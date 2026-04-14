@@ -1,0 +1,434 @@
+import express from "express";
+import { createServer as createViteServer } from "vite";
+import path from "path";
+import fs from "fs";
+import multer from "multer";
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+  const DATA_FILE = path.join(process.cwd(), "data.json");
+  const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+
+  // Ensure uploads directory exists
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR);
+  }
+
+  const DEFAULT_DATA = {
+    settings: {
+      clubName: "IRB Warriors",
+      established: "2026",
+      location: "Abdul Rob Bazar, Islam Gonj, Kamal Nagar, Lakshmipur",
+      phone: "+880 1892-128292",
+      whatsapp: "+880 1892-128292",
+      facebook: "https://www.facebook.com/share/1DzscJ3sCS/",
+      logo: "/logo.png"
+    },
+    committee: [
+      { id: 1, name: "IRB Admin", role: "সভাপতি (President)", photo: "https://picsum.photos/seed/pres/200/200", phone: "+880 1892-128292" }
+    ],
+    players: [
+      { id: 1, name: "Sabbir Ahmed", role: "Batsman", jerseyNumber: "07", photo: "https://picsum.photos/seed/p1/200/200", phone: "01800000000", status: "Active", stats: { matches: 10, runs: 450, wickets: 2, avg: 45.0, sr: 140.5 } },
+      { id: 2, name: "Rakib Hasan", role: "Bowler", jerseyNumber: "99", photo: "https://picsum.photos/seed/p2/200/200", phone: "01811111111", status: "Active", stats: { matches: 12, runs: 80, wickets: 25, avg: 12.0, sr: 90.0 } }
+    ],
+    matches: [
+      { id: 1, teamA: "IRB Warriors", teamB: "Dhaka Gladiators", date: "2026-04-15", time: "10:00 AM", venue: "Islamgonj Bazar Ground", type: "Short Pitch", overs: 8, status: "Upcoming" },
+      { id: 2, teamA: "IRB Warriors", teamB: "Comilla Victors", date: "2026-04-20", time: "02:00 PM", venue: "Green Field Stadium", type: "Long Pitch", overs: 20, status: "Upcoming" }
+    ],
+    admissions: [],
+    finance: [
+      { id: 1, type: "Income", amount: 5000, category: "Sponsorship", description: "Local Shop Sponsor", date: "2026-04-01" },
+      { id: 2, type: "Expense", amount: 1200, category: "Equipment", description: "New Cricket Balls", date: "2026-04-05" }
+    ],
+    notices: [
+      { id: 1, title: "Practice Session", content: "Tomorrow morning at 7 AM. Everyone must be present.", date: "2026-04-10", priority: "Urgent" }
+    ],
+    gallery: [],
+    events: [],
+    hostedTournaments: [],
+    externalTournaments: []
+  };
+
+  // Initialize data file if it doesn't exist
+  if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(DEFAULT_DATA, null, 2));
+  } else {
+    try {
+      const existingData = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+      let updated = false;
+      (Object.keys(DEFAULT_DATA) as Array<keyof typeof DEFAULT_DATA>).forEach(key => {
+        if (!existingData[key]) {
+          existingData[key] = DEFAULT_DATA[key as keyof typeof DEFAULT_DATA];
+          updated = true;
+        }
+      });
+      if (updated) {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(existingData, null, 2));
+      }
+    } catch (e) {
+      console.error("Error updating data file:", e);
+    }
+  }
+
+  app.use(express.json());
+  app.use("/uploads", express.static(UPLOADS_DIR));
+
+  // Multer configuration
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+  const upload = multer({ storage });
+
+  // Upload endpoint
+  app.post("/api/upload", upload.single("file"), (req: any, res) => {
+    if (!req.file) return res.status(400).send("No file uploaded.");
+    res.json({ url: `/uploads/${req.file.filename}` });
+  });
+
+  // API Routes
+  app.get("/api/data", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    res.json(data);
+  });
+
+  // Settings
+  app.post("/api/settings", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.settings = { ...data.settings, ...req.body };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(data.settings);
+  });
+
+  // Admissions
+  app.post("/api/admissions", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newAdmission = { ...req.body, id: Date.now(), status: "pending" };
+    data.admissions.push(newAdmission);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newAdmission);
+  });
+
+  app.post("/api/admissions/:id/approve", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const admissionIdx = data.admissions.findIndex((a: any) => a.id === parseInt(req.params.id));
+    if (admissionIdx !== -1) {
+      data.admissions[admissionIdx].status = "approved";
+      // Auto-create player from approved admission
+      const newPlayer = {
+        id: Date.now(),
+        name: data.admissions[admissionIdx].name,
+        role: data.admissions[admissionIdx].role,
+        jerseyNumber: "TBD",
+        photo: "https://picsum.photos/seed/new/200/200",
+        phone: data.admissions[admissionIdx].phone,
+        status: "Active",
+        stats: { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0 }
+      };
+      data.players.push(newPlayer);
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(data.admissions[admissionIdx]);
+    } else {
+      res.status(404).send("Not found");
+    }
+  });
+
+  app.delete("/api/admissions/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.admissions = data.admissions.filter((a: any) => a.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  // Committee
+  app.post("/api/committee", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newMember = { ...req.body, id: Date.now() };
+    data.committee.push(newMember);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newMember);
+  });
+
+  // Players
+  app.post("/api/players", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newPlayer = { ...req.body, id: Date.now() };
+    data.players.push(newPlayer);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newPlayer);
+  });
+
+  app.post("/api/players/:id/stats", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const player = data.players.find((p: any) => p.id === parseInt(req.params.id));
+    if (player) {
+      player.stats = { ...player.stats, ...req.body };
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(player);
+    } else {
+      res.status(404).send("Not found");
+    }
+  });
+
+  app.delete("/api/players/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.players = data.players.filter((p: any) => p.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  // Finance
+  app.post("/api/finance", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newRecord = { ...req.body, id: Date.now() };
+    data.finance.push(newRecord);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newRecord);
+  });
+
+  app.delete("/api/finance/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.finance = data.finance.filter((f: any) => f.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  // Notices
+  app.post("/api/notices", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newNotice = { ...req.body, id: Date.now() };
+    data.notices.push(newNotice);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newNotice);
+  });
+
+  // Gallery
+  app.post("/api/gallery", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newItem = { ...req.body, id: Date.now() };
+    data.gallery.push(newItem);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newItem);
+  });
+
+  app.delete("/api/gallery/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.gallery = data.gallery.filter((item: any) => item.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  // Events
+  app.post("/api/events", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newEvent = { ...req.body, id: Date.now() };
+    data.events.push(newEvent);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newEvent);
+  });
+
+  app.delete("/api/events/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.events = data.events.filter((e: any) => e.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  // Hosted Tournaments
+  app.post("/api/hostedTournaments", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newTournament = { ...req.body, id: Date.now(), registrations: [], sponsors: [], fixtures: [] };
+    data.hostedTournaments.push(newTournament);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newTournament);
+  });
+
+  app.delete("/api/hostedTournaments/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.hostedTournaments = data.hostedTournaments.filter((t: any) => t.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  app.patch("/api/hostedTournaments/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const tournamentIdx = data.hostedTournaments.findIndex((t: any) => t.id === parseInt(req.params.id));
+    if (tournamentIdx !== -1) {
+      data.hostedTournaments[tournamentIdx] = { ...data.hostedTournaments[tournamentIdx], ...req.body };
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(data.hostedTournaments[tournamentIdx]);
+    } else {
+      res.status(404).send("Tournament not found");
+    }
+  });
+
+  app.post("/api/hostedTournaments/:id/registrations", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    if (tournament) {
+      const newReg = { ...req.body, id: Date.now(), registrationDate: new Date().toISOString() };
+      tournament.registrations.push(newReg);
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(newReg);
+    } else {
+      res.status(404).send("Tournament not found");
+    }
+  });
+
+  app.post("/api/hostedTournaments/:id/registrations/:regId/payment", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    if (tournament) {
+      const reg = tournament.registrations.find((r: any) => r.id === parseInt(req.params.regId));
+      if (reg) {
+        reg.amountPaid = req.body.amountPaid;
+        reg.amountDue = req.body.amountDue;
+        reg.paymentStatus = req.body.paymentStatus;
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+        res.json(reg);
+      } else {
+        res.status(404).send("Registration not found");
+      }
+    } else {
+      res.status(404).send("Tournament not found");
+    }
+  });
+
+  app.post("/api/hostedTournaments/:id/sponsors", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    if (tournament) {
+      const newSponsor = { ...req.body, id: Date.now() };
+      tournament.sponsors.push(newSponsor);
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(newSponsor);
+    } else {
+      res.status(404).send("Tournament not found");
+    }
+  });
+
+  app.post("/api/hostedTournaments/:id/fixtures", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    if (tournament) {
+      const newMatch = { ...req.body, id: Date.now(), status: "Upcoming" };
+      tournament.fixtures.push(newMatch);
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(newMatch);
+    } else {
+      res.status(404).send("Tournament not found");
+    }
+  });
+
+  app.post("/api/hostedTournaments/:id/fixtures/:matchId/score", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    if (tournament) {
+      const match = tournament.fixtures.find((m: any) => m.id === parseInt(req.params.matchId));
+      if (match) {
+        match.score = req.body.score;
+        match.status = req.body.status || "Live";
+        if (req.body.result) match.result = req.body.result;
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+        res.json(match);
+      } else {
+        res.status(404).send("Match not found");
+      }
+    } else {
+      res.status(404).send("Tournament not found");
+    }
+  });
+
+  // External Tournaments
+  app.post("/api/externalTournaments", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newTournament = { ...req.body, id: Date.now(), expenses: [], matches: [] };
+    data.externalTournaments.push(newTournament);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newTournament);
+  });
+
+  app.delete("/api/externalTournaments/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.externalTournaments = data.externalTournaments.filter((t: any) => t.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  app.post("/api/externalTournaments/:id/expenses", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const tournament = data.externalTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    if (tournament) {
+      const newExpense = { ...req.body, id: Date.now() };
+      tournament.expenses.push(newExpense);
+      // Also add to main finance
+      data.finance.push({ ...newExpense, description: `[${tournament.name}] ${newExpense.description}` });
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(newExpense);
+    } else {
+      res.status(404).send("Tournament not found");
+    }
+  });
+
+  // Committee Delete
+  app.delete("/api/committee/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.committee = data.committee.filter((m: any) => m.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  // Matches & Scoring
+  app.post("/api/matches", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const newMatch = { ...req.body, id: Date.now() };
+    data.matches.push(newMatch);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json(newMatch);
+  });
+
+  app.delete("/api/matches/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    data.matches = data.matches.filter((m: any) => m.id !== parseInt(req.params.id));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true });
+  });
+
+  app.post("/api/matches/:id/score", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const match = data.matches.find((m: any) => m.id === parseInt(req.params.id));
+    if (match) {
+      match.score = req.body;
+      match.status = "Live";
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(match);
+    } else {
+      res.status(404).send("Not found");
+    }
+  });
+
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();

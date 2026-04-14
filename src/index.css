@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-emerald-950: #020617;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-gray-900 bg-gray-950 min-h-screen relative;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)),
+      url('https://www.transparenttextures.com/patterns/natural-paper.png'),
+      url('https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2067&auto=format&fit=crop');
+    background-size: cover, 200px, cover;
+    background-position: center;
+    background-attachment: fixed;
+    opacity: 1;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 0% 0%, rgba(245, 158, 11, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 0% 100%, rgba(245, 158, 11, 0.15) 0%, transparent 40%);
+    z-index: -1;
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  .scoreboard-font {
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.05em;
+  }
+  .text-shadow-glow {
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+  }
+  .glass-card {
+    @apply bg-slate-800/40 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+  }
+  .glass-sidebar {
+    @apply bg-slate-900/60 backdrop-blur-3xl border-r border-white/5 shadow-2xl;
+  }
+  .stadium-glow {
+    box-shadow: 0 0 50px rgba(245, 158, 11, 0.1);
+  }
+  .bg-carbon {
+    background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+  }
+  .bg-hex {
+    background-image: url('https://www.transparenttextures.com/patterns/hexellence.png');
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.5);
+  }
+  @media print {
+    .no-print { display: none !important; }
+    .only-print { display: block !important; }
+  }
+}
+
+

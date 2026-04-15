@@ -25,25 +25,12 @@ async function startServer() {
       facebook: "https://www.facebook.com/share/1DzscJ3sCS/",
       logo: "/logo.png"
     },
-    committee: [
-      { id: 1, name: "IRB Admin", role: "সভাপতি (President)", photo: "https://picsum.photos/seed/pres/200/200", phone: "+880 1892-128292" }
-    ],
-    players: [
-      { id: 1, name: "Sabbir Ahmed", role: "Batsman", jerseyNumber: "07", photo: "https://picsum.photos/seed/p1/200/200", phone: "01800000000", status: "Active", stats: { matches: 10, runs: 450, wickets: 2, avg: 45.0, sr: 140.5 } },
-      { id: 2, name: "Rakib Hasan", role: "Bowler", jerseyNumber: "99", photo: "https://picsum.photos/seed/p2/200/200", phone: "01811111111", status: "Active", stats: { matches: 12, runs: 80, wickets: 25, avg: 12.0, sr: 90.0 } }
-    ],
-    matches: [
-      { id: 1, teamA: "IRB Warriors", teamB: "Dhaka Gladiators", date: "2026-04-15", time: "10:00 AM", venue: "Islamgonj Bazar Ground", type: "Short Pitch", overs: 8, status: "Upcoming" },
-      { id: 2, teamA: "IRB Warriors", teamB: "Comilla Victors", date: "2026-04-20", time: "02:00 PM", venue: "Green Field Stadium", type: "Long Pitch", overs: 20, status: "Upcoming" }
-    ],
+    committee: [],
+    players: [],
+    matches: [],
     admissions: [],
-    finance: [
-      { id: 1, type: "Income", amount: 5000, category: "Sponsorship", description: "Local Shop Sponsor", date: "2026-04-01" },
-      { id: 2, type: "Expense", amount: 1200, category: "Equipment", description: "New Cricket Balls", date: "2026-04-05" }
-    ],
-    notices: [
-      { id: 1, title: "Practice Session", content: "Tomorrow morning at 7 AM. Everyone must be present.", date: "2026-04-10", priority: "Urgent" }
-    ],
+    finance: [],
+    notices: [],
     gallery: [],
     events: [],
     hostedTournaments: [],

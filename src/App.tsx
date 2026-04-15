@@ -64,7 +64,7 @@ import {
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { cn } from "./lib/utils";
-import { AppData } from "./types";
+import { AppData, CommitteeMember, Player } from "./types";
 import { supabase } from "./lib/supabase";
 
 // --- Components ---
@@ -492,11 +492,11 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                   viewport={{ once: true }}
                   className="group bg-slate-900/50 backdrop-blur-md rounded-[3rem] overflow-hidden border border-slate-800 hover:border-amber-500/50 transition-all duration-500 shadow-2xl"
                 >
-                  <div className="aspect-[4/5] overflow-hidden relative">
+                  <div className="aspect-[4/5] overflow-hidden relative bg-slate-950/50">
                     <img 
                       src={member.photo} 
                       alt={member.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
                       <a href={`tel:${member.phone}`} className="w-full py-4 bg-amber-500 text-gray-950 rounded-2xl font-black text-center flex items-center justify-center gap-2">
@@ -1664,6 +1664,8 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [showEditStats, setShowEditStats] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
+  const [editingMember, setEditingMember] = useState<CommitteeMember | null>(null);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [showAdmissionDetails, setShowAdmissionDetails] = useState(false);
   const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
   const [selectedAdmissions, setSelectedAdmissions] = useState<number[]>([]);
@@ -1767,23 +1769,71 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/committee", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMember),
-    });
+    try {
+      await supabaseService.addCommitteeMember(newMember);
+    } catch (error) {
+      console.error("Supabase addMember failed:", error);
+      await fetch("/api/committee", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newMember),
+      });
+    }
     setNewMember({ name: "", role: "", phone: "", photo: "" });
     setShowAddMember(false);
     onRefresh();
   };
 
+  const handleUpdateMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMember) return;
+    try {
+      await supabaseService.updateCommitteeMember(editingMember.id, editingMember);
+    } catch (error) {
+      console.error("Supabase updateMember failed:", error);
+      await fetch(`/api/committee/${editingMember.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingMember),
+      });
+    }
+    setEditingMember(null);
+    onRefresh();
+    setNotification({ message: "Member updated successfully!", type: 'success' });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleUpdatePlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlayer) return;
+    try {
+      await supabaseService.updatePlayer(editingPlayer.id, editingPlayer);
+    } catch (error) {
+      console.error("Supabase updatePlayer failed:", error);
+      await fetch(`/api/players/${editingPlayer.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingPlayer),
+      });
+    }
+    setEditingPlayer(null);
+    onRefresh();
+    setNotification({ message: "Player updated successfully!", type: 'success' });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   const handleAddGallery = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/gallery", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newGallery),
-    });
+    try {
+      await supabaseService.addGalleryItem(newGallery);
+    } catch (error) {
+      console.error("Supabase addGallery failed:", error);
+      await fetch("/api/gallery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newGallery),
+      });
+    }
     setNewGallery({ type: "Photo", url: "", caption: "", thumbnail: "" });
     setShowAddGallery(false);
     onRefresh();
@@ -1791,11 +1841,16 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
 
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newEvent),
-    });
+    try {
+      await supabaseService.addEvent(newEvent);
+    } catch (error) {
+      console.error("Supabase addEvent failed:", error);
+      await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newEvent),
+      });
+    }
     setNewEvent({ title: "", date: "", location: "", description: "" });
     setShowAddEvent(false);
     onRefresh();
@@ -1803,11 +1858,16 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
 
   const handleAddFinance = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/finance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newFinance),
-    });
+    try {
+      await supabaseService.addFinance(newFinance);
+    } catch (error) {
+      console.error("Supabase addFinance failed:", error);
+      await fetch("/api/finance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newFinance),
+      });
+    }
     setNewFinance({ type: "Income", amount: 0, category: "", description: "", date: new Date().toISOString().split('T')[0] });
     setShowAddFinance(false);
     onRefresh();
@@ -1815,41 +1875,61 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
 
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/players", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newPlayer),
-    });
+    try {
+      await supabaseService.addPlayer(newPlayer);
+    } catch (error) {
+      console.error("Supabase addPlayer failed:", error);
+      await fetch("/api/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newPlayer),
+      });
+    }
     setNewPlayer({ name: "", role: "Batsman", jerseyNumber: "", photo: "", phone: "", status: "Active" });
     setShowAddPlayer(false);
     onRefresh();
   };
 
   const handleTogglePublish = async (tournament: any) => {
-    await fetch(`/api/hostedTournaments/${tournament.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isPublished: !tournament.isPublished }),
-    });
+    try {
+      await supabaseService.updateHostedTournament(tournament.id, { isPublished: !tournament.isPublished });
+    } catch (error) {
+      console.error("Supabase togglePublish failed:", error);
+      await fetch(`/api/hostedTournaments/${tournament.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: !tournament.isPublished }),
+      });
+    }
     onRefresh();
   };
 
   const handleToggleType = async (tournament: any) => {
-    await fetch(`/api/hostedTournaments/${tournament.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: tournament.type === 'Public' ? 'Domestic' : 'Public' }),
-    });
+    try {
+      await supabaseService.updateHostedTournament(tournament.id, { type: tournament.type === 'Public' ? 'Domestic' : 'Public' });
+    } catch (error) {
+      console.error("Supabase toggleType failed:", error);
+      await fetch(`/api/hostedTournaments/${tournament.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: tournament.type === 'Public' ? 'Domestic' : 'Public' }),
+      });
+    }
     onRefresh();
   };
 
   const handleAddMatch = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/matches", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMatch),
-    });
+    try {
+      await supabaseService.addMatch(newMatch);
+    } catch (error) {
+      console.error("Supabase addMatch failed:", error);
+      await fetch("/api/matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newMatch),
+      });
+    }
     setNewMatch({ teamA: "IRB Warriors", teamB: "", date: "", time: "", venue: "", type: "Short Pitch", overs: 8, status: "Upcoming" });
     setShowAddMatch(false);
     onRefresh();
@@ -1859,18 +1939,32 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
-    await fetch("/api/hostedTournaments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...data,
-        entryFee: parseInt(data.entryFee as string),
-        maxTeams: parseInt(data.maxTeams as string),
-        status: "Upcoming",
-        type: data.type || "Public",
-        isPublished: data.isPublished === "true"
-      }),
-    });
+    const tournamentData = {
+      ...data,
+      name: data.name as string,
+      date: data.date as string,
+      venue: data.venue as string,
+      prizePool: data.prizePool as string,
+      entryFee: parseInt(data.entryFee as string),
+      maxTeams: parseInt(data.maxTeams as string),
+      status: "Upcoming",
+      type: (data.type as string) || "Public",
+      isPublished: data.isPublished === "true",
+      registrations: [],
+      sponsors: [],
+      fixtures: []
+    };
+
+    try {
+      await supabaseService.addHostedTournament(tournamentData as any);
+    } catch (error) {
+      console.error("Supabase addHosted failed:", error);
+      await fetch("/api/hostedTournaments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tournamentData),
+      });
+    }
     setShowAddHosted(false);
     onRefresh();
   };
@@ -2066,11 +2160,16 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings),
-    });
+    try {
+      await supabaseService.updateSettings(settings);
+    } catch (error) {
+      console.error("Supabase updateSettings failed:", error);
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+    }
     onRefresh();
     setNotification({ message: "Settings saved successfully!", type: 'success' });
     setTimeout(() => setNotification(null), 3000);
@@ -2478,7 +2577,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                   
                   <div className="flex items-center gap-6 relative z-10">
                     <div className="relative">
-                      <img src={member.photo} alt={member.name} className="w-24 h-24 rounded-[2rem] object-cover border-2 border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" referrerPolicy="no-referrer" />
+                      <img src={member.photo} alt={member.name} className="w-24 h-24 rounded-[2rem] object-contain bg-slate-950/50 border-2 border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" referrerPolicy="no-referrer" />
                       <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-amber-500 rounded-xl flex items-center justify-center text-gray-950 shadow-lg">
                         <Users size={14} />
                       </div>
@@ -2502,12 +2601,20 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                         <ShieldCheck size={14} />
                       </div>
                     </div>
-                    <button 
-                      onClick={() => handleDelete('committee', member.id)}
-                      className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
-                    >
-                      <X size={20} />
-                    </button>
+                    <div className="flex justify-end gap-3">
+                      <button 
+                        onClick={() => setEditingMember(member)}
+                        className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
+                      >
+                        <Edit3 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete('committee', member.id)}
+                        className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -2670,7 +2777,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                         <td className="px-10 py-8">
                           <div className="flex items-center gap-5">
                             <div className="relative">
-                              <img src={player.photo} alt={player.name} className="w-16 h-16 rounded-2xl object-cover border border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" referrerPolicy="no-referrer" />
+                              <img src={player.photo} alt={player.name} className="w-16 h-16 rounded-2xl object-contain bg-slate-950/50 border border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" referrerPolicy="no-referrer" />
                               <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-500 text-gray-950 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">#{player.jerseyNumber}</div>
                             </div>
                             <div>
@@ -2699,13 +2806,22 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                                 <button 
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    setEditingPlayer(player);
+                                  }}
+                                  className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-500 shadow-lg shadow-blue-500/5"
+                                >
+                                  <Edit3 size={18} />
+                                </button>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setSelectedPlayer(player);
                                     setEditStats(player.stats);
                                     setShowEditStats(true);
                                   }}
                                   className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
                                 >
-                                  <Edit3 size={18} />
+                                  <Activity size={18} />
                                 </button>
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); handleDelete('players', player.id); }}
@@ -3917,6 +4033,45 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
           </motion.div>
         )}
 
+        {editingMember && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-black text-white uppercase italic">Edit <span className="text-amber-500">Member</span></h2>
+                <button onClick={() => setEditingMember(null)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-500 hover:text-white"><X /></button>
+              </div>
+              <form onSubmit={handleUpdateMember} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
+                  <input required value={editingMember.name} onChange={e => setEditingMember({...editingMember, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter name" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
+                  <select required value={editingMember.role} onChange={e => setEditingMember({...editingMember, role: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white appearance-none">
+                    <option value="" className="bg-slate-900">Select a role</option>
+                    <option value="সভাপতি (President)" className="bg-slate-900">সভাপতি (President)</option>
+                    <option value="সহ সভাপতি (Vice President)" className="bg-slate-900">সহ সভাপতি (Vice President)</option>
+                    <option value="সাধারণ সম্পাদক (General Secretary)" className="bg-slate-900">সাধারণ সম্পাদক (General Secretary)</option>
+                    <option value="সহ সাধারণ সম্পাদক (Joint General Secretary)" className="bg-slate-900">সহ সাধারণ সম্পাদক (Joint General Secretary)</option>
+                    <option value="কোষাধ্যক্ষ (Treasurer)" className="bg-slate-900">কোষাধ্যক্ষ (Treasurer)</option>
+                    <option value="সদস্য (Member)" className="bg-slate-900">সদস্য (Member)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
+                  <input required value={editingMember.phone} onChange={e => setEditingMember({...editingMember, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter phone" />
+                </div>
+                <FileUploader 
+                  label="Member Photo" 
+                  currentUrl={editingMember.photo} 
+                  onUpload={(url) => setEditingMember({...editingMember, photo: url})} 
+                />
+                <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Update Member</button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
         {showAddGallery && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
@@ -4021,6 +4176,56 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                   <input required value={newPlayer.phone} onChange={e => setNewPlayer({...newPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                 </div>
                 <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Save Player</button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {editingPlayer && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10 overflow-y-auto max-h-[90vh] custom-scrollbar">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-black text-white uppercase italic">Edit <span className="text-amber-500">Player</span></h2>
+                <button onClick={() => setEditingPlayer(null)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-500 hover:text-white"><X /></button>
+              </div>
+              <form onSubmit={handleUpdatePlayer} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
+                    <input required value={editingPlayer.name} onChange={e => setEditingPlayer({...editingPlayer, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey #</label>
+                    <input required value={editingPlayer.jerseyNumber} onChange={e => setEditingPlayer({...editingPlayer, jerseyNumber: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
+                  <select value={editingPlayer.role} onChange={e => setEditingPlayer({...editingPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <option value="Batsman" className="bg-slate-900">Batsman</option>
+                    <option value="Bowler" className="bg-slate-900">Bowler</option>
+                    <option value="All-rounder" className="bg-slate-900">All-rounder</option>
+                    <option value="Wicket Keeper" className="bg-slate-900">Wicket Keeper</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</label>
+                  <select value={editingPlayer.status} onChange={e => setEditingPlayer({...editingPlayer, status: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <option value="Active" className="bg-slate-900">Active</option>
+                    <option value="Injured" className="bg-slate-900">Injured</option>
+                    <option value="Inactive" className="bg-slate-900">Inactive</option>
+                  </select>
+                </div>
+                <FileUploader 
+                  label="Player Photo" 
+                  currentUrl={editingPlayer.photo} 
+                  onUpload={(url) => setEditingPlayer({...editingPlayer, photo: url})} 
+                />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
+                  <input required value={editingPlayer.phone} onChange={e => setEditingPlayer({...editingPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                </div>
+                <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Update Player</button>
               </form>
             </motion.div>
           </motion.div>
@@ -4534,7 +4739,7 @@ const RankingPage = ({ data }: { data: AppData }) => {
               <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-amber-500 text-gray-950 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-xl shadow-amber-500/20">
                 #{index + 1}
               </div>
-              <img src={player.photo} alt={player.name} className="w-32 h-32 rounded-[2.5rem] object-cover mx-auto mb-6 border-4 border-slate-800" referrerPolicy="no-referrer" />
+              <img src={player.photo} alt={player.name} className="w-32 h-32 rounded-[2.5rem] object-contain bg-slate-950/50 mx-auto mb-6 border-4 border-slate-800" referrerPolicy="no-referrer" />
               <h3 className="text-2xl font-black text-white uppercase italic mb-2">{player.name}</h3>
               <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-6">{player.role}</p>
               
@@ -4571,7 +4776,7 @@ const RankingPage = ({ data }: { data: AppData }) => {
                   <td className="px-8 py-6 font-black text-slate-600 italic">#{index + 4}</td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <img src={player.photo} alt={player.name} className="w-12 h-12 rounded-xl object-cover border border-slate-800" referrerPolicy="no-referrer" />
+                      <img src={player.photo} alt={player.name} className="w-12 h-12 rounded-xl object-contain bg-slate-950/50 border border-slate-800" referrerPolicy="no-referrer" />
                       <div>
                         <div className="font-black text-white uppercase italic">{player.name}</div>
                         <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{player.role}</div>
@@ -4596,9 +4801,100 @@ const RankingPage = ({ data }: { data: AppData }) => {
 
 import { supabaseService } from "./services/supabaseService";
 
+const ADMIN_UID = "d37be083-24df-4871-b8ec-05fe92bc1d90";
+
+const Login = ({ onLogin }: { onLogin: () => void }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) {
+      setError("Supabase client not initialized. Please check your environment variables.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (data.user?.id !== ADMIN_UID) {
+        await supabase.auth.signOut();
+        throw new Error("Unauthorized: You are not the admin.");
+      }
+      onLogin();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center px-4 py-20">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl p-10 rounded-[3rem] border border-slate-800 shadow-2xl space-y-8"
+      >
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Admin <span className="text-amber-500">Login</span></h2>
+          <p className="text-slate-400 text-sm font-medium">Access the control center</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Email Address</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-amber-500 transition-colors font-bold"
+                placeholder="admin@irbwarriors.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Password</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-amber-500 transition-colors font-bold"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-black py-4 rounded-2xl transition-all uppercase italic tracking-widest shadow-[0_10px_30px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2"
+          >
+            {loading ? "Authenticating..." : "Enter Command Center"}
+            {!loading && <ArrowRight size={20} />}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  );
+};
+
 export default function App() {
   const [data, setData] = useState<AppData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   const fetchData = async () => {
     try {
@@ -4621,6 +4917,38 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
+    
+    let authSubscription: any = null;
+    let dataSubscription: any = null;
+
+    if (supabase) {
+      // Check current session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user?.id === ADMIN_UID) {
+          setUser(session.user);
+        }
+      });
+
+      // Listen for auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user?.id === ADMIN_UID) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
+      });
+      authSubscription = subscription;
+
+      // Real-time data updates
+      dataSubscription = supabaseService.subscribeToData(() => {
+        fetchData();
+      });
+    }
+
+    return () => {
+      if (authSubscription) authSubscription.unsubscribe();
+      if (dataSubscription) dataSubscription.unsubscribe();
+    };
   }, []);
 
   if (loading || !data) {
@@ -4644,7 +4972,10 @@ export default function App() {
             <Route path="/" element={<Portfolio data={data} onRefresh={fetchData} />} />
             <Route path="/matches" element={<MatchesPage data={data} />} />
             <Route path="/admission" element={<AdmissionForm data={data} onRefresh={fetchData} />} />
-            <Route path="/admin" element={<AdminPanel data={data} onRefresh={fetchData} />} />
+            <Route 
+              path="/admin" 
+              element={user ? <AdminPanel data={data} onRefresh={fetchData} /> : <Login onLogin={fetchData} />} 
+            />
           </Routes>
         </main>
         

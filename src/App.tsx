@@ -1309,7 +1309,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="md:col-span-2 space-y-4">
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Playing Type / খেলার ধরণ</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {[
                   { id: 'Batsman', label: 'Batsman / ব্যাটসম্যান' },
                   { id: 'Bowler', label: 'Bowler / বোলার' },

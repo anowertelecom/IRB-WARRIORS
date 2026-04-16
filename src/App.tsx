@@ -266,15 +266,32 @@ const FileUploader = ({ onUpload, label, currentUrl }: { onUpload: (url: string)
   );
 };
 
+import { useNavigate, useLocation } from "react-router-dom";
+
 const Navbar = ({ data, user }: { data: AppData, user?: any }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Handle scrolling to sections correctly, even if we are on a different page
+  useEffect(() => {
+    if (location.pathname === '/' && location.hash) {
+      setTimeout(() => {
+        const id = location.hash.replace('#', '');
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+  }, [location]);
 
   const navLinks = [
     { name: "Home", path: "home" },
@@ -285,104 +302,155 @@ const Navbar = ({ data, user }: { data: AppData, user?: any }) => {
     { name: "Apply", path: "apply" },
   ];
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-      setIsOpen(false);
+  const handleNavClick = (path: string) => {
+    setIsOpen(false);
+    if (path === 'apply') {
+      navigate('/admission');
+    } else if (location.pathname !== '/') {
+      navigate('/#' + path);
+    } else {
+      const element = document.getElementById(path);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      } else if (path === 'home') {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     }
   };
 
   return (
-    <nav className={cn(
-      "fixed top-0 w-full z-50 transition-all duration-500",
-      scrolled ? "bg-slate-950/95 backdrop-blur-md py-3 border-b border-slate-800 shadow-2xl" : "bg-transparent py-6"
-    )}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-white/5 backdrop-blur-xl rounded-full flex items-center justify-center overflow-hidden border border-white/10 shadow-lg group-hover:scale-110 transition-transform">
-              <img 
-                src={data.settings?.logo || "/logo.png"} 
-                alt={data.settings?.clubName || "IRB WARRIORS"} 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/logo.png";
-                }}
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black text-lg tracking-tighter text-white leading-none uppercase italic">
-                {data.settings?.clubName.split(' ')[0]} <span className="text-amber-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
-              </span>
-            </div>
-          </Link>
-          
-          <div className="hidden lg:flex items-center gap-1 bg-white/5 backdrop-blur-md p-1 rounded-xl border border-white/10">
-            {navLinks.map((link) => (
-              <button 
-                key={link.name}
-                onClick={() => scrollToSection(link.path)}
-                className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-amber-500 hover:bg-white/5 transition-all"
-              >
-                {link.name}
-              </button>
-            ))}
-            <Link to="/admin" className="px-4 py-2 bg-amber-500 text-gray-950 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-amber-400 transition-all flex items-center gap-2 ml-2">
-              <ShieldCheck size={14} />
-              {user ? (user.role === 'admin' ? 'Admin' : 'Staff') : 'Admin'}
+    <>
+      <nav className={cn(
+        "fixed top-0 w-full z-50 transition-all duration-500",
+        scrolled ? "bg-slate-950/95 backdrop-blur-md py-3 border-b border-slate-800 shadow-2xl" : "bg-transparent py-4 md:py-6"
+      )}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
+            <Link to="/" className="flex items-center gap-3 group relative z-[60]">
+              <div className="w-10 h-10 bg-white/5 backdrop-blur-xl rounded-full flex items-center justify-center overflow-hidden border border-white/10 shadow-lg group-hover:scale-110 transition-transform">
+                <img 
+                  src={data.settings?.logo || "/logo.png"} 
+                  alt={data.settings?.clubName || "IRB WARRIORS"} 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/logo.png";
+                  }}
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-display font-black text-xl tracking-wide text-white leading-none uppercase pt-1">
+                  {data.settings?.clubName.split(' ')[0]} <span className="text-amber-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
+                </span>
+              </div>
             </Link>
-            {user && (
-              <button 
-                onClick={async () => {
-                  if (supabase) {
-                    await supabase.auth.signOut();
-                    window.location.href = "/";
-                  }
-                }}
-                className="p-2 ml-1 text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-              >
-                <LogOut size={16} />
-              </button>
-            )}
+            
+            {/* Desktop Menu */}
+            <div className="hidden lg:flex items-center gap-1 bg-white/5 backdrop-blur-md p-1 rounded-xl border border-white/10">
+              {navLinks.map((link) => (
+                <button 
+                  key={link.name}
+                  onClick={() => handleNavClick(link.path)}
+                  className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-amber-500 hover:bg-white/5 transition-all"
+                >
+                  {link.name}
+                </button>
+              ))}
+              <Link to="/admin" className="px-4 py-2 bg-amber-500 text-gray-950 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-amber-400 transition-all flex items-center gap-2 ml-2">
+                <ShieldCheck size={14} />
+                {user ? (user.role === 'admin' ? 'Admin' : 'Staff') : 'Admin'}
+              </Link>
+              {user && (
+                <button 
+                  onClick={async () => {
+                    if (supabase) {
+                      await supabase.auth.signOut();
+                      window.location.href = "/";
+                    }
+                  }}
+                  className="p-2 ml-1 text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                >
+                  <LogOut size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button 
+              onClick={() => setIsOpen(!isOpen)} 
+              className="lg:hidden p-2 text-white bg-white/10 backdrop-blur-md rounded-xl relative z-[60] hover:bg-amber-500/20 hover:text-amber-500 transition-colors"
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
-
-          <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2 text-white bg-white/10 rounded-xl">
-            {isOpen ? <X /> : <Menu />}
-          </button>
         </div>
-      </div>
+      </nav>
 
+      {/* Mobile Menu Drawer */}
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-2 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55] bg-slate-950/95 backdrop-blur-xl lg:hidden flex flex-col justify-center items-center"
           >
-            {navLinks.map((link) => (
-              <button 
-                key={link.name}
-                onClick={() => scrollToSection(link.path)}
-                className="block w-full text-left px-4 py-3 text-lg font-bold text-white/70 hover:text-amber-500 hover:bg-white/5 rounded-xl transition-all"
-              >
-                {link.name}
-              </button>
-            ))}
-            <Link 
-              to="/admin" 
-              onClick={() => setIsOpen(false)} 
-              className="block px-4 py-3 text-lg font-bold text-amber-500 bg-amber-500/10 rounded-xl"
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ delay: 0.1 }}
+              className="flex flex-col items-center gap-6 w-full max-w-sm px-6"
             >
-              Admin Panel
-            </Link>
+              {navLinks.map((link, i) => (
+                <motion.button 
+                  key={link.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + (i * 0.05) }}
+                  onClick={() => handleNavClick(link.path)}
+                  className="w-full py-4 text-center text-2xl font-display font-black tracking-widest uppercase text-white/80 hover:text-amber-500 hover:bg-white/5 rounded-2xl transition-all"
+                >
+                  {link.name}
+                </motion.button>
+              ))}
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="w-full pt-6 border-t border-white/10 flex flex-col gap-4"
+              >
+                <Link 
+                  to="/admin" 
+                  onClick={() => setIsOpen(false)} 
+                  className="w-full py-4 flex items-center justify-center gap-3 text-xl font-display font-black tracking-widest uppercase text-gray-950 bg-amber-500 rounded-2xl hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                >
+                  <ShieldCheck size={20} />
+                  {user ? 'Admin Panel' : 'Admin Login'}
+                </Link>
+                
+                {user && (
+                  <button 
+                    onClick={async () => {
+                      if (supabase) {
+                        await supabase.auth.signOut();
+                        window.location.href = "/";
+                      }
+                    }}
+                    className="w-full py-4 flex items-center justify-center gap-3 text-sm font-black tracking-widest uppercase text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-2xl transition-all"
+                  >
+                    <LogOut size={16} />
+                    Sign Out
+                  </button>
+                )}
+              </motion.div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   );
 };
 
@@ -390,11 +458,11 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
   return (
     <div className="bg-slate-950 min-h-screen">
       {/* Hero Section */}
-      <section id="home" className="relative min-h-screen md:h-screen flex items-center justify-center overflow-hidden py-24 md:py-0">
+      <section id="home" className="relative min-h-screen md:h-screen flex flex-col items-center justify-center overflow-hidden py-24 md:py-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-slate-950 to-slate-950 z-0" />
         <div className="absolute inset-0 bg-carbon opacity-20 z-0" />
         
-        <div className="relative z-10 text-center space-y-6 md:space-y-8 px-4 max-w-5xl mx-auto">
+        <div className="relative z-10 text-center space-y-6 md:space-y-8 px-4 max-w-5xl mx-auto flex-1 flex flex-col justify-center w-full">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -421,20 +489,20 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
             স্থাপিত {data.settings?.established || "২০২৬"}
           </motion.div>
           
-          <div className="space-y-2 md:space-y-4">
+          <div className="space-y-2 md:space-y-4 relative z-10">
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-4xl sm:text-6xl md:text-9xl font-black text-white tracking-tighter uppercase leading-[1.1] md:leading-none italic"
+              className="text-6xl sm:text-7xl md:text-9xl lg:text-[10rem] font-display font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 tracking-normal uppercase leading-[0.9] md:leading-none text-shadow-glow"
             >
-              {data.settings?.clubName.split(' ')[0]} <span className="text-amber-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
+              {data.settings?.clubName.split(' ')[0]} <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-600">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-sm sm:text-lg md:text-2xl font-black text-white tracking-[0.05em] sm:tracking-[0.2em] uppercase italic"
+              className="text-sm sm:text-lg md:text-2xl font-bold text-white/50 tracking-[0.05em] sm:tracking-[0.2em] uppercase italic"
             >
               আইআরবি ওয়ারিয়র্স স্পোর্টস ক্লাব
             </motion.p>
@@ -460,23 +528,23 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="flex flex-wrap justify-center gap-3 md:gap-4 pt-4"
+            className="flex flex-wrap justify-center gap-3 md:gap-4 pt-4 relative z-10"
           >
             <button 
               onClick={() => document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-6 md:px-8 py-3 md:py-4 bg-amber-500 text-gray-950 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-amber-400 hover:scale-105 transition-all flex items-center gap-2 shadow-2xl shadow-amber-500/20 group"
+              className="px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_35px_rgba(245,158,11,0.5)] group"
             >
               আবেদন করুন <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <button 
               onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-6 md:px-8 py-3 md:py-4 bg-white/5 text-white border border-white/10 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-white/10 transition-all"
+              className="px-6 md:px-8 py-3 md:py-4 bg-white/[0.03] backdrop-blur-md text-white border border-white/10 rounded-xl font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all shadow-lg"
             >
               খেলোয়াড় সমূহ
             </button>
             <button 
               onClick={() => document.getElementById('matches')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-6 md:px-8 py-3 md:py-4 bg-white/5 text-white border border-white/10 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-white/10 transition-all"
+              className="px-6 md:px-8 py-3 md:py-4 bg-white/[0.03] backdrop-blur-md text-white border border-white/10 rounded-xl font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all shadow-lg"
             >
               ম্যাচ রেকর্ড
             </button>
@@ -484,7 +552,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
         </div>
 
         {/* Stats Section */}
-        <div className="relative md:absolute bottom-0 w-full bg-gray-950/80 backdrop-blur-2xl border-t border-white/5 py-10 md:py-8 overflow-hidden z-20 mt-12 md:mt-0">
+        <div className="relative md:absolute bottom-0 w-full bg-slate-950/40 backdrop-blur-2xl border-t border-white/10 py-10 md:py-8 overflow-hidden z-20 mt-12 md:mt-0 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-y-8 md:gap-x-4">
             {[
               { label: "Members", value: data.committee.length, icon: Users, sub: "সদস্য" },
@@ -520,8 +588,8 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="space-y-10">
               <div className="space-y-4">
-                <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">About Us</span>
-                <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">IRB <span className="text-amber-500">Warriors</span></h2>
+                <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)]">About Us</span>
+                <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow">IRB <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Warriors</span></h2>
                 <p className="text-slate-500 font-bold uppercase tracking-widest">আইআরবি ওয়ারিয়র্স স্পোর্টস ক্লাব</p>
               </div>
               
@@ -535,26 +603,26 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-[2.5rem] border border-slate-800 space-y-4">
-                  <div className="w-12 h-12 bg-amber-500 text-gray-950 rounded-2xl flex items-center justify-center">
+                <div className="glass-card glass-card-hover p-8 rounded-[2.5rem] space-y-4 group">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 text-gray-950 rounded-2xl flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.3)] group-hover:scale-110 transition-transform">
                     <Trophy size={24} />
                   </div>
-                  <h3 className="text-xl font-black text-white uppercase italic">Our Mission</h3>
-                  <p className="text-slate-500 text-sm font-medium">To provide a platform for young athletes to excel.</p>
+                  <h3 className="text-xl font-display font-black text-white uppercase drop-shadow-md">Our Mission</h3>
+                  <p className="text-slate-400 text-sm font-medium">To provide a platform for young athletes to excel.</p>
                 </div>
-                <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-[2.5rem] border border-slate-800 space-y-4">
-                  <div className="w-12 h-12 bg-amber-500 text-gray-950 rounded-2xl flex items-center justify-center">
+                <div className="glass-card glass-card-hover p-8 rounded-[2.5rem] space-y-4 group">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 text-gray-950 rounded-2xl flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.3)] group-hover:scale-110 transition-transform">
                     <Users size={24} />
                   </div>
-                  <h3 className="text-xl font-black text-white uppercase italic">Our Vision</h3>
-                  <p className="text-slate-500 text-sm font-medium">Building a stronger community through sports.</p>
+                  <h3 className="text-xl font-display font-black text-white uppercase drop-shadow-md">Our Vision</h3>
+                  <p className="text-slate-400 text-sm font-medium">Building a stronger community through sports.</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-8">
-              <div className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 space-y-8">
-                <h3 className="text-2xl font-black text-white uppercase italic border-b border-slate-800 pb-6">Club <span className="text-amber-500">Details</span></h3>
+              <div className="glass-card glass-card-hover p-10 rounded-[3rem] space-y-8">
+                <h3 className="text-4xl font-display font-black uppercase border-b border-white/[0.05] pb-6 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">Club <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Details</span></h3>
                 <div className="space-y-6">
                   {[
                     { label: "Founded / প্রতিষ্ঠিত সাল", value: data.settings?.established || "২০২৬", icon: Calendar },
@@ -575,13 +643,13 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                 </div>
               </div>
 
-              <div className="bg-amber-500 p-10 rounded-[3rem] space-y-6 shadow-2xl shadow-amber-500/20">
-                <h3 className="text-2xl font-black text-gray-950 uppercase italic">Get In <span className="text-white">Touch</span></h3>
+              <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-10 rounded-[3rem] space-y-6 shadow-[0_20px_50px_rgba(245,158,11,0.2)] hover:shadow-[0_20px_50px_rgba(245,158,11,0.4)] transition-all">
+                <h3 className="text-2xl font-black text-gray-950 uppercase italic drop-shadow-sm">Get In <span className="text-white">Touch</span></h3>
                 <div className="flex flex-wrap gap-4">
-                  <a href={`tel:${data.settings?.whatsapp}`} className="px-6 py-3 bg-slate-950 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center gap-2">
+                  <a href={`tel:${data.settings?.whatsapp}`} className="px-6 py-3 bg-slate-950/80 backdrop-blur-md text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-950 hover:scale-105 transition-all flex items-center gap-2 shadow-lg shadow-black/20">
                     <Phone size={14} /> Call Now
                   </a>
-                  <a href={data.settings?.facebook} target="_blank" rel="noreferrer" className="px-6 py-3 bg-white text-gray-950 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all flex items-center gap-2">
+                  <a href={data.settings?.facebook} target="_blank" rel="noreferrer" className="px-6 py-3 bg-white/90 backdrop-blur-md text-gray-950 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white hover:scale-105 transition-all flex items-center gap-2 shadow-lg shadow-white/20">
                     <Facebook size={14} /> Facebook
                   </a>
                 </div>
@@ -596,14 +664,14 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
         <div className="absolute inset-0 bg-hex opacity-5 z-0" />
         <div className="max-w-7xl mx-auto px-4 relative z-10 space-y-16">
           <div className="text-center space-y-4">
-            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Our Team</span>
-            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">Leadership <span className="text-amber-500">Team</span></h2>
+            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)]">Our Team</span>
+            <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow">Leadership <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Team</span></h2>
             <p className="text-slate-400 font-bold uppercase tracking-widest">আমাদের নেতৃত্ব</p>
           </div>
 
           {data.committee.length === 0 ? (
-            <div className="bg-slate-900/50 backdrop-blur-md p-20 rounded-[4rem] border border-slate-800 text-center space-y-4">
-              <div className="w-20 h-20 bg-slate-950/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
+            <div className="bg-white/[0.03] backdrop-blur-3xl p-20 rounded-[4rem] border border-white/[0.05] text-center space-y-4 shadow-xl">
+              <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
                 <Users size={40} />
               </div>
               <p className="text-xl font-bold text-slate-500">Team members will appear here once added by the admin.</p>
@@ -617,7 +685,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
                   viewport={{ once: true }}
-                  className="group bg-slate-900/50 backdrop-blur-md rounded-[3rem] overflow-hidden border border-slate-800 hover:border-amber-500/50 transition-all duration-500 shadow-2xl"
+                  className="group bg-white/[0.03] backdrop-blur-3xl rounded-[3rem] overflow-hidden border border-white/[0.05] hover:border-amber-500/50 transition-all duration-500 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_15px_40px_0_rgba(245,158,11,0.2)]"
                 >
                   <div className="aspect-[4/5] overflow-hidden relative bg-slate-950/50">
                     <img 
@@ -630,15 +698,15 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                         target.src = "https://placehold.co/400x500/1e293b/fbbf24?text=No+Photo";
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
-                      <a href={`tel:${member.phone}`} className="w-full py-4 bg-amber-500 text-gray-950 rounded-2xl font-black text-center flex items-center justify-center gap-2">
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
+                      <a href={`tel:${member.phone}`} className="w-full py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 rounded-2xl font-black text-center flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
                         <Phone size={18} /> Call Now
                       </a>
                     </div>
                   </div>
-                  <div className="p-8 text-center space-y-1">
-                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{member.role}</p>
-                    <h3 className="text-2xl font-black text-white tracking-tight italic uppercase">{member.name}</h3>
+                  <div className="p-8 text-center space-y-1 bg-gradient-to-b from-transparent to-slate-950/80">
+                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest drop-shadow-md">{member.role}</p>
+                    <h3 className="text-2xl font-black text-white tracking-tight italic uppercase drop-shadow-lg">{member.name}</h3>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{member.phone}</p>
                   </div>
                 </motion.div>
@@ -653,14 +721,14 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
         <div className="absolute inset-0 bg-carbon opacity-10 z-0" />
         <div className="max-w-7xl mx-auto px-4 relative z-10 space-y-16">
           <div className="text-center space-y-4">
-            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Gallery</span>
-            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">Photo & Video <span className="text-amber-500">Gallery</span></h2>
+            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)]">Gallery</span>
+            <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow">Photo & Video <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Gallery</span></h2>
             <p className="text-slate-400 font-bold uppercase tracking-widest">ফটো ও ভিডিও গ্যালারি</p>
           </div>
 
           {data.gallery.length === 0 ? (
-            <div className="bg-slate-900/50 backdrop-blur-md p-20 rounded-[4rem] border border-slate-800 text-center space-y-4">
-              <div className="w-20 h-20 bg-slate-950/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
+            <div className="glass-card p-20 rounded-[4rem] text-center space-y-4">
+              <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
                 <Trophy size={40} />
               </div>
               <p className="text-xl font-bold text-slate-500">Gallery items will appear here once added by the admin.</p>
@@ -672,7 +740,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                   key={item.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
-                  className="break-inside-avoid bg-slate-900/50 rounded-[2.5rem] overflow-hidden group relative border border-slate-800 shadow-2xl"
+                  className="break-inside-avoid bg-white/[0.05] backdrop-blur-xl rounded-[2.5rem] overflow-hidden group relative border border-white/[0.1] shadow-xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] transition-all"
                 >
                   <img 
                     src={item.type === 'Video' ? (item.thumbnail || "https://picsum.photos/seed/video/800/600") : item.url} 
@@ -705,14 +773,14 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
         <div className="absolute inset-0 bg-hex opacity-5 z-0" />
         <div className="max-w-7xl mx-auto px-4 relative z-10 space-y-16">
           <div className="text-center space-y-4">
-            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Events</span>
-            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">Club <span className="text-amber-500">Events</span></h2>
+            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)]">Events</span>
+            <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow">Club <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Events</span></h2>
             <p className="text-slate-400 font-bold uppercase tracking-widest">ক্লাব ইভেন্ট</p>
           </div>
 
           {data.events.length === 0 ? (
-            <div className="bg-slate-900/50 backdrop-blur-md p-20 rounded-[4rem] border border-slate-800 text-center space-y-4">
-              <div className="w-20 h-20 bg-slate-950/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
+            <div className="glass-card p-20 rounded-[4rem] text-center space-y-4">
+              <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
                 <Calendar size={40} />
               </div>
               <p className="text-xl font-bold text-slate-500">Events will appear here once added by the admin.</p>
@@ -720,14 +788,14 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {data.events.map((event) => (
-                <div key={event.id} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 flex gap-8 items-start group hover:border-amber-500/50 transition-colors shadow-2xl">
-                  <div className="w-20 h-20 bg-amber-500 text-gray-950 rounded-3xl flex flex-col items-center justify-center shrink-0 font-black">
+                <div key={event.id} className="glass-card glass-card-hover p-10 rounded-[3rem] flex gap-8 items-start group">
+                  <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 text-gray-950 rounded-3xl flex flex-col items-center justify-center shrink-0 font-black shadow-[0_0_15px_rgba(245,158,11,0.3)] group-hover:scale-110 transition-transform">
                     <span className="text-2xl leading-none">{event.date.split('-')[2]}</span>
                     <span className="text-[10px] uppercase tracking-widest">{new Date(event.date).toLocaleString('default', { month: 'short' })}</span>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <h3 className="text-2xl font-black text-white uppercase italic group-hover:text-amber-500 transition-colors">{event.title}</h3>
+                      <h3 className="text-2xl font-display font-black text-white uppercase group-hover:text-amber-500 transition-colors drop-shadow-md">{event.title}</h3>
                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <MapPin size={14} className="text-amber-500" /> {event.location}
                       </p>
@@ -746,14 +814,14 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
         <div className="absolute inset-0 bg-carbon opacity-10 z-0" />
         <div className="max-w-7xl mx-auto px-4 relative z-10 space-y-16">
           <div className="text-center space-y-4">
-            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Tournaments</span>
-            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">Our <span className="text-amber-500">Tournaments</span></h2>
+            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)]">Tournaments</span>
+            <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow">Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Tournaments</span></h2>
             <p className="text-slate-400 font-bold uppercase tracking-widest">আমাদের আয়োজিত টুর্নামেন্ট</p>
           </div>
 
           {data.hostedTournaments?.filter(t => t.isPublished).length === 0 ? (
-            <div className="bg-slate-900/50 backdrop-blur-md p-20 rounded-[4rem] border border-slate-800 text-center space-y-4">
-              <div className="w-20 h-20 bg-slate-950/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
+            <div className="glass-card p-20 rounded-[4rem] text-center space-y-4">
+              <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
                 <Trophy size={40} />
               </div>
               <p className="text-xl font-bold text-slate-500">No tournaments hosted yet. Stay tuned!</p>
@@ -761,7 +829,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
           ) : (
             <div className="grid grid-cols-1 gap-12">
               {data.hostedTournaments?.filter(t => t.isPublished).map((tournament) => (
-                <div key={tournament.id} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[4rem] border border-slate-800 shadow-2xl space-y-10 group hover:border-amber-500/30 transition-all duration-500">
+                <div key={tournament.id} className="glass-card glass-card-hover p-10 rounded-[4rem] space-y-10 group">
                   <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
@@ -775,7 +843,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                         )}>{tournament.type === 'Public' ? 'Public' : 'Domestic'}</span>
                         <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{tournament.startDate} - {tournament.endDate}</p>
                       </div>
-                      <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tight leading-none">{tournament.name}</h3>
+                      <h3 className="text-4xl md:text-6xl font-display font-black text-white uppercase tracking-normal drop-shadow-xl">{tournament.name}</h3>
                     </div>
                     <div className="flex flex-wrap gap-8">
                       <div className="space-y-1">
@@ -849,7 +917,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
         <div className="max-w-4xl mx-auto px-4 relative z-10 space-y-16">
           <div className="text-center space-y-4">
             <span className="px-4 py-1 bg-emerald-500 text-gray-950 rounded-full text-[10px] font-black uppercase tracking-widest">Registration</span>
-            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">Team <span className="text-emerald-500">Entry</span></h2>
+            <h2 className="text-5xl md:text-8xl font-display font-black text-white uppercase leading-none text-shadow-glow">Team <span className="text-emerald-500">Entry</span></h2>
             <p className="text-slate-500 font-bold uppercase tracking-widest">টুর্নামেন্ট রেজিস্ট্রেশন</p>
           </div>
 
@@ -867,7 +935,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
         <div className="max-w-4xl mx-auto px-4 relative z-10 space-y-16">
           <div className="text-center space-y-4">
             <span className="px-4 py-1 bg-amber-500 text-gray-950 rounded-full text-[10px] font-black uppercase tracking-widest">Join Us</span>
-            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">Ready to <span className="text-amber-500">Join?</span></h2>
+            <h2 className="text-5xl md:text-8xl font-display font-black text-white uppercase leading-none text-shadow-glow">Ready to <span className="text-amber-500">Join?</span></h2>
             <p className="text-slate-500 font-bold uppercase tracking-widest">আমাদের ক্লাবে যোগ দিন</p>
           </div>
 
@@ -1177,14 +1245,14 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
   }
 
   return (
-    <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 p-8 md:p-12 shadow-2xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-[120px] -mr-48 -mt-48" />
+    <div className="glass-card rounded-[3rem] p-6 md:p-12 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-full blur-[120px] -mr-48 -mt-48 pointer-events-none" />
       
       <form onSubmit={handleSubmit} className="space-y-12 relative z-10">
         {/* Header */}
         <div className="text-center space-y-6">
           <div className="flex justify-center">
-            <div className="w-[100px] h-[100px] bg-black rounded-full border-2 border-slate-800 shadow-[0_0_20px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center">
+            <div className="w-[100px] h-[100px] bg-slate-900 rounded-full border-4 border-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.2)] overflow-hidden flex items-center justify-center">
               <img 
                 src={data.settings?.logo || "/logo.png"} 
                 alt="Logo" 
@@ -1198,7 +1266,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
             </div>
           </div>
           <div className="space-y-2">
-            <h2 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter">
+            <h2 className="text-4xl md:text-5xl font-display font-black text-white uppercase tracking-normal">
               PLAYER ADMISSION <span className="text-amber-500">FORM</span>
             </h2>
             <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px]">IRB WARRIORS CRICKET TEAM</p>
@@ -1208,11 +1276,11 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
         {/* Section 1: Personal Information */}
         <div className="space-y-10">
           <div className="flex items-center gap-5">
-            <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-xl shadow-amber-500/20">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
               <User size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Personal <span className="text-amber-500">Information</span></h3>
+              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 uppercase italic tracking-tight">Personal <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Information</span></h3>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ব্যক্তিগত তথ্য</p>
             </div>
           </div>
@@ -1234,7 +1302,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
                 required 
                 value={formData.name} 
                 onChange={e => setFormData({...formData, name: e.target.value})} 
-                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+                className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="Enter your full name" 
               />
             </div>
@@ -1244,7 +1312,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
                 required 
                 value={formData.fatherName} 
                 onChange={e => setFormData({...formData, fatherName: e.target.value})} 
-                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+                className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="Enter father's name" 
               />
             </div>
@@ -1255,7 +1323,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
                 type="date"
                 value={formData.dob} 
                 onChange={e => setFormData({...formData, dob: e.target.value})} 
-                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white text-sm" 
+                className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white text-sm shadow-inner" 
               />
             </div>
             <div className="space-y-2">
@@ -1263,7 +1331,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
               <select 
                 value={formData.bloodGroup} 
                 onChange={e => setFormData({...formData, bloodGroup: e.target.value})} 
-                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white text-sm"
+                className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white text-sm shadow-inner"
               >
                 <option value="" className="bg-slate-900">Select Blood Group</option>
                 {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(group => (
@@ -1277,7 +1345,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
                 required 
                 value={formData.phone} 
                 onChange={e => setFormData({...formData, phone: e.target.value})} 
-                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+                className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="Enter phone number" 
               />
             </div>
@@ -1287,7 +1355,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
                 required 
                 value={formData.address} 
                 onChange={e => setFormData({...formData, address: e.target.value})} 
-                className="w-full p-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm min-h-[100px] resize-none" 
+                className="w-full p-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm min-h-[100px] resize-none shadow-inner" 
                 placeholder="Enter your full address" 
               />
             </div>
@@ -1297,11 +1365,11 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
         {/* Section 2: Cricket Profile */}
         <div className="space-y-10 pt-10 border-t border-white/5">
           <div className="flex items-center gap-5">
-            <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-xl shadow-amber-500/20">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
               <Activity size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Cricket <span className="text-amber-500">Profile</span></h3>
+              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 uppercase italic tracking-tight">Cricket <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Profile</span></h3>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ক্রিকেট প্রোফাইল</p>
             </div>
           </div>
@@ -1362,7 +1430,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
               <input 
                 value={formData.bowlingStyle} 
                 onChange={e => setFormData({...formData, bowlingStyle: e.target.value})} 
-                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+                className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="e.g. Fast / Spin" 
               />
             </div>
@@ -1393,7 +1461,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
               <input 
                 value={formData.jerseyNumber} 
                 onChange={e => setFormData({...formData, jerseyNumber: e.target.value})} 
-                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+                className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="e.g. 07" 
               />
             </div>
@@ -1403,11 +1471,11 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
         {/* Section 3: Rules & Regulations */}
         <div className="space-y-10 pt-10 border-t border-white/5">
           <div className="flex items-center gap-5">
-            <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-xl shadow-amber-500/20">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
               <ShieldCheck size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Rules & <span className="text-amber-500">Regulations</span></h3>
+              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 uppercase italic tracking-tight">Rules & <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Regulations</span></h3>
               <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">নিয়মাবলী</p>
             </div>
           </div>
@@ -1447,16 +1515,16 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
 
         {/* Section 4: Declaration */}
         <div className="space-y-10 pt-10 border-t border-white/5">
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-xl shadow-amber-500/20">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-5">
+            <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-xl shadow-amber-500/20 shrink-0">
               <CheckCircle2 size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Declaration <span className="text-amber-500">ঘোষণা</span></h3>
+              <h3 className="text-4xl font-display font-black text-white uppercase tracking-normal">Declaration <span className="text-amber-500">ঘোষণা</span></h3>
             </div>
           </div>
 
-          <div className="bg-white/[0.03] p-10 rounded-[3rem] border border-white/5 space-y-8 relative overflow-hidden">
+          <div className="bg-white/[0.03] p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white/5 space-y-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px] -mr-32 -mt-32" />
             
             <div className="space-y-4 relative z-10">
@@ -1480,21 +1548,21 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
                   <CheckCircle2 size={20} className="text-gray-950 opacity-0 peer-checked:opacity-100 transition-opacity" />
                 </div>
               </div>
-              <span className="text-sm font-black text-white/40 uppercase tracking-widest group-hover:text-white transition-colors italic">I Agree / আমি সম্মত</span>
+              <span className="text-sm font-black text-white/60 uppercase tracking-widest group-hover:text-white transition-colors italic">I Agree / আমি সম্মত</span>
             </label>
           </div>
         </div>
 
         <div className="pt-10 space-y-8">
           {data.settings.admissionFee > 0 && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-8 flex items-center gap-6">
-              <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-xl shadow-amber-500/20 shrink-0">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-6 md:p-8 flex flex-col sm:flex-row items-center sm:items-start md:items-center gap-6 text-center sm:text-left">
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-xl shadow-amber-500/20 shrink-0">
                 <DollarSign size={32} />
               </div>
-              <div>
-                <h4 className="text-xl font-black text-white uppercase italic tracking-tight">Admission Fee: <span className="text-amber-500">{data.settings.admissionFee} BDT</span></h4>
+              <div className="w-full">
+                <h4 className="text-3xl md:text-4xl font-display font-black text-white uppercase tracking-normal">Admission Fee: <span className="text-amber-500">{data.settings.admissionFee} BDT</span></h4>
                 <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">ভর্তি ফি: {data.settings.admissionFee} টাকা (এককালীন)</p>
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-2">Please pay this amount during admission / ভর্তির সময় এই টাকা পরিশোধ করতে হবে</p>
+                <p className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-widest mt-3 sm:mt-2">Please pay this amount during admission / ভর্তির সময় এই টাকা পরিশোধ করতে হবে</p>
               </div>
             </div>
           )}
@@ -1503,21 +1571,24 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
             type="submit" 
             disabled={!agreed}
             className={cn(
-              "w-full py-10 rounded-[3rem] font-black text-2xl transition-all flex items-center justify-center gap-5 uppercase italic tracking-tighter group shadow-2xl relative overflow-hidden",
+              "w-full py-6 md:py-8 rounded-[2rem] md:rounded-[3rem] font-display font-black text-2xl md:text-3xl transition-all flex flex-col md:flex-row items-center justify-center gap-2 md:gap-5 uppercase tracking-wider group shadow-2xl relative overflow-hidden",
               agreed 
-                ? "bg-amber-500 text-gray-950 hover:bg-amber-400 shadow-amber-500/30 scale-[1.02]" 
-                : "bg-white/5 text-white/10 cursor-not-allowed border border-white/5"
+                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-gray-950 hover:from-amber-400 hover:to-orange-400 shadow-[0_10px_40px_rgba(245,158,11,0.3)] scale-[1.02]" 
+                : "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-            Submit Application / আবেদন জমা দিন
-            <ArrowRight size={32} className={cn("transition-transform", agreed && "group-hover:translate-x-3")} />
+            <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_infinite] hidden group-hover:block" />
+            <span className="relative z-10 text-center flex flex-col md:flex-row items-center gap-2">
+              Submit Application 
+              <span className="text-sm md:text-2xl text-black/50 md:text-gray-950 block md:inline">/ আবেদন জমা দিন</span>
+            </span>
+            <ArrowRight size={24} className={cn("hidden md:block transition-transform relative z-10", agreed && "group-hover:translate-x-3")} />
           </button>
           <div className="flex flex-col items-center gap-2 mt-10">
             <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">
               Contact - WhatsApp
             </p>
-            <p className="text-2xl font-black text-amber-500 italic tracking-tighter">01892128292</p>
+            <p className="text-3xl font-display font-black text-amber-500 tracking-widest">{data.settings.whatsapp || "01892128292"}</p>
           </div>
         </div>
       </form>
@@ -2501,10 +2572,10 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Sidebar */}
           <aside className="lg:w-80 shrink-0">
-            <div className="bg-black backdrop-blur-3xl rounded-[2rem] border border-slate-800 lg:border-r p-4 lg:p-8 lg:sticky lg:top-28 h-auto lg:h-[calc(100vh-140px)] flex flex-col space-y-4 lg:space-y-8 overflow-hidden relative shadow-2xl">
-              <div className="hidden lg:block px-2 pb-8 border-b border-slate-800 relative z-10">
+            <div className="bg-black/40 backdrop-blur-3xl rounded-[2rem] border border-white/5 lg:border-r p-4 lg:p-8 lg:sticky lg:top-28 h-auto lg:h-[calc(100vh-140px)] flex flex-col space-y-4 lg:space-y-8 overflow-hidden relative shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
+              <div className="hidden lg:block px-2 pb-8 border-b border-white/5 relative z-10">
                 <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-[0_0_30px_rgba(245,158,11,0.3)]">
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
                     <LayoutDashboard size={28} />
                   </div>
                   <div>
@@ -2522,8 +2593,8 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                     className={cn(
                       "flex-shrink-0 lg:w-full flex items-center gap-3 lg:gap-4 px-4 lg:px-6 py-3 lg:py-4 rounded-xl text-[10px] lg:text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300 group whitespace-nowrap",
                       activeTab === item.id 
-                        ? "bg-amber-500 text-gray-950 shadow-lg scale-[1.02] italic" 
-                        : "text-slate-300 hover:bg-slate-900 hover:text-white bg-slate-900/40 lg:bg-transparent"
+                        ? "bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 shadow-[0_0_15px_rgba(245,158,11,0.3)] scale-[1.02] italic" 
+                        : "text-slate-300 hover:bg-white/5 hover:text-white bg-white/[0.02] lg:bg-transparent"
                     )}
                   >
                     <span className={cn(
@@ -2535,7 +2606,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 ))}
               </nav>
   
-              <div className="hidden lg:block pt-8 border-t border-slate-800">
+              <div className="hidden lg:block pt-8 border-t border-white/5">
                 <Link to="/" className="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-500/10 transition-all group">
                   <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
                   Exit Admin
@@ -2585,14 +2656,14 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {[
                 { label: 'Total Runs', value: data.players.reduce((sum, p) => sum + (p.stats?.runs || 0), 0), icon: <Zap className="text-amber-500" />, trend: 'Live' },
-                { label: 'Total Wickets', value: data.players.reduce((sum, p) => sum + (p.stats?.wickets || 0), 0), icon: <BallIcon className="text-rose-500" />, trend: 'Live' },
-                { label: 'Matches Won', value: data.matches.filter(m => m.status === 'Finished' && m.result?.includes('Won')).length, icon: <Trophy className="text-amber-500" />, trend: 'Live' },
-                { label: 'Win Rate', value: data.matches.filter(m => m.status === 'Finished').length > 0 ? `${Math.round((data.matches.filter(m => m.status === 'Finished' && m.result?.includes('Won')).length / data.matches.filter(m => m.status === 'Finished').length) * 100)}%` : '0%', icon: <Activity className="text-emerald-500" />, trend: 'Live' },
+                { label: 'Total Wickets', value: data.players.reduce((sum, p) => sum + (p.stats?.wickets || 0), 0), icon: <BallIcon className="text-emerald-500" />, trend: 'Live' },
+                { label: 'Matches Won', value: data.matches.filter(m => m.status === 'Finished' && m.result?.includes('Won')).length, icon: <Trophy className="text-orange-500" />, trend: 'Live' },
+                { label: 'Win Rate', value: data.matches.filter(m => m.status === 'Finished').length > 0 ? `${Math.round((data.matches.filter(m => m.status === 'Finished' && m.result?.includes('Won')).length / data.matches.filter(m => m.status === 'Finished').length) * 100)}%` : '0%', icon: <Activity className="text-amber-400" />, trend: 'Live' },
               ].map((stat, i) => (
-                <div key={i} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-amber-500/10 transition-colors" />
+                <div key={i} className="bg-white/[0.03] backdrop-blur-3xl border border-white/[0.05] shadow-lg p-6 md:p-8 rounded-[2rem] relative overflow-hidden group hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(245,158,11,0.15)] transition-all duration-300">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-full blur-3xl -mr-12 -mt-12 group-hover:from-amber-500/20 group-hover:to-orange-500/20 transition-all" />
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-950 rounded-2xl flex items-center justify-center border border-slate-800">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white/[0.02] rounded-2xl flex items-center justify-center border border-white/[0.05] shadow-inner group-hover:bg-white/[0.05] transition-colors">
                       {stat.icon}
                     </div>
                     <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
@@ -2608,9 +2679,9 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-              <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] space-y-6 md:space-y-8">
+              <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/[0.05] shadow-[0_10px_30px_rgba(0,0,0,0.4)] p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] space-y-6 md:space-y-8">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg md:text-xl font-black text-white uppercase italic tracking-tight">Performance <span className="text-amber-500">Analytics</span></h3>
+                  <h3 className="text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 uppercase italic tracking-tight">Performance <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Analytics</span></h3>
                   <select className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-[8px] md:text-[10px] font-black text-white uppercase outline-none">
                     <option>Last 6 Months</option>
                     <option>Last Year</option>
@@ -2624,11 +2695,11 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 </div>
               </div>
 
-              <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] space-y-6 md:space-y-8">
-                <h3 className="text-lg md:text-xl font-black text-white uppercase italic tracking-tight">Recent <span className="text-amber-500">Matches</span></h3>
+              <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/[0.05] shadow-[0_10px_30px_rgba(0,0,0,0.4)] p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] space-y-6 md:space-y-8">
+                <h3 className="text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 uppercase italic tracking-tight">Recent <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Matches</span></h3>
                 <div className="space-y-3 md:space-y-4">
                   {data.matches.slice(0, 4).map((match, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-slate-950/50 rounded-2xl border border-slate-800 hover:border-amber-500/30 transition-all group">
+                    <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] rounded-2xl border border-white/[0.05] hover:border-amber-500/30 hover:bg-white/[0.05] transition-all group shadow-sm hover:shadow-md">
                       <div className="flex items-center gap-3 md:gap-4">
                         <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 font-black italic text-xs">VS</div>
                         <div>
@@ -2653,18 +2724,19 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-10 bg-slate-900/50 backdrop-blur-md p-4 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-slate-800 shadow-2xl"
+            className="space-y-10 bg-white/[0.03] backdrop-blur-3xl p-4 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white/[0.05] shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden"
           >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-500/10 to-orange-500/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
               <div className="space-y-1">
-                <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Player <span className="text-amber-500">Admissions</span></h2>
-                <div className="h-1 w-20 bg-amber-500/30 rounded-full" />
+                <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 uppercase italic tracking-tight">Player <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Admissions</span></h2>
+                <div className="h-1 w-20 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
               </div>
               
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 relative z-10">
                 <button 
                   onClick={() => setShowAddAdmission(true)}
-                  className="flex items-center gap-3 px-6 py-3 bg-emerald-500 text-gray-950 rounded-2xl text-[10px] font-black hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20 uppercase tracking-widest"
+                  className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-emerald-400 to-green-500 text-gray-950 rounded-2xl text-[10px] font-black hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] uppercase tracking-widest"
                 >
                   <Plus size={16} />
                   Manual Admission
@@ -2673,14 +2745,14 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                   <>
                     <button 
                       onClick={() => window.print()}
-                      className="flex items-center gap-3 px-6 py-3 bg-slate-900/50 text-white rounded-2xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
+                      className="flex items-center gap-3 px-6 py-3 bg-white/[0.05] backdrop-blur-md text-white rounded-2xl text-[10px] font-black hover:bg-white/[0.1] transition-all border border-white/10 hover:border-white/20 uppercase tracking-widest shadow-lg"
                     >
-                      <Printer size={16} className="text-amber-500" />
+                      <Printer size={16} className="text-amber-400" />
                       Print Selected ({selectedAdmissions.length})
                     </button>
                     <button 
                       onClick={handleDownloadSelected}
-                      className="flex items-center gap-3 px-6 py-3 bg-amber-500 text-gray-950 rounded-2xl text-[10px] font-black hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/20 uppercase tracking-widest"
+                      className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 rounded-2xl text-[10px] font-black hover:scale-105 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] uppercase tracking-widest"
                     >
                       <Download size={16} />
                       Download Selected
@@ -2690,11 +2762,11 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               </div>
             </div>
 
-            <div className="bg-slate-950/50 backdrop-blur-3xl rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+            <div className="bg-black/20 backdrop-blur-3xl rounded-[2rem] md:rounded-[3rem] border border-white/[0.05] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative z-10">
               <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full border-collapse min-w-[800px] md:min-w-0">
-                  <thead>
-                    <tr className="border-b border-slate-800">
+                  <thead className="bg-white/[0.02]">
+                    <tr className="border-b border-white/[0.05]">
                       <th className="px-10 py-8 text-left">
                         <label className="relative flex items-center cursor-pointer group">
                           <input 
@@ -5039,17 +5111,12 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
 const MatchesPage = ({ data }: { data: AppData }) => {
   return (
     <div className="min-h-screen pt-32 pb-20 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-slate-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.05),transparent_50%)]" />
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-      </div>
-
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-4"
+            className="text-6xl md:text-8xl font-display font-black text-white uppercase tracking-normal mb-4"
           >
             Match <span className="text-amber-500">Fixtures</span>
           </motion.h1>
@@ -5128,12 +5195,6 @@ const RankingPage = ({ data, isAdminView = false }: { data: AppData, isAdminView
       "relative overflow-hidden",
       isAdminView ? "p-0" : "min-h-screen pt-32 pb-20 px-4"
     )}>
-      {!isAdminView && (
-        <div className="absolute inset-0 bg-slate-950">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.05),transparent_50%)]" />
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-        </div>
-      )}
 
       <div className={cn("relative z-10", !isAdminView && "max-w-7xl mx-auto")}>
         {!isAdminView && (
@@ -5141,7 +5202,7 @@ const RankingPage = ({ data, isAdminView = false }: { data: AppData, isAdminView
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-4"
+              className="text-5xl md:text-8xl font-display font-black text-white uppercase tracking-normal mb-4"
             >
               Player <span className="text-amber-500">Rankings</span>
             </motion.h1>
@@ -5305,102 +5366,75 @@ const Login = ({ onLogin }: { onLogin: (user: any) => void }) => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Password</label>
-              <input 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-amber-500 transition-colors font-bold"
-                placeholder="••••••••"
-                required
-              />
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 rounded-2xl py-4 font-black uppercase tracking-widest hover:scale-[1.02] transition-transform flex justify-center items-center gap-2 shadow-lg shadow-amber-500/25"
+              >
+                {loading ? <div className="w-5 h-5 border-2 border-gray-950 border-t-transparent rounded-full animate-spin" /> : "Access System"}
+              </button>
             </div>
+            {error && <p className="text-red-500 text-xs font-bold text-center bg-red-500/10 p-4 rounded-xl border border-red-500/20">{error}</p>}
           </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
-              <AlertCircle size={16} />
-              {error}
-            </div>
-          )}
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-black py-4 rounded-2xl transition-all uppercase italic tracking-widest shadow-[0_10px_30px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2"
-          >
-            {loading ? "Authenticating..." : "Enter Command Center"}
-            {!loading && <ArrowRight size={20} />}
-          </button>
         </form>
       </motion.div>
     </div>
   );
 };
 
+const initialData: AppData = {
+  settings: {
+    clubName: "IRB Warriors",
+    established: "2026",
+    location: "Dhaka, Bangladesh",
+    phone: "+8801234567890",
+    whatsapp: "+8801234567890",
+    facebook: "https://facebook.com/irbwarriors",
+    logo: "https://picsum.photos/seed/cricket-logo/200/200",
+    admissionFee: 50,
+    monthlyFee: 20
+  },
+  committee: [],
+  players: [],
+  matches: [],
+  admissions: [],
+  finance: [],
+  notices: [],
+  gallery: [],
+  events: [],
+  hostedTournaments: []
+};
+
 export default function App() {
-  const [data, setData] = useState<AppData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<AppData>(initialData);
   const [user, setUser] = useState<any>(null);
-
-  const fetchData = async (isInitial = false) => {
-    if (isInitial) setLoading(true);
-    
-    // Safety timeout to prevent infinite hanging
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Request timeout")), 10000)
-    );
-
+  const [loading, setLoading] = useState(true);
+  
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
-      const allData = await Promise.race([
-        supabaseService.getAllData(),
-        timeoutPromise
-      ]) as AppData;
-      
-      setData(allData);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      
-      // Only show error/fallback if we don't have data yet
-      if (!data) {
-        try {
-          const res = await fetch("/api/data");
-          if (res.ok) {
-            const json = await res.json();
-            setData(json);
-          } else {
-            throw new Error("Local API failed");
-          }
-        } catch (localError) {
-          console.error("Local fetch also failed:", localError);
-          // Set default data structure to prevent hanging
-          setData({
-            settings: { clubName: "IRB WARRIORS", established: "2026", location: "Lakshmipur, Bangladesh", whatsapp: "+880 1892-128292", facebook: "https://facebook.com", logo: "", admissionFee: 0, monthlyFee: 0 },
-            committee: [],
-            players: [],
-            matches: [],
-            admissions: [],
-            finance: [],
-            notices: [],
-            gallery: [],
-            events: [],
-            hostedTournaments: [],
-            externalTournaments: []
-          });
-        }
+      const allData = await supabaseService.getAllData();
+      if (allData) {
+        setData(allData);
       }
+    } catch (error) {
+      console.error("Failed to load data", error);
     } finally {
-      if (isInitial) setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   const handleAuth = async (sessionUser: any) => {
     if (sessionUser) {
-      let role = sessionUser.id === ADMIN_UID ? 'admin' : 'staff';
+      let role = 'staff';
       try {
-        const profile = await supabaseService.getProfile(sessionUser.id);
-        if (profile?.role) {
-          role = profile.role;
+        if (sessionUser.id === ADMIN_UID) {
+          role = 'admin';
+        } else {
+          const profile = await supabaseService.getProfile(sessionUser.id);
+          if (profile?.role) {
+            role = profile.role;
+          }
         }
       } catch (e) {
         console.warn("Could not fetch profile, using default role");
@@ -5470,70 +5504,86 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-950 font-sans selection:bg-amber-500/30 selection:text-amber-200">
-        <Navbar data={data} user={user} />
-        <main>
-          <Routes>
-            <Route path="/" element={<Portfolio data={data} onRefresh={fetchData} />} />
-            <Route path="/matches" element={<MatchesPage data={data} />} />
-            <Route path="/admission" element={<AdmissionForm data={data} onRefresh={fetchData} />} />
-            <Route 
-              path="/admin" 
-              element={user ? <AdminPanel data={data} onRefresh={fetchData} userRole={user.role} /> : <Login onLogin={fetchData} />} 
-            />
-          </Routes>
-        </main>
+      <div className="min-h-screen font-sans selection:bg-amber-500/30 selection:text-amber-200 relative overflow-hidden">
         
-        <footer className="bg-black text-white py-20 border-t border-slate-900">
-          <div className="max-w-7xl mx-auto px-4 text-center space-y-10">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-24 h-24 bg-slate-900 rounded-full flex items-center justify-center text-white overflow-hidden border-4 border-amber-500 shadow-2xl">
-                <img 
-                  src={data.settings?.logo || "/logo.png"} 
-                  alt={data.settings?.clubName || "IRB WARRIORS"} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://picsum.photos/seed/cricket-logo/200/200";
-                  }}
-                />
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Navbar data={data} user={user} />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<Portfolio data={data} onRefresh={fetchData} />} />
+              <Route path="/matches" element={<MatchesPage data={data} />} />
+              <Route path="/admission" element={<AdmissionForm data={data} onRefresh={fetchData} />} />
+              <Route 
+                path="/admin" 
+                element={user ? <AdminPanel data={data} onRefresh={fetchData} userRole={user.role} /> : <Login onLogin={fetchData} />} 
+              />
+            </Routes>
+          </main>
+          
+          <footer className="bg-slate-950/80 backdrop-blur-3xl text-white py-24 border-t border-white/5 relative z-20 mt-auto">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute -top-[200px] left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent opacity-50 z-0"></div>
+            </div>
+            
+            <div className="max-w-7xl mx-auto px-4 text-center space-y-12 relative z-10">
+              <div className="flex flex-col items-center gap-6">
+                <div className="w-28 h-28 bg-slate-950 rounded-full flex items-center justify-center text-white overflow-hidden border-4 border-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.3)]">
+                  <img 
+                    src={data.settings?.logo || "/logo.png"} 
+                    alt={data.settings?.clubName || "IRB WARRIORS"} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://picsum.photos/seed/cricket-logo/200/200";
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <span className="block text-5xl font-display font-black tracking-normal uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl">
+                    {data.settings?.clubName.split(' ')[0]} <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
+                  </span>
+                  <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-xs">Since {data.settings?.established || "2026"}</p>
+                </div>
               </div>
-              <span className="text-4xl font-black tracking-tighter uppercase italic">
-                {data.settings?.clubName.split(' ')[0]} <span className="text-amber-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
-              </span>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-6">
-              <a 
-                href={`https://wa.me/${data.settings?.whatsapp.replace(/\D/g, '')}`} 
-                target="_blank" 
-                rel="noreferrer"
-                className="flex items-center gap-2 px-6 py-3 bg-emerald-600/10 text-emerald-500 rounded-full border border-emerald-600/20 hover:bg-emerald-600 hover:text-white transition-all font-bold"
-              >
-                <Phone size={20} />
-                WhatsApp: {data.settings?.whatsapp}
-              </a>
-              <a 
-                href={data.settings?.facebook} 
-                target="_blank" 
-                rel="noreferrer"
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600/10 text-blue-500 rounded-full border border-blue-600/20 hover:bg-blue-600 hover:text-white transition-all font-bold"
-              >
-                <Facebook size={20} />
-                Facebook Page
-              </a>
-            </div>
+              
+              <div className="flex flex-wrap justify-center gap-6 pt-4">
+                <a 
+                  href={`https://wa.me/${data.settings?.whatsapp.replace(/\D/g, '')}`} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center gap-3 px-8 py-4 bg-white/[0.03] text-emerald-400 rounded-2xl border border-white/[0.05] hover:bg-emerald-500 hover:text-gray-950 hover:border-emerald-500 transition-all font-black uppercase tracking-widest text-xs shadow-lg shadow-black/20"
+                >
+                  <Phone size={18} />
+                  WhatsApp
+                </a>
+                <a 
+                  href={data.settings?.facebook} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center gap-3 px-8 py-4 bg-white/[0.03] text-blue-400 rounded-2xl border border-white/[0.05] hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all font-black uppercase tracking-widest text-xs shadow-lg shadow-black/20"
+                >
+                  <Facebook size={18} />
+                  Connect
+                </a>
+              </div>
 
-            <p className="text-slate-500 max-w-md mx-auto text-sm">
-              {data.settings?.clubName} is more than just a club; it's a family of passionate cricketers striving for greatness.
-            </p>
-            
-            <div className="pt-10 border-t border-slate-900 text-xs text-slate-600 font-medium tracking-widest uppercase">
-              © {new Date().getFullYear()} {data.settings?.clubName.toUpperCase()}. ALL RIGHTS RESERVED.
+              <div className="max-w-xl mx-auto space-y-6">
+                <p className="text-slate-400 text-sm font-medium leading-relaxed">
+                  {data.settings?.clubName} is more than just a club; it's a family of passionate cricketers striving for greatness.
+                </p>
+                <div className="flex items-center justify-center gap-2 text-slate-500">
+                  <MapPin size={16} />
+                  <span className="text-xs font-bold uppercase tracking-widest">{data.settings?.location}</span>
+                </div>
+              </div>
+              
+              <div className="pt-12 border-t border-white/5 text-[10px] text-slate-600 font-black tracking-[0.2em] uppercase">
+                © {new Date().getFullYear()} {data.settings?.clubName.toUpperCase()}. ALL RIGHTS RESERVED.
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+        </div>
       </div>
     </BrowserRouter>
   );
-}
+};
 

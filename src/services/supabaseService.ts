@@ -3,31 +3,48 @@ import { AppData, Player, Match, Admission, FinanceRecord, Notice, GalleryItem, 
 
 export const supabaseService = {
   async getAllData(): Promise<AppData> {
-    if (!supabase) throw new Error("Supabase client not initialized. Check your environment variables.");
+    if (!supabase) throw new Error("Supabase client not initialized.");
+    
+    // Fetch data with individual error handling to prevent one table from blocking everything
+    const fetchTable = async (table: string, single = false) => {
+      try {
+        const query = supabase.from(table).select('*');
+        const { data, error } = await (single ? query.single() : query);
+        if (error) {
+          console.warn(`Error fetching table ${table}:`, error);
+          return null;
+        }
+        return data;
+      } catch (err) {
+        console.warn(`Exception fetching table ${table}:`, err);
+        return null;
+      }
+    };
+
     const [
-      { data: settings },
-      { data: committee },
-      { data: players },
-      { data: matches },
-      { data: admissions },
-      { data: finance },
-      { data: notices },
-      { data: gallery },
-      { data: events },
-      { data: hostedTournaments },
-      { data: externalTournaments }
+      settings,
+      committee,
+      players,
+      matches,
+      admissions,
+      finance,
+      notices,
+      gallery,
+      events,
+      hostedTournaments,
+      externalTournaments
     ] = await Promise.all([
-      supabase.from('settings').select('*').single(),
-      supabase.from('committee').select('*'),
-      supabase.from('players').select('*'),
-      supabase.from('matches').select('*'),
-      supabase.from('admissions').select('*'),
-      supabase.from('finance').select('*'),
-      supabase.from('notices').select('*'),
-      supabase.from('gallery').select('*'),
-      supabase.from('events').select('*'),
-      supabase.from('hosted_tournaments').select('*'),
-      supabase.from('external_tournaments').select('*')
+      fetchTable('settings', true),
+      fetchTable('committee'),
+      fetchTable('players'),
+      fetchTable('matches'),
+      fetchTable('admissions'),
+      fetchTable('finance'),
+      fetchTable('notices'),
+      fetchTable('gallery'),
+      fetchTable('events'),
+      fetchTable('hosted_tournaments'),
+      fetchTable('external_tournaments')
     ]);
 
     return {
@@ -248,7 +265,8 @@ export const supabaseService = {
       .insert([{
         type: item.type,
         url: item.url,
-        caption: item.caption
+        caption: item.caption,
+        thumbnail: item.thumbnail
       }])
       .select()
       .single();
@@ -382,6 +400,17 @@ export const supabaseService = {
       })
       .eq('id', id);
     if (error) throw error;
+    return data;
+  },
+
+  async getProfile(id: string) {
+    if (!supabase) throw new Error("Supabase client not initialized.");
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) return null;
     return data;
   },
 

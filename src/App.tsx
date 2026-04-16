@@ -57,6 +57,8 @@ import {
   Award,
   History
 } from "lucide-react";
+import imageCompression from 'browser-image-compression';
+import heic2any from "heic2any";
 import { 
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area
@@ -71,42 +73,122 @@ import { supabase } from "./lib/supabase";
 
 const FileUploader = ({ onUpload, label, currentUrl }: { onUpload: (url: string) => void, label: string, currentUrl?: string }) => {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check if it's a valid file type - make it more permissive
+    const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|heic|heif|avif|tiff|bmp)$/i.test(file.name);
+    const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(file.name);
+
+    if (!isImage && !isVideo) {
+      setError(`Format not recognized: ${file.type || 'unknown'}. Try renaming to .jpg`);
+      console.log("File type check failed:", file.name, file.type);
+      return;
+    }
+
     setUploading(true);
+    setError(null);
+    
     try {
-      // Try Supabase Storage first
-      if (!supabase) throw new Error("Supabase client not initialized.");
+      let fileToUpload = file;
+
+      // Handle HEIC/HEIF conversion separately before compression
+      if (/\.(heic|heif)$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif') {
+        try {
+          const convertedBlob = await heic2any({
+            blob: file,
+            toType: "image/jpeg",
+            quality: 0.8
+          });
+          const blobArray = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+          const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+          fileToUpload = new File([blobArray], newName, { type: 'image/jpeg' });
+        } catch (heicErr) {
+          console.error("HEIC conversion failed:", heicErr);
+          // If heic2any fails, we fallback to imageCompression which might handle some HEIC or original
+        }
+      }
+
+      // Handle Image Compression and Format Conversion
+      if (isImage) {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1600,
+          useWebWorker: true,
+          initialQuality: 0.8,
+          fileType: 'image/jpeg' as string 
+        };
+        try {
+          // Compress the file (whether it's original or was just converted from HEIC)
+          fileToUpload = await imageCompression(fileToUpload, options);
+          
+          // Double check the file type/name after compression
+          const fileNameWithJpg = fileToUpload.name.endsWith('.jpg') ? fileToUpload.name : fileToUpload.name.replace(/\.[^/.]+$/, "") + ".jpg";
+          fileToUpload = new File([fileToUpload], fileNameWithJpg, { type: 'image/jpeg' });
+        } catch (err) {
+          console.error("Compression/Conversion failed", err);
+          // Only fallback to original if compression failed entirely
+        }
+      }
+
+      // 1. Try Supabase Storage
+      let uploadSuccessful = false;
+      if (supabase) {
+        try {
+          const fileExt = fileToUpload.name.split('.').pop() || 'jpg';
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `${fileName}`;
+
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('uploads')
+            .upload(filePath, fileToUpload, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (!uploadError) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('uploads')
+              .getPublicUrl(filePath);
+            
+            // Verify if the Public URL is actually accessible (Optional check, but we trust Supabase)
+            onUpload(publicUrl);
+            uploadSuccessful = true;
+          } else {
+            console.warn("Supabase upload failed, trying local fallback:", uploadError.message);
+          }
+        } catch (sErr) {
+          console.warn("Supabase error:", sErr);
+        }
+      }
       
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error("Supabase upload failed, falling back to local API:", uploadError);
+      // 2. Local API Fallback (if Supabase fails or is not available)
+      if (!uploadSuccessful) {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", fileToUpload);
+        
         const res = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Server Error (${res.status}): ${errorText || 'Upload failed'}`);
+        }
+        
         const localData = await res.json();
+        if (!localData.url) throw new Error("Server returned no URL");
+        
         onUpload(localData.url);
-      } else {
-        const { data: { publicUrl } } = supabase.storage
-          .from('uploads')
-          .getPublicUrl(filePath);
-        onUpload(publicUrl);
+        uploadSuccessful = true;
       }
-    } catch (error) {
-      console.error("Upload failed", error);
+    } catch (err: any) {
+      console.error("Critical Upload Error:", err);
+      setError(err.message || "Upload failed. Try a smaller file.");
     } finally {
       setUploading(false);
     }
@@ -114,15 +196,44 @@ const FileUploader = ({ onUpload, label, currentUrl }: { onUpload: (url: string)
 
   return (
     <div className="space-y-2">
-      <label className="text-xs font-black text-gray-400 uppercase tracking-widest">{label}</label>
+      <div className="flex justify-between items-center">
+        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">{label}</label>
+        {error && (
+          <motion.span 
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-[9px] font-black text-rose-500 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20"
+          >
+            {error}
+          </motion.span>
+        )}
+      </div>
       <div className="flex items-center gap-4">
         {currentUrl && (
-          <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-100 shrink-0 bg-gray-50">
+          <div className="w-16 h-16 rounded-xl overflow-hidden border border-slate-800 shrink-0 bg-slate-900 group relative">
             {currentUrl.match(/\.(mp4|webm|ogg)$/i) ? (
               <video src={currentUrl} className="w-full h-full object-cover" />
             ) : (
-              <img src={currentUrl} alt="Preview" className="w-full h-full object-cover" />
+              <img 
+                src={currentUrl} 
+                alt="Preview" 
+                className="w-full h-full object-cover" 
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  // If it's a relative URL, maybe it needs the full path for preview in some environments
+                  if (currentUrl.startsWith('/uploads/') && !currentUrl.startsWith('http')) {
+                    // Try to recover by adding origin if needed, or stick to error
+                    target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=Not+Found";
+                  } else {
+                    target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=Broken+Link";
+                  }
+                }}
+              />
             )}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="text-[8px] text-white font-bold uppercase">Ready</div>
+            </div>
           </div>
         )}
         <div className="relative flex-1">
@@ -155,7 +266,7 @@ const FileUploader = ({ onUpload, label, currentUrl }: { onUpload: (url: string)
   );
 };
 
-const Navbar = ({ data }: { data: AppData }) => {
+const Navbar = ({ data, user }: { data: AppData, user?: any }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -195,9 +306,10 @@ const Navbar = ({ data }: { data: AppData }) => {
                 src={data.settings?.logo || "/logo.png"} 
                 alt={data.settings?.clubName || "IRB WARRIORS"} 
                 className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "https://picsum.photos/seed/cricket-logo/200/200";
+                  target.src = "/logo.png";
                 }}
               />
             </div>
@@ -220,8 +332,21 @@ const Navbar = ({ data }: { data: AppData }) => {
             ))}
             <Link to="/admin" className="px-4 py-2 bg-amber-500 text-gray-950 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-amber-400 transition-all flex items-center gap-2 ml-2">
               <ShieldCheck size={14} />
-              Admin
+              {user ? (user.role === 'admin' ? 'Admin' : 'Staff') : 'Admin'}
             </Link>
+            {user && (
+              <button 
+                onClick={async () => {
+                  if (supabase) {
+                    await supabase.auth.signOut();
+                    window.location.href = "/";
+                  }
+                }}
+                className="p-2 ml-1 text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+              >
+                <LogOut size={16} />
+              </button>
+            )}
           </div>
 
           <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2 text-white bg-white/10 rounded-xl">
@@ -497,6 +622,11 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                       src={member.photo} 
                       alt={member.name} 
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://placehold.co/400x500/1e293b/fbbf24?text=No+Photo";
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
                       <a href={`tel:${member.phone}`} className="w-full py-4 bg-amber-500 text-gray-950 rounded-2xl font-black text-center flex items-center justify-center gap-2">
@@ -546,6 +676,11 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                     src={item.type === 'Video' ? (item.thumbnail || "https://picsum.photos/seed/video/800/600") : item.url} 
                     alt={item.caption} 
                     className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://placehold.co/800x600/1e293b/fbbf24?text=Image+Not+Found";
+                    }}
                   />
                   <div className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8 text-white">
                     <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">{item.type}</p>
@@ -693,7 +828,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                       <div className="flex flex-wrap justify-center gap-12">
                         {tournament.sponsors.map(sponsor => (
                           <div key={sponsor.id} className="group/sponsor relative">
-                            <img src={sponsor.logo} className="h-12 w-auto grayscale opacity-30 group-hover/sponsor:grayscale-0 group-hover/sponsor:opacity-100 transition-all duration-500" alt={sponsor.name} />
+                            <img src={sponsor.logo} className="h-12 w-auto grayscale opacity-30 group-hover/sponsor:grayscale-0 group-hover/sponsor:opacity-100 transition-all duration-500" alt={sponsor.name} referrerPolicy="no-referrer" />
                           </div>
                         ))}
                       </div>
@@ -1052,9 +1187,10 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
                 src={data.settings?.logo || "/logo.png"} 
                 alt="Logo" 
                 className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "https://picsum.photos/seed/cricket-logo/200/200";
+                  target.src = "/logo.png";
                 }}
               />
             </div>
@@ -1522,7 +1658,16 @@ const SquadSelectionModal = ({ tournament, players, onClose, onSave }: { tournam
                     : "bg-slate-950/50 border-slate-800 hover:border-amber-500/30"
                 )}
               >
-                <img src={player.photo} alt={player.name} className="w-12 h-12 rounded-xl object-cover border border-slate-800" referrerPolicy="no-referrer" />
+                <img 
+                  src={player.photo} 
+                  alt={player.name} 
+                  className="w-12 h-12 rounded-xl object-cover border border-slate-800" 
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
+                  }}
+                />
                 <div className="flex-1">
                   <p className="text-sm font-black text-white uppercase italic">{player.name}</p>
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{player.role}</p>
@@ -1577,7 +1722,16 @@ const PlayerProfile = ({ player, onBack }: { player: any, onBack: () => void }) 
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-amber-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
             <div className="relative glass-card rounded-[3rem] overflow-hidden aspect-[4/5]">
-              <img src={player.photo} alt={player.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img 
+                src={player.photo} 
+                alt={player.name} 
+                className="w-full h-full object-cover" 
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://placehold.co/400x500/1e293b/fbbf24?text=No+Photo";
+                }}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent" />
               <div className="absolute bottom-8 left-8 right-8">
                 <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{player.name}</h2>
@@ -1686,8 +1840,28 @@ const PlayerProfile = ({ player, onBack }: { player: any, onBack: () => void }) 
   );
 };
 
-const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }) => {
-  const [activeTab, setActiveTab] = useState<'admissions' | 'committee' | 'players' | 'matches' | 'finance' | 'ranking' | 'gallery' | 'events' | 'hosted' | 'external' | 'settings'>('admissions');
+const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: () => void, userRole?: string }) => {
+  const isAdmin = userRole === 'admin';
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'admissions' | 'committee' | 'players' | 'matches' | 'finance' | 'ranking' | 'gallery' | 'events' | 'hosted' | 'external' | 'settings'>('dashboard');
+  
+  // Tabs configuration based on roles
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'staff'] },
+    { id: 'finance', label: 'Finance', icon: DollarSign, roles: ['admin', 'staff'] },
+    { id: 'admissions', label: 'Admissions', icon: ClipboardList, roles: ['admin', 'staff'] },
+    { id: 'players', label: 'Players', icon: Users, roles: ['admin', 'staff'] },
+    { id: 'matches', label: 'Matches', icon: Calendar, roles: ['admin', 'staff'] },
+    { id: 'events', label: 'Events', icon: Clock, roles: ['admin', 'staff'] },
+    { id: 'gallery', label: 'Gallery', icon: ImageIcon, roles: ['admin', 'staff'] },
+    { id: 'hosted', label: 'Hosted', icon: Trophy, roles: ['admin', 'staff'] },
+    { id: 'external', label: 'External', icon: Activity, roles: ['admin', 'staff'] },
+    { id: 'committee', label: 'Committee', icon: ShieldCheck, roles: ['admin'] },
+    { id: 'ranking', label: 'Ranking', icon: TrendingUp, roles: ['admin'] },
+    { id: 'settings', label: 'Settings', icon: Settings, roles: ['admin'] },
+  ];
+
+  const filteredTabs = tabs.filter(tab => tab.roles.includes(userRole || 'staff'));
+
   const [showAddMember, setShowAddMember] = useState(false);
   const [showAddGallery, setShowAddGallery] = useState(false);
   const [showAddEvent, setShowAddEvent] = useState(false);
@@ -2314,21 +2488,6 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { id: 'admissions', label: 'Admissions', icon: <ClipboardList size={20} /> },
-    { id: 'committee', label: 'Committee', icon: <ShieldCheck size={20} /> },
-    { id: 'players', label: 'Players', icon: <Sword size={20} /> },
-    { id: 'matches', label: 'Matches', icon: <CircleDot size={20} /> },
-    { id: 'hosted', label: 'Hosted Hub', icon: <Trophy size={20} /> },
-    { id: 'external', label: 'External Hub', icon: <Globe size={20} /> },
-    { id: 'finance', label: 'Finance Ledger', icon: <DollarSign size={20} /> },
-    { id: 'ranking', label: 'Ranking', icon: <BarChart3 size={20} /> },
-    { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={20} /> },
-    { id: 'events', label: 'Events', icon: <Calendar size={20} /> },
-    { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
-  ];
-
   return (
     <div className="pt-24 pb-20 min-h-screen relative overflow-hidden bg-slate-950">
       {/* Atmospheric Background - Stadium Floodlight Glow */}
@@ -2354,7 +2513,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
               </div>
               
               <nav className="flex-1 space-y-2 relative z-10 overflow-y-auto custom-scrollbar pr-2">
-                {menuItems.map((item) => (
+                {filteredTabs.map((item) => (
                   <button 
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
@@ -2368,7 +2527,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                     <span className={cn(
                       "transition-colors duration-300",
                       activeTab === item.id ? "text-gray-950" : "text-amber-500 group-hover:text-amber-400"
-                    )}>{item.icon}</span>
+                    )}><item.icon size={20} /></span>
                     {item.label}
                   </button>
                 ))}
@@ -2648,7 +2807,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                             >
                               <Activity size={18} />
                             </button>
-                            {admission.status === 'pending' && (
+                            {isAdmin && admission.status === 'pending' && (
                               <button 
                                 onClick={() => handleApprove(admission.id)}
                                 className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all duration-500 shadow-lg shadow-emerald-500/5"
@@ -2656,12 +2815,14 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                                 <ShieldCheck size={18} />
                               </button>
                             )}
-                            <button 
-                              onClick={() => handleDelete('admissions', admission.id)}
-                              className="w-12 h-12 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all duration-500 shadow-lg shadow-red-500/5"
-                            >
-                              <X size={18} />
-                            </button>
+                            {isAdmin && (
+                              <button 
+                                onClick={() => handleDelete('admissions', admission.id)}
+                                className="w-12 h-12 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all duration-500 shadow-lg shadow-red-500/5"
+                              >
+                                <X size={18} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -2838,12 +2999,14 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                           >
                             <Download size={18} />
                           </button>
-                          <button 
-                            onClick={() => handleDelete('finance', record.id)} 
-                            className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
-                          >
-                            <X size={18} />
-                          </button>
+                          {isAdmin && (
+                            <button 
+                              onClick={() => handleDelete('finance', record.id)} 
+                              className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
+                            >
+                              <X size={18} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -2902,7 +3065,16 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                         <td className="px-10 py-8">
                           <div className="flex items-center gap-5">
                             <div className="relative">
-                              <img src={player.photo} alt={player.name} className="w-16 h-16 rounded-2xl object-contain bg-slate-950/50 border border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" referrerPolicy="no-referrer" />
+                              <img 
+                                src={player.photo} 
+                                alt={player.name} 
+                                className="w-16 h-16 rounded-2xl object-contain bg-slate-950/50 border border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" 
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
+                                }}
+                              />
                               <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-500 text-gray-950 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">#{player.jerseyNumber}</div>
                             </div>
                             <div>
@@ -2928,32 +3100,38 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                         </td>
                             <td className="px-10 py-8">
                               <div className="flex justify-end gap-3">
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingPlayer(player);
-                                  }}
-                                  className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-500 shadow-lg shadow-blue-500/5"
-                                >
-                                  <Edit3 size={18} />
-                                </button>
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedPlayer(player);
-                                    setEditStats(player.stats);
-                                    setShowEditStats(true);
-                                  }}
-                                  className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
-                                >
-                                  <Activity size={18} />
-                                </button>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); handleDelete('players', player.id); }}
-                                  className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
-                                >
-                                  <X size={18} />
-                                </button>
+                                {isAdmin && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingPlayer(player);
+                                    }}
+                                    className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-500 shadow-lg shadow-blue-500/5"
+                                  >
+                                    <Edit3 size={18} />
+                                  </button>
+                                )}
+                                {isAdmin && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedPlayer(player);
+                                      setEditStats(player.stats);
+                                      setShowEditStats(true);
+                                    }}
+                                    className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
+                                  >
+                                    <Activity size={18} />
+                                  </button>
+                                )}
+                                {isAdmin && (
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handleDelete('players', player.id); }}
+                                    className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
+                                  >
+                                    <X size={18} />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -3033,27 +3211,31 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                       </td>
                       <td className="px-10 py-8 text-right">
                         <div className="flex justify-end gap-3">
-                          <button 
-                            onClick={() => {
-                              setSelectedMatch(match);
-                              setMatchScore({
-                                teamARuns: match.score?.teamARuns || 0,
-                                teamAWickets: match.score?.teamAWickets || 0,
-                                teamBRuns: match.score?.teamBRuns || 0,
-                                teamBWickets: match.score?.teamBWickets || 0,
-                              });
-                              setShowUpdateScore(true);
-                            }}
-                            className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
-                          >
-                            <Edit3 size={18} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete('matches', match.id)}
-                            className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
-                          >
-                            <X size={18} />
-                          </button>
+                          {isAdmin && (
+                            <button 
+                              onClick={() => {
+                                setSelectedMatch(match);
+                                setMatchScore({
+                                  teamARuns: match.score?.teamARuns || 0,
+                                  teamAWickets: match.score?.teamAWickets || 0,
+                                  teamBRuns: match.score?.teamBRuns || 0,
+                                  teamBWickets: match.score?.teamBWickets || 0,
+                                });
+                                setShowUpdateScore(true);
+                              }}
+                              className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
+                            >
+                              <Edit3 size={18} />
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button 
+                              onClick={() => handleDelete('matches', match.id)}
+                              className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
+                            >
+                              <X size={18} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -3095,7 +3277,16 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
               {data.gallery.map((item) => (
                 <div key={item.id} className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden relative group shadow-2xl hover:border-amber-500/50 transition-all duration-500">
                   <div className="aspect-video relative overflow-hidden">
-                    <img src={item.type === 'Video' ? (item.thumbnail || "https://picsum.photos/seed/video/400/300") : item.url} alt={item.caption} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
+                    <img 
+                      src={item.type === 'Video' ? (item.thumbnail || "https://picsum.photos/seed/video/400/300") : item.url} 
+                      alt={item.caption} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      referrerPolicy="no-referrer" 
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://placehold.co/800x600/1e293b/fbbf24?text=Image+Not+Found";
+                      }}
+                    />
                     {item.type === 'Video' && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
                         <Play size={48} className="text-amber-500 opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -3112,12 +3303,14 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                     <p className="text-sm font-black text-white uppercase italic tracking-tight truncate">{item.caption}</p>
                   </div>
 
-                  <button 
-                    onClick={() => handleDelete('gallery', item.id)} 
-                    className="absolute top-6 right-6 w-12 h-12 bg-rose-500/20 backdrop-blur-md text-rose-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center hover:bg-rose-500 hover:text-white shadow-xl"
-                  >
-                    <X size={20} />
-                  </button>
+                  {isAdmin && (
+                    <button 
+                      onClick={() => handleDelete('gallery', item.id)} 
+                      className="absolute top-6 right-6 w-12 h-12 bg-rose-500/20 backdrop-blur-md text-rose-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center hover:bg-rose-500 hover:text-white shadow-xl"
+                    >
+                      <X size={20} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -3441,7 +3634,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {tournament.sponsors.map(sponsor => (
                           <div key={sponsor.id} className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800 flex flex-col items-center gap-2 group/sponsor relative">
-                            <img src={sponsor.logo} className="w-10 h-10 object-contain" alt={sponsor.name} />
+                            <img src={sponsor.logo} className="w-10 h-10 object-contain" alt={sponsor.name} referrerPolicy="no-referrer" />
                             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest text-center">{sponsor.name}</p>
                           </div>
                         ))}
@@ -4992,7 +5185,16 @@ const RankingPage = ({ data }: { data: AppData }) => {
               <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-amber-500 text-gray-950 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-xl shadow-amber-500/20">
                 #{index + 1}
               </div>
-              <img src={player.photo} alt={player.name} className="w-32 h-32 rounded-[2.5rem] object-contain bg-slate-950/50 mx-auto mb-6 border-4 border-slate-800" referrerPolicy="no-referrer" />
+              <img 
+                src={player.photo} 
+                alt={player.name} 
+                className="w-32 h-32 rounded-[2.5rem] object-contain bg-slate-950/50 mx-auto mb-6 border-4 border-slate-800" 
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://placehold.co/200x200/1e293b/fbbf24?text=N/A";
+                }}
+              />
               <h3 className="text-2xl font-black text-white uppercase italic mb-2">{player.name}</h3>
               <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-6">{player.role}</p>
               
@@ -5029,7 +5231,16 @@ const RankingPage = ({ data }: { data: AppData }) => {
                   <td className="px-8 py-6 font-black text-slate-600 italic">#{index + 4}</td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <img src={player.photo} alt={player.name} className="w-12 h-12 rounded-xl object-contain bg-slate-950/50 border border-slate-800" referrerPolicy="no-referrer" />
+                      <img 
+                        src={player.photo} 
+                        alt={player.name} 
+                        className="w-12 h-12 rounded-xl object-contain bg-slate-950/50 border border-slate-800" 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
+                        }}
+                      />
                       <div>
                         <div className="font-black text-white uppercase italic">{player.name}</div>
                         <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{player.role}</div>
@@ -5056,7 +5267,7 @@ import { supabaseService } from "./services/supabaseService";
 
 const ADMIN_UID = "d37be083-24df-4871-b8ec-05fe92bc1d90";
 
-const Login = ({ onLogin }: { onLogin: () => void }) => {
+const Login = ({ onLogin }: { onLogin: (user: any) => void }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -5073,11 +5284,12 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      if (data.user?.id !== ADMIN_UID) {
-        await supabase.auth.signOut();
-        throw new Error("Unauthorized: You are not the admin.");
-      }
-      onLogin();
+      
+      // Fetch role
+      const profile = await supabaseService.getProfile(data.user.id);
+      const role = data.user.id === ADMIN_UID ? 'admin' : (profile?.role || 'staff');
+      
+      onLogin({ ...data.user, role });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -5149,27 +5361,76 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  const fetchData = async () => {
+  const fetchData = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
+    
+    // Safety timeout to prevent infinite hanging
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Request timeout")), 10000)
+    );
+
     try {
-      const allData = await supabaseService.getAllData();
+      const allData = await Promise.race([
+        supabaseService.getAllData(),
+        timeoutPromise
+      ]) as AppData;
+      
       setData(allData);
     } catch (error) {
-      console.error("Error fetching data from Supabase:", error);
-      // Fallback to local API if Supabase fails (optional, but good for transition)
-      try {
-        const res = await fetch("/api/data");
-        const json = await res.json();
-        setData(json);
-      } catch (localError) {
-        console.error("Local fetch also failed:", localError);
+      console.error("Error fetching data:", error);
+      
+      // Only show error/fallback if we don't have data yet
+      if (!data) {
+        try {
+          const res = await fetch("/api/data");
+          if (res.ok) {
+            const json = await res.json();
+            setData(json);
+          } else {
+            throw new Error("Local API failed");
+          }
+        } catch (localError) {
+          console.error("Local fetch also failed:", localError);
+          // Set default data structure to prevent hanging
+          setData({
+            settings: { clubName: "IRB WARRIORS", established: "2026", location: "Lakshmipur, Bangladesh", whatsapp: "+880 1892-128292", facebook: "https://facebook.com", logo: "", admissionFee: 0, monthlyFee: 0 },
+            committee: [],
+            players: [],
+            matches: [],
+            admissions: [],
+            finance: [],
+            notices: [],
+            gallery: [],
+            events: [],
+            hostedTournaments: [],
+            externalTournaments: []
+          });
+        }
       }
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
+    }
+  };
+
+  const handleAuth = async (sessionUser: any) => {
+    if (sessionUser) {
+      let role = sessionUser.id === ADMIN_UID ? 'admin' : 'staff';
+      try {
+        const profile = await supabaseService.getProfile(sessionUser.id);
+        if (profile?.role) {
+          role = profile.role;
+        }
+      } catch (e) {
+        console.warn("Could not fetch profile, using default role");
+      }
+      setUser({ ...sessionUser, role });
+    } else {
+      setUser(null);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
     
     let authSubscription: any = null;
     let dataSubscription: any = null;
@@ -5177,24 +5438,18 @@ export default function App() {
     if (supabase) {
       // Check current session
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user?.id === ADMIN_UID) {
-          setUser(session.user);
-        }
+        handleAuth(session?.user);
       });
 
       // Listen for auth changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user?.id === ADMIN_UID) {
-          setUser(session.user);
-        } else {
-          setUser(null);
-        }
+        handleAuth(session?.user);
       });
       authSubscription = subscription;
 
-      // Real-time data updates
+      // Real-time data updates - Don't trigger full screen loading
       dataSubscription = supabaseService.subscribeToData(() => {
-        fetchData();
+        fetchData(false);
       });
     }
 
@@ -5204,7 +5459,7 @@ export default function App() {
     };
   }, []);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-slate-950">
         <motion.div 
@@ -5216,10 +5471,25 @@ export default function App() {
     );
   }
 
+  if (!data) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white space-y-4">
+        <AlertCircle size={40} className="text-amber-500" />
+        <p className="text-xl font-bold uppercase tracking-widest italic">Data Loading Failed</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-6 py-2 bg-amber-500 text-black font-black rounded-xl uppercase text-xs"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-slate-950 font-sans selection:bg-amber-500/30 selection:text-amber-200">
-        <Navbar data={data} />
+        <Navbar data={data} user={user} />
         <main>
           <Routes>
             <Route path="/" element={<Portfolio data={data} onRefresh={fetchData} />} />
@@ -5227,7 +5497,7 @@ export default function App() {
             <Route path="/admission" element={<AdmissionForm data={data} onRefresh={fetchData} />} />
             <Route 
               path="/admin" 
-              element={user ? <AdminPanel data={data} onRefresh={fetchData} /> : <Login onLogin={fetchData} />} 
+              element={user ? <AdminPanel data={data} onRefresh={fetchData} userRole={user.role} /> : <Login onLogin={fetchData} />} 
             />
           </Routes>
         </main>

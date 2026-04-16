@@ -390,17 +390,17 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
   return (
     <div className="bg-slate-950 min-h-screen">
       {/* Hero Section */}
-      <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section id="home" className="relative min-h-screen md:h-screen flex items-center justify-center overflow-hidden py-24 md:py-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-slate-950 to-slate-950 z-0" />
         <div className="absolute inset-0 bg-carbon opacity-20 z-0" />
         
-        <div className="relative z-10 text-center space-y-8 px-4 max-w-5xl mx-auto">
+        <div className="relative z-10 text-center space-y-6 md:space-y-8 px-4 max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-center mb-4"
+            className="flex justify-center mb-2 md:mb-4"
           >
-            <div className="w-32 h-32 md:w-40 md:h-40 bg-black rounded-full border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] overflow-hidden flex items-center justify-center">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 bg-black rounded-full border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] overflow-hidden flex items-center justify-center">
               <img 
                 src={data.settings?.logo || "/logo.png"} 
                 alt="Logo" 
@@ -416,17 +416,17 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-block px-4 py-1 bg-amber-500 text-gray-950 rounded-lg text-[10px] font-black tracking-[0.2em] uppercase"
+            className="inline-block px-3 py-1 bg-amber-500 text-gray-950 rounded-lg text-[8px] sm:text-[10px] font-black tracking-[0.2em] uppercase"
           >
             স্থাপিত {data.settings?.established || "২০২৬"}
           </motion.div>
           
-          <div className="space-y-4">
+          <div className="space-y-2 md:space-y-4">
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-6xl md:text-9xl font-black text-white tracking-tighter uppercase leading-none italic"
+              className="text-4xl sm:text-6xl md:text-9xl font-black text-white tracking-tighter uppercase leading-[1.1] md:leading-none italic"
             >
               {data.settings?.clubName.split(' ')[0]} <span className="text-amber-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
             </motion.h1>
@@ -434,7 +434,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-lg md:text-2xl font-black text-white tracking-[0.2em] uppercase italic"
+              className="text-sm sm:text-lg md:text-2xl font-black text-white tracking-[0.05em] sm:tracking-[0.2em] uppercase italic"
             >
               আইআরবি ওয়ারিয়র্স স্পোর্টস ক্লাব
             </motion.p>
@@ -444,13 +444,13 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="space-y-6"
+            className="space-y-4 md:space-y-6"
           >
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-white/80 text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+            <div className="flex flex-col items-center gap-1 md:gap-2">
+              <p className="text-white/80 text-xs sm:text-sm font-bold uppercase tracking-widest flex items-center gap-2">
                 <MapPin size={14} className="text-amber-500" /> {data.settings?.location}
               </p>
-              <p className="text-white/40 text-xs max-w-xl mx-auto font-medium leading-relaxed">
+              <p className="text-white/40 text-[10px] sm:text-xs max-w-xl mx-auto font-medium leading-relaxed px-4">
                 আইআরবি ওয়ারিয়র্স ২০২৬ সালে প্রতিষ্ঠিত একটি গর্বিত ক্রীড়া সংগঠন। আমরা স্থানীয় ক্রীড়া প্রতিভা বিকাশ এবং আমাদের সম্প্রদায়ে দলগত মনোভাব গড়ে তোলার জন্য নিবেদিত।
               </p>
             </div>
@@ -460,23 +460,23 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="flex flex-wrap justify-center gap-4 pt-4"
+            className="flex flex-wrap justify-center gap-3 md:gap-4 pt-4"
           >
             <button 
               onClick={() => document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-8 py-4 bg-amber-500 text-gray-950 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-amber-400 hover:scale-105 transition-all flex items-center gap-2 shadow-2xl shadow-amber-500/20 group"
+              className="px-6 md:px-8 py-3 md:py-4 bg-amber-500 text-gray-950 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-amber-400 hover:scale-105 transition-all flex items-center gap-2 shadow-2xl shadow-amber-500/20 group"
             >
               আবেদন করুন <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <button 
               onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-8 py-4 bg-white/5 text-white border border-white/10 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all"
+              className="px-6 md:px-8 py-3 md:py-4 bg-white/5 text-white border border-white/10 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-white/10 transition-all"
             >
               খেলোয়াড় সমূহ
             </button>
             <button 
               onClick={() => document.getElementById('matches')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-8 py-4 bg-white/5 text-white border border-white/10 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all"
+              className="px-6 md:px-8 py-3 md:py-4 bg-white/5 text-white border border-white/10 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest hover:bg-white/10 transition-all"
             >
               ম্যাচ রেকর্ড
             </button>
@@ -484,8 +484,8 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
         </div>
 
         {/* Stats Section */}
-        <div className="absolute bottom-0 w-full bg-gray-950/50 backdrop-blur-xl border-t border-white/5 py-8">
-          <div className="max-w-7xl mx-auto px-4 grid grid-cols-3 md:grid-cols-6 gap-4">
+        <div className="relative md:absolute bottom-0 w-full bg-gray-950/80 backdrop-blur-2xl border-t border-white/5 py-10 md:py-8 overflow-hidden z-20 mt-12 md:mt-0">
+          <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-y-8 md:gap-x-4">
             {[
               { label: "Members", value: data.committee.length, icon: Users, sub: "সদস্য" },
               { label: "Players", value: data.players.length, icon: Activity, sub: "খেলোয়াড়" },
@@ -494,7 +494,7 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
               { label: "Gallery", value: data.gallery.length, icon: ImageIcon, sub: "গ্যালারি" },
               { label: "Events", value: data.events.length, icon: Calendar, sub: "ইভেন্ট" },
             ].map((stat, i) => (
-              <div key={i} className="text-center space-y-2 group">
+              <div key={i} className="text-center space-y-2 md:space-y-2 group">
                 <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center mx-auto text-amber-500 group-hover:bg-amber-500 group-hover:text-gray-950 transition-all duration-500">
                   <stat.icon size={18} />
                 </div>
@@ -502,8 +502,10 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
                   <div className="flex items-center justify-center gap-1">
                     <p className="text-2xl font-black text-white leading-none">{stat.value}</p>
                   </div>
-                  <p className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">{stat.label}</p>
-                  <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">{stat.sub}</p>
+                  <div className="flex flex-col">
+                    <p className="text-[8px] font-black text-white/40 uppercase tracking-[0.1em] md:tracking-[0.2em]">{stat.label}</p>
+                    <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.1em] md:tracking-[0.2em]">{stat.sub}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -2499,8 +2501,8 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Sidebar */}
           <aside className="lg:w-80 shrink-0">
-            <div className="bg-black backdrop-blur-3xl rounded-[2rem] border-r border-slate-800 p-8 sticky top-28 h-[calc(100vh-140px)] flex flex-col space-y-8 overflow-hidden relative">
-              <div className="px-2 pb-8 border-b border-slate-800 relative z-10">
+            <div className="bg-black backdrop-blur-3xl rounded-[2rem] border border-slate-800 lg:border-r p-4 lg:p-8 lg:sticky lg:top-28 h-auto lg:h-[calc(100vh-140px)] flex flex-col space-y-4 lg:space-y-8 overflow-hidden relative shadow-2xl">
+              <div className="hidden lg:block px-2 pb-8 border-b border-slate-800 relative z-10">
                 <div className="flex items-center gap-5">
                   <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-[0_0_30px_rgba(245,158,11,0.3)]">
                     <LayoutDashboard size={28} />
@@ -2512,28 +2514,28 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 </div>
               </div>
               
-              <nav className="flex-1 space-y-2 relative z-10 overflow-y-auto custom-scrollbar pr-2">
+              <nav className="flex flex-row lg:flex-col gap-2 relative z-10 overflow-x-auto lg:overflow-y-auto custom-scrollbar pb-2 lg:pb-0 lg:pr-2 no-scrollbar">
                 {filteredTabs.map((item) => (
                   <button 
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
                     className={cn(
-                      "w-full flex items-center gap-4 px-6 py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300 group",
+                      "flex-shrink-0 lg:w-full flex items-center gap-3 lg:gap-4 px-4 lg:px-6 py-3 lg:py-4 rounded-xl text-[10px] lg:text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300 group whitespace-nowrap",
                       activeTab === item.id 
                         ? "bg-amber-500 text-gray-950 shadow-lg scale-[1.02] italic" 
-                        : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                        : "text-slate-300 hover:bg-slate-900 hover:text-white bg-slate-900/40 lg:bg-transparent"
                     )}
                   >
                     <span className={cn(
                       "transition-colors duration-300",
                       activeTab === item.id ? "text-gray-950" : "text-amber-500 group-hover:text-amber-400"
-                    )}><item.icon size={20} /></span>
+                    )}><item.icon size={18} /></span>
                     {item.label}
                   </button>
                 ))}
               </nav>
   
-              <div className="pt-8 border-t border-slate-800">
+              <div className="hidden lg:block pt-8 border-t border-slate-800">
                 <Link to="/" className="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-500/10 transition-all group">
                   <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
                   Exit Admin
@@ -2544,16 +2546,16 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
   
           {/* Main Content */}
           <main className="flex-1 min-w-0">
-            <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8 px-2 lg:px-0">
               <div className="space-y-2">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="h-1 w-12 bg-amber-500 rounded-full" />
                   <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.4em]">Management System</span>
                 </div>
-                <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter italic leading-none">
+                <h1 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic leading-none">
                   {activeTab.replace(/([A-Z])/g, ' $1').trim()} <span className="text-amber-500">Hub</span>
                 </h1>
-                <p className="text-white/80 font-bold uppercase tracking-[0.2em] text-[10px] max-w-md">Comprehensive control over your club's {activeTab} ecosystem.</p>
+                <p className="text-white/80 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px] max-w-md">Comprehensive control over your club's {activeTab} ecosystem.</p>
               </div>
               {notification && (
                 <motion.div 
@@ -2578,19 +2580,19 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-10"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            className="space-y-6 md:space-y-10"
+           >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {[
                 { label: 'Total Runs', value: data.players.reduce((sum, p) => sum + (p.stats?.runs || 0), 0), icon: <Zap className="text-amber-500" />, trend: 'Live' },
                 { label: 'Total Wickets', value: data.players.reduce((sum, p) => sum + (p.stats?.wickets || 0), 0), icon: <BallIcon className="text-rose-500" />, trend: 'Live' },
                 { label: 'Matches Won', value: data.matches.filter(m => m.status === 'Finished' && m.result?.includes('Won')).length, icon: <Trophy className="text-amber-500" />, trend: 'Live' },
                 { label: 'Win Rate', value: data.matches.filter(m => m.status === 'Finished').length > 0 ? `${Math.round((data.matches.filter(m => m.status === 'Finished' && m.result?.includes('Won')).length / data.matches.filter(m => m.status === 'Finished').length) * 100)}%` : '0%', icon: <Activity className="text-emerald-500" />, trend: 'Live' },
               ].map((stat, i) => (
-                <div key={i} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-8 rounded-[2rem] relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+                <div key={i} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-amber-500/10 transition-colors" />
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 bg-slate-950 rounded-2xl flex items-center justify-center border border-slate-800">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-950 rounded-2xl flex items-center justify-center border border-slate-800">
                       {stat.icon}
                     </div>
                     <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
@@ -2599,43 +2601,43 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                    <h3 className="text-4xl font-black text-white scoreboard-font">{stat.value}</h3>
+                    <h3 className="text-2xl md:text-4xl font-black text-white scoreboard-font">{stat.value}</h3>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-10 rounded-[3rem] space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+              <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] space-y-6 md:space-y-8">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Performance <span className="text-amber-500">Analytics</span></h3>
-                  <select className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-[10px] font-black text-white uppercase outline-none">
+                  <h3 className="text-lg md:text-xl font-black text-white uppercase italic tracking-tight">Performance <span className="text-amber-500">Analytics</span></h3>
+                  <select className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-[8px] md:text-[10px] font-black text-white uppercase outline-none">
                     <option>Last 6 Months</option>
                     <option>Last Year</option>
                   </select>
                 </div>
-                <div className="h-[300px] w-full flex items-center justify-center bg-slate-950/30 rounded-2xl border border-dashed border-slate-800">
+                <div className="h-[250px] md:h-[300px] w-full flex items-center justify-center bg-slate-950/30 rounded-2xl border border-dashed border-slate-800">
                   <div className="text-center space-y-2">
-                    <Activity size={40} className="text-slate-700 mx-auto" />
-                    <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Analytics will appear here as data grows</p>
+                    <Activity size={32} className="text-slate-700 mx-auto" />
+                    <p className="text-slate-500 font-black uppercase tracking-widest text-[8px] md:text-[10px] px-4">Analytics will appear here as data grows</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-10 rounded-[3rem] space-y-8">
-                <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Recent <span className="text-amber-500">Matches</span></h3>
-                <div className="space-y-4">
+              <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] space-y-6 md:space-y-8">
+                <h3 className="text-lg md:text-xl font-black text-white uppercase italic tracking-tight">Recent <span className="text-amber-500">Matches</span></h3>
+                <div className="space-y-3 md:space-y-4">
                   {data.matches.slice(0, 4).map((match, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-slate-950/50 rounded-2xl border border-slate-800 hover:border-amber-500/30 transition-all group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 font-black italic">VS</div>
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 font-black italic text-xs">VS</div>
                         <div>
-                          <p className="text-xs font-black text-white uppercase italic">{match.teamB}</p>
-                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{match.date} • {match.venue}</p>
+                          <p className="text-[10px] md:text-xs font-black text-white uppercase italic">{match.teamB}</p>
+                          <p className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest">{match.date}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] font-black text-amber-500 bg-amber-500/10 px-3 py-1 rounded-lg uppercase italic">Upcoming</span>
+                        <span className="text-[8px] md:text-[10px] font-black text-amber-500 bg-amber-500/10 px-2 md:px-3 py-1 rounded-lg uppercase italic">Upcoming</span>
                       </div>
                     </div>
                   ))}
@@ -2651,7 +2653,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-10 bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl"
+            className="space-y-10 bg-slate-900/50 backdrop-blur-md p-4 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-slate-800 shadow-2xl"
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="space-y-1">
@@ -2688,9 +2690,9 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               </div>
             </div>
 
-            <div className="bg-slate-950/50 backdrop-blur-3xl rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+            <div className="bg-slate-950/50 backdrop-blur-3xl rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full border-collapse min-w-[800px] md:min-w-0">
                   <thead>
                     <tr className="border-b border-slate-800">
                       <th className="px-10 py-8 text-left">
@@ -2951,71 +2953,71 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               </button>
             </div>
 
-            <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-950/50">
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Date</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Type</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Category</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Amount</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {data.finance?.map((record) => (
-                    <tr key={record.id} className="hover:bg-slate-900/50 transition-all duration-300 group">
-                      <td className="px-10 py-8 text-xs font-bold text-slate-500 uppercase tracking-widest">{record.date}</td>
-                      <td className="px-10 py-8">
-                        <span className={cn(
-                          "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
-                          record.type === 'Income' 
-                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
-                            : "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                        )}>
-                          {record.type}
-                        </span>
-                      </td>
-                      <td className="px-10 py-8 text-sm font-black text-white uppercase italic tracking-tight">{record.category}</td>
-                      <td className={cn(
-                        "px-10 py-8 text-sm font-black italic tracking-tighter",
-                        record.type === 'Income' ? "text-emerald-500" : "text-rose-500"
-                      )}>
-                        {record.type === 'Income' ? '+' : '-'}৳{record.amount.toLocaleString()}
-                      </td>
-                      <td className="px-10 py-8 text-right">
-                        <div className="flex justify-end gap-3">
-                          <button 
-                            onClick={() => {
-                              const doc = new jsPDF();
-                              doc.text(`Receipt: ${record.category}`, 10, 10);
-                              doc.text(`Date: ${record.date}`, 10, 20);
-                              doc.text(`Type: ${record.type}`, 10, 30);
-                              doc.text(`Amount: ৳${record.amount}`, 10, 40);
-                              doc.save(`receipt-${record.id}.pdf`);
-                            }}
-                            className="w-12 h-12 bg-slate-950 text-slate-500 rounded-2xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all duration-500"
-                            title="Download Receipt"
-                          >
-                            <Download size={18} />
-                          </button>
-                          {isAdmin && (
-                            <button 
-                              onClick={() => handleDelete('finance', record.id)} 
-                              className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
-                            >
-                              <X size={18} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
+            <div className="bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-collapse min-w-[700px] md:min-w-0">
+                  <thead>
+                    <tr className="bg-slate-950/50">
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Date</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Type</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Category</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Amount</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {data.finance?.map((record) => (
+                      <tr key={record.id} className="hover:bg-slate-900/50 transition-all duration-300 group">
+                        <td className="px-6 md:px-10 py-6 md:py-8 text-xs font-bold text-slate-500 uppercase tracking-widest">{record.date}</td>
+                        <td className="px-6 md:px-10 py-6 md:py-8">
+                          <span className={cn(
+                            "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
+                            record.type === 'Income' 
+                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                              : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                          )}>
+                            {record.type}
+                          </span>
+                        </td>
+                        <td className="px-6 md:px-10 py-6 md:py-8 text-sm font-black text-white uppercase italic tracking-tight">{record.category}</td>
+                        <td className={cn(
+                          "px-6 md:px-10 py-6 md:py-8 text-sm font-black italic tracking-tighter",
+                          record.type === 'Income' ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                          {record.type === 'Income' ? '+' : '-'}৳{record.amount.toLocaleString()}
+                        </td>
+                        <td className="px-6 md:px-10 py-6 md:py-8 text-right">
+                          <div className="flex justify-end gap-3">
+                            <button 
+                              onClick={() => {
+                                const doc = new jsPDF();
+                                doc.text(`Receipt: ${record.category}`, 10, 10);
+                                doc.text(`Date: ${record.date}`, 10, 20);
+                                doc.text(`Type: ${record.type}`, 10, 30);
+                                doc.text(`Amount: ৳${record.amount}`, 10, 40);
+                                doc.save(`receipt-${record.id}.pdf`);
+                              }}
+                              className="w-12 h-12 bg-slate-950 text-slate-500 rounded-2xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all duration-500"
+                              title="Download Receipt"
+                            >
+                              <Download size={18} />
+                            </button>
+                            {isAdmin && (
+                              <button 
+                                onClick={() => handleDelete('finance', record.id)} 
+                                className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
+                              >
+                                <X size={18} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-
-            {/* Modals removed from here and consolidated at the end */}
           </motion.div>
         )}
 
@@ -3034,81 +3036,81 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               />
             ) : (
               <>
-                <div className="flex justify-between items-center">
-              <div className="space-y-1">
-                <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Player <span className="text-amber-500">Roster</span></h2>
-                <div className="h-1 w-20 bg-amber-500/30 rounded-full" />
-              </div>
-              <button 
-                onClick={() => setShowAddPlayer(true)}
-                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
-              >
-                <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-                Add Player
-              </button>
-            </div>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-4 md:px-0">
+                  <div className="space-y-1">
+                    <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Player <span className="text-amber-500">Roster</span></h2>
+                    <div className="h-1 w-20 bg-amber-500/30 rounded-full" />
+                  </div>
+                  <button 
+                    onClick={() => setShowAddPlayer(true)}
+                    className="w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+                  >
+                    <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
+                    Add Player
+                  </button>
+                </div>
 
-            <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-950/50">
-                      <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Player</th>
-                      <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Role</th>
-                      <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Stats</th>
-                      <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {data.players.map((player) => (
-                      <tr key={player.id} className="hover:bg-slate-900/50 transition-all duration-300 group cursor-pointer" onClick={() => setSelectedPlayerForProfile(player)}>
-                        <td className="px-10 py-8">
-                          <div className="flex items-center gap-5">
-                            <div className="relative">
-                              <img 
-                                src={player.photo} 
-                                alt={player.name} 
-                                className="w-16 h-16 rounded-2xl object-contain bg-slate-950/50 border border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" 
-                                referrerPolicy="no-referrer"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
-                                }}
-                              />
-                              <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-500 text-gray-950 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">#{player.jerseyNumber}</div>
-                            </div>
-                            <div>
-                              <h3 className="text-base font-black text-white uppercase italic tracking-tight">{player.name}</h3>
-                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{player.phone}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-10 py-8">
-                          <span className="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-950 text-amber-500 border border-slate-800">{player.role}</span>
-                        </td>
-                        <td className="px-10 py-8">
-                          <div className="flex gap-6">
-                            <div className="text-center">
-                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Runs</p>
-                              <p className="text-sm font-black text-white italic">{player.stats.runs}</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Wickets</p>
-                              <p className="text-sm font-black text-white italic">{player.stats.wickets}</p>
-                            </div>
-                          </div>
-                        </td>
-                            <td className="px-10 py-8">
-                              <div className="flex justify-end gap-3">
+                <div className="bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+                  <div className="overflow-x-auto no-scrollbar">
+                    <table className="w-full text-left border-collapse min-w-[800px] md:min-w-0">
+                      <thead>
+                        <tr className="bg-slate-950/50">
+                          <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Player</th>
+                          <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Role</th>
+                          <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Stats</th>
+                          <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {data.players.map((player) => (
+                          <tr key={player.id} className="hover:bg-slate-900/50 transition-all duration-300 group cursor-pointer" onClick={() => setSelectedPlayerForProfile(player)}>
+                            <td className="px-6 md:px-10 py-6 md:py-8">
+                              <div className="flex items-center gap-4 md:gap-5">
+                                <div className="relative shrink-0">
+                                  <img 
+                                    src={player.photo} 
+                                    alt={player.name} 
+                                    className="w-12 h-12 md:w-16 md:h-16 rounded-2xl object-contain bg-slate-950/50 border border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" 
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
+                                    }}
+                                  />
+                                  <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-5 h-5 md:w-7 md:h-7 bg-amber-500 text-gray-950 rounded-lg flex items-center justify-center text-[8px] md:text-[10px] font-black shadow-lg">#{player.jerseyNumber}</div>
+                                </div>
+                                <div>
+                                  <h3 className="text-sm md:text-base font-black text-white uppercase italic tracking-tight">{player.name}</h3>
+                                  <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{player.phone}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 md:px-10 py-6 md:py-8">
+                              <span className="px-3 md:px-4 py-1.5 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest bg-slate-950 text-amber-500 border border-slate-800">{player.role}</span>
+                            </td>
+                            <td className="px-6 md:px-10 py-6 md:py-8">
+                              <div className="flex gap-4 md:gap-6">
+                                <div className="text-center">
+                                  <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Runs</p>
+                                  <p className="text-xs md:text-sm font-black text-white italic">{player.stats.runs}</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Wickets</p>
+                                  <p className="text-xs md:text-sm font-black text-white italic">{player.stats.wickets}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 md:px-10 py-6 md:py-8">
+                              <div className="flex justify-end gap-2 md:gap-3">
                                 {isAdmin && (
                                   <button 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setEditingPlayer(player);
                                     }}
-                                    className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-500 shadow-lg shadow-blue-500/5"
+                                    className="w-10 h-10 md:w-12 md:h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-500 shadow-lg shadow-blue-500/5"
                                   >
-                                    <Edit3 size={18} />
+                                    <Edit3 size={16} />
                                   </button>
                                 )}
                                 {isAdmin && (
@@ -3119,17 +3121,17 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                                       setEditStats(player.stats);
                                       setShowEditStats(true);
                                     }}
-                                    className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
+                                    className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
                                   >
-                                    <Activity size={18} />
+                                    <Activity size={16} />
                                   </button>
                                 )}
                                 {isAdmin && (
                                   <button 
                                     onClick={(e) => { e.stopPropagation(); handleDelete('players', player.id); }}
-                                    className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
+                                    className="w-10 h-10 md:w-12 md:h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
                                   >
-                                    <X size={18} />
+                                    <X size={16} />
                                   </button>
                                 )}
                               </div>
@@ -3167,50 +3169,51 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               </button>
             </div>
 
-            <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-950/50">
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Match</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Status</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Score</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {data.matches?.map((match) => (
-                    <tr key={match.id} className="hover:bg-slate-900/50 transition-all duration-300 group">
-                      <td className="px-10 py-8">
-                        <div className="flex items-center gap-6">
-                          <div className="w-16 h-16 bg-slate-950 rounded-2xl flex flex-col items-center justify-center border border-slate-800 group-hover:border-amber-500/30 transition-all">
-                            <span className="text-[10px] font-black text-amber-500 uppercase">{match.date.split('-')[2]}</span>
-                            <span className="text-[8px] font-black text-slate-500 uppercase">{new Date(match.date).toLocaleString('default', { month: 'short' })}</span>
+            <div className="bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-collapse min-w-[800px] md:min-w-0">
+                  <thead>
+                    <tr className="bg-slate-950/50">
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Match</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Status</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Score</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {data.matches?.map((match) => (
+                      <tr key={match.id} className="hover:bg-slate-900/50 transition-all duration-300 group">
+                        <td className="px-6 md:px-10 py-6 md:py-8">
+                          <div className="flex items-center gap-4 md:gap-6">
+                            <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-950 rounded-2xl flex flex-col items-center justify-center border border-slate-800 group-hover:border-amber-500/30 transition-all">
+                              <span className="text-[8px] md:text-[10px] font-black text-amber-500 uppercase">{match.date.split('-')[2]}</span>
+                              <span className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase">{new Date(match.date).toLocaleString('default', { month: 'short' })}</span>
+                            </div>
+                            <div>
+                              <h3 className="text-sm md:text-base font-black text-white uppercase italic tracking-tight">{match.teamA} <span className="text-amber-500/50 mx-1 md:mx-2">VS</span> {match.teamB}</h3>
+                              <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1 truncate max-w-[150px]">{match.venue} • {match.time}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="text-base font-black text-white uppercase italic tracking-tight">{match.teamA} <span className="text-amber-500/50 mx-2">VS</span> {match.teamB}</h3>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{match.venue} • {match.time}</p>
+                        </td>
+                        <td className="px-6 md:px-10 py-6 md:py-8">
+                          <span className={cn(
+                            "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
+                            match.status === 'Live' 
+                              ? "bg-rose-500/10 text-rose-500 border-rose-500/20 animate-pulse" 
+                              : "bg-slate-950 text-slate-500 border-slate-800"
+                          )}>
+                            {match.status}
+                          </span>
+                        </td>
+                        <td className="px-6 md:px-10 py-6 md:py-8">
+                          <div className="space-y-1">
+                            <p className="text-sm font-black text-white italic tracking-tighter whitespace-nowrap">
+                              {match.score ? `${match.score.teamARuns}/${match.score.teamAWickets} - ${match.score.teamBRuns}/${match.score.teamBWickets}` : 'No Score'}
+                            </p>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-10 py-8">
-                        <span className={cn(
-                          "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
-                          match.status === 'Live' 
-                            ? "bg-rose-500/10 text-rose-500 border-rose-500/20 animate-pulse" 
-                            : "bg-slate-950 text-slate-500 border-slate-800"
-                        )}>
-                          {match.status}
-                        </span>
-                      </td>
-                      <td className="px-10 py-8">
-                        <div className="space-y-1">
-                          <p className="text-sm font-black text-white italic tracking-tighter">
-                            {match.score ? `${match.score.teamARuns}/${match.score.teamAWickets} - ${match.score.teamBRuns}/${match.score.teamBWickets}` : 'No Score'}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-10 py-8 text-right">
-                        <div className="flex justify-end gap-3">
+                        </td>
+                        <td className="px-6 md:px-10 py-6 md:py-8 text-right">
+                          <div className="flex justify-end gap-3">
                           {isAdmin && (
                             <button 
                               onClick={() => {
@@ -3243,11 +3246,12 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 </tbody>
               </table>
             </div>
-          </motion.div>
-        )}
+          </div>
+        </motion.div>
+      )}
         {activeTab === 'ranking' && (
           <motion.div key="ranking" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-            <RankingPage data={data} />
+            <RankingPage data={data} isAdminView={true} />
           </motion.div>
         )}
 
@@ -3273,9 +3277,9 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
               {data.gallery.map((item) => (
-                <div key={item.id} className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden relative group shadow-2xl hover:border-amber-500/50 transition-all duration-500">
+                <div key={item.id} className="bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] md:rounded-[3rem] border border-slate-800 overflow-hidden relative group shadow-2xl hover:border-amber-500/50 transition-all duration-500">
                   <div className="aspect-video relative overflow-hidden">
                     <img 
                       src={item.type === 'Video' ? (item.thumbnail || "https://picsum.photos/seed/video/400/300") : item.url} 
@@ -3384,28 +3388,28 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-10 bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl"
+            className="space-y-6 md:space-y-10"
           >
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-4 md:px-0">
               <div className="space-y-1">
                 <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Hosted <span className="text-amber-500">Tournaments</span></h2>
                 <div className="h-1 w-20 bg-amber-500/30 rounded-full" />
               </div>
               <button 
                 onClick={() => setShowAddHosted(true)} 
-                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+                className="w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
               >
                 <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
                 Create Tournament
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-8">
+            <div className="grid grid-cols-1 gap-6 md:gap-8">
               {data.hostedTournaments?.map((tournament) => (
-                <div key={tournament.id} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl space-y-8">
+                <div key={tournament.id} className="bg-slate-900/50 backdrop-blur-md p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-slate-800 shadow-2xl space-y-6 md:space-y-8">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3">
+                    <div className="space-y-3 w-full md:w-auto">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3">
                         <span className={cn(
                           "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border",
                           tournament.status === 'Ongoing' ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-slate-950 text-slate-500 border-slate-800"
@@ -3428,143 +3432,121 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                         >
                           {tournament.isPublished ? 'Published' : 'Draft'}
                         </button>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{tournament.startDate} - {tournament.endDate}</p>
                       </div>
-                      <h3 className="text-3xl font-black text-white uppercase italic tracking-tight">{tournament.name}</h3>
-                      <button 
-                        onClick={() => setSelectedTournamentForBracket(tournament)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-950 text-white rounded-xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
-                      >
-                        <Columns size={14} className="text-amber-500" />
-                        View Bracket
-                      </button>
+                      <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tight">{tournament.name}</h3>
+                      <div className="flex flex-wrap items-center gap-4">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{tournament.startDate} - {tournament.endDate}</p>
+                        <button 
+                          onClick={() => setSelectedTournamentForBracket(tournament)}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-slate-950 text-white rounded-lg text-[9px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
+                        >
+                          <Columns size={12} className="text-amber-500" />
+                          Bracket
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-4">
-                      <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Entry Fee</p>
-                        <p className="text-xl font-black text-amber-500 italic">৳{tournament.entryFee}</p>
+                    <div className="flex gap-4 md:gap-6 w-full md:w-auto justify-between md:justify-start bg-slate-950/30 p-4 md:p-0 rounded-2xl md:rounded-none">
+                      <div className="text-left md:text-right">
+                        <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Entry Fee</p>
+                        <p className="text-lg md:text-xl font-black text-amber-500 italic">৳{tournament.entryFee}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Prize Pool</p>
-                        <p className="text-xl font-black text-emerald-500 italic">{tournament.prizePool}</p>
+                        <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Prize Pool</p>
+                        <p className="text-lg md:text-xl font-black text-emerald-500 italic">{tournament.prizePool}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-950/50 p-6 rounded-3xl border border-slate-800">
-                    <div className="space-y-1">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Collected</p>
-                      <p className="text-xl font-black text-emerald-500 italic">৳{tournament.registrations.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0)}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 bg-slate-950/50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-800">
+                    <div className="space-y-0.5 md:space-y-1">
+                      <p className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest">Collected</p>
+                      <p className="text-base md:text-xl font-black text-emerald-500 italic">৳{tournament.registrations.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0)}</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Expected</p>
-                      <p className="text-xl font-black text-white italic">৳{tournament.registrations.length * tournament.entryFee}</p>
+                    <div className="space-y-0.5 md:space-y-1">
+                      <p className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest">Expected</p>
+                      <p className="text-base md:text-xl font-black text-white italic">৳{tournament.registrations.length * tournament.entryFee}</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Due</p>
-                      <p className="text-xl font-black text-rose-500 italic">৳{(tournament.registrations.length * tournament.entryFee) - tournament.registrations.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0)}</p>
+                    <div className="col-span-2 md:col-span-1 space-y-0.5 md:space-y-1 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/50">
+                      <p className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest">Balance Due</p>
+                      <p className="text-base md:text-xl font-black text-rose-500 italic">৳{(tournament.registrations.length * tournament.entryFee) - tournament.registrations.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0)}</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                        <h4 className="text-[10px] md:text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
                           <Users size={14} className="text-amber-500" />
-                          Registered Teams ({tournament.registrations.length})
+                          Teams ({tournament.registrations.length})
                         </h4>
                         <button 
                           onClick={() => {
                             setSelectedTournamentForReg(tournament);
                             setShowAddRegistration(true);
                           }}
-                          className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-xl text-[10px] font-black hover:bg-emerald-500 hover:text-gray-950 transition-all uppercase italic tracking-widest border border-emerald-500/20"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg text-[9px] font-black hover:bg-emerald-500 hover:text-gray-950 transition-all uppercase italic tracking-widest border border-emerald-500/20"
                         >
-                          <Plus size={14} />
-                          Add Team
+                          <Plus size={12} />
+                          Add
                         </button>
                       </div>
-                      <div className="bg-slate-950/50 rounded-2xl border border-slate-800 overflow-x-auto shadow-inner">
+                      <div className="bg-slate-950/50 rounded-[1.5rem] md:rounded-2xl border border-slate-800 overflow-x-auto no-scrollbar shadow-inner">
                         <table className="w-full text-left text-[10px] min-w-[500px]">
-                          <thead className="bg-slate-950">
+                          <thead className="bg-slate-950 border-b border-slate-800">
                             <tr>
-                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-400">Team & Address</th>
-                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-400">Captain & Phone</th>
-                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-400">Players</th>
-                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-400">Payment Status</th>
-                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-400">Paid / Due</th>
+                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500 text-[8px]">Team</th>
+                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500 text-[8px]">Leader</th>
+                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500 text-[8px]">Payment</th>
+                              <th className="px-4 py-3 font-black uppercase tracking-widest text-slate-500 text-[8px]">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800">
                             {tournament.registrations.map(reg => (
                               <tr key={reg.id} className="hover:bg-slate-900/50 transition-colors">
                                 <td className="px-4 py-3">
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2">
                                     {reg.logo && (
                                       <img 
                                         src={reg.logo} 
-                                        className="w-8 h-8 rounded-lg object-cover border border-slate-800" 
+                                        className="w-6 h-6 rounded-md object-cover border border-slate-800" 
                                         alt="Team Logo" 
                                         referrerPolicy="no-referrer"
                                       />
                                     )}
-                                    <div>
-                                      <p className="font-bold text-white uppercase">{reg.teamName}</p>
-                                      <p className="text-[8px] text-slate-500 leading-tight max-w-[150px] truncate" title={reg.address}>{reg.address}</p>
+                                    <p className="font-black text-white uppercase italic">{reg.teamName}</p>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <p className="font-bold text-slate-300">{reg.captainName || 'N/A'}</p>
+                                  <p className="text-[8px] text-slate-600">{reg.phone}</p>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex flex-col gap-1">
+                                    <span className={cn(
+                                      "px-2 py-0.5 rounded-md text-[7px] font-black uppercase w-fit",
+                                      reg.paymentStatus === 'Paid' ? "bg-emerald-500/20 text-emerald-400" : 
+                                      reg.paymentStatus === 'Partial' ? "bg-amber-500/20 text-amber-400" : 
+                                      "bg-rose-500/20 text-rose-400"
+                                    )}>{reg.paymentStatus}</span>
+                                    <p className="text-[8px] font-bold text-emerald-500">৳{reg.amountPaid}</p>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[7px] font-black text-slate-600 uppercase">Due:</span>
+                                      <p className="text-rose-500/60 font-black">৳{reg.amountDue}</p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3 text-slate-300">
-                                  <p className="font-bold">{reg.captainName || 'N/A'}</p>
-                                  <p className="text-[8px] text-slate-500">{reg.phone}</p>
-                                </td>
                                 <td className="px-4 py-3">
-                                  {tournament.type === 'Domestic' ? (
-                                    <div className="flex items-center gap-2">
-                                      <Users size={12} className="text-amber-500" />
-                                      <span className="font-black text-white">{reg.playerIds?.length || 0} Players</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-slate-500 italic">External Team</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span className={cn(
-                                    "px-2 py-0.5 rounded-md text-[8px] font-black uppercase mb-1 block w-fit",
-                                    reg.paymentStatus === 'Paid' ? "bg-emerald-500/20 text-emerald-400" : 
-                                    reg.paymentStatus === 'Partial' ? "bg-amber-500/20 text-amber-400" : 
-                                    "bg-rose-500/20 text-rose-400"
-                                  )}>{reg.paymentStatus}</span>
-                                  {reg.transactionId && (
-                                    <p className="text-[7px] font-black text-slate-500 uppercase tracking-tighter truncate max-w-[80px]" title={reg.transactionId}>
-                                      Trx: {reg.transactionId}
-                                    </p>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="space-y-0.5">
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-[7px] font-black text-slate-600 uppercase">Paid:</span>
-                                        <p className="text-emerald-500 font-black">৳{reg.amountPaid}</p>
-                                      </div>
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-[7px] font-black text-slate-600 uppercase">Due:</span>
-                                        <p className="text-rose-500/60 font-black">৳{reg.amountDue}</p>
-                                      </div>
-                                    </div>
-                                    <button 
-                                      onClick={() => {
-                                        setSelectedTournament(tournament);
-                                        setSelectedRegistration(reg);
-                                        setShowUpdatePayment(true);
-                                      }}
-                                      className="p-2 bg-slate-950 hover:bg-amber-500 hover:text-gray-950 rounded-lg transition-all border border-slate-800"
-                                      title="Update Payment"
-                                    >
-                                      <DollarSign size={12} />
-                                    </button>
-                                  </div>
+                                  <button 
+                                    onClick={() => {
+                                      setSelectedTournament(tournament);
+                                      setSelectedRegistration(reg);
+                                      setShowUpdatePayment(true);
+                                    }}
+                                    className="p-2 bg-slate-950 hover:bg-amber-500 hover:text-gray-950 rounded-lg transition-all border border-slate-800"
+                                    title="Update Payment"
+                                  >
+                                    <DollarSign size={12} />
+                                  </button>
                                 </td>
                               </tr>
                             ))}
@@ -3579,27 +3561,22 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                     </div>
 
                     <div className="space-y-4">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <Activity size={14} className="text-amber-500" />
                         Fixtures ({tournament.fixtures.length})
                       </h4>
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                         {tournament.fixtures.map(fixture => (
-                          <div key={fixture.id} className="p-3 bg-slate-950/50 rounded-xl border border-slate-800 flex justify-between items-center">
-                            <div>
-                              <p className="text-[10px] font-black text-white uppercase italic">{fixture.teamA} vs {fixture.teamB}</p>
+                          <div key={fixture.id} className="p-3 bg-slate-950/50 rounded-xl border border-slate-800 flex justify-between items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-black text-white uppercase italic truncate">{fixture.teamA} vs {fixture.teamB}</p>
                               <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{fixture.date} • {fixture.time}</p>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="text-right">
+                            <div className="flex items-center gap-2">
+                              <div className="text-right hidden sm:block">
                                 <p className="text-[10px] font-black text-amber-500 italic">
                                   {fixture.status === 'Live' ? 'LIVE' : fixture.status === 'Finished' ? (fixture.result || 'Finished') : 'Upcoming'}
                                 </p>
-                                {fixture.score && (
-                                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
-                                    {fixture.score.teamARuns}/{fixture.score.teamAWickets} - {fixture.score.teamBRuns}/{fixture.score.teamBWickets}
-                                  </p>
-                                )}
                               </div>
                               <button 
                                 onClick={() => {
@@ -3615,27 +3592,24 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                             </div>
                           </div>
                         ))}
-                        {tournament.fixtures.length > 3 && (
-                          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest text-center">+{tournament.fixtures.length - 3} more fixtures</p>
-                        )}
                         {tournament.fixtures.length === 0 && (
-                          <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center py-4 border border-dashed border-slate-800 rounded-xl">No fixtures added yet</p>
+                          <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center py-4 border border-dashed border-slate-800 rounded-xl">No fixtures yet</p>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-8 mt-8">
+                  <div className="grid grid-cols-1 gap-6 mt-6 md:mt-8">
                     <div className="space-y-4">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <Trophy size={14} className="text-amber-500" />
                         Sponsors ({tournament.sponsors.length})
                       </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 md:gap-4">
                         {tournament.sponsors.map(sponsor => (
-                          <div key={sponsor.id} className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800 flex flex-col items-center gap-2 group/sponsor relative">
-                            <img src={sponsor.logo} className="w-10 h-10 object-contain" alt={sponsor.name} referrerPolicy="no-referrer" />
-                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest text-center">{sponsor.name}</p>
+                          <div key={sponsor.id} className="bg-slate-950/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-800 flex flex-col items-center gap-2 group/sponsor relative">
+                            <img src={sponsor.logo} className="w-8 h-8 md:w-10 md:h-10 object-contain" alt={sponsor.name} referrerPolicy="no-referrer" />
+                            <p className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest text-center truncate w-full">{sponsor.name}</p>
                           </div>
                         ))}
                         <button 
@@ -3643,30 +3617,29 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                             setSelectedTournament(tournament);
                             setShowAddSponsor(true);
                           }}
-                          className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800 border-dashed flex flex-col items-center justify-center gap-2 hover:bg-slate-900 transition-all min-h-[100px]"
+                          className="bg-slate-950/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-800 border-dashed flex flex-col items-center justify-center gap-2 hover:bg-slate-900 transition-all min-h-[80px] md:min-h-[100px]"
                         >
-                          <Plus size={16} className="text-slate-600" />
-                          <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Add Sponsor</p>
+                          <Plus size={14} className="text-slate-600" />
+                          <p className="text-[7px] md:text-[8px] font-black text-slate-600 uppercase tracking-widest">Add</p>
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-8 border-t border-slate-800 flex justify-between items-center">
-                    <div className="flex gap-4">
+                  <div className="pt-6 md:pt-8 border-t border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center">
+                    <div className="flex flex-wrap gap-3">
                       <button 
                         onClick={() => {
                           setSelectedTournament(tournament);
                           setShowAddFixture(true);
                         }}
-                        className="px-6 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
+                        className="flex-1 sm:flex-none px-4 md:px-6 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
                       >
-                        Manage Fixtures
+                        Fixtures
                       </button>
                       <button 
                         onClick={() => {
                           setSelectedTournament(tournament);
-                          // Open scoring for the first live/upcoming match or show list
                           if (tournament.fixtures.length > 0) {
                             setSelectedTournamentMatch(tournament.fixtures[0]);
                             setShowTournamentScoring(true);
@@ -3675,14 +3648,14 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                             setTimeout(() => setNotification(null), 3000);
                           }
                         }}
-                        className="px-6 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
+                        className="flex-1 sm:flex-none px-4 md:px-6 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
                       >
-                        Live Scoring
+                        Live Scorer
                       </button>
                     </div>
                     <button 
                       onClick={() => handleDelete('hostedTournaments', tournament.id)}
-                      className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
+                      className="w-full sm:w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg"
                     >
                       <X size={20} />
                     </button>
@@ -3699,49 +3672,49 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-10 bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl"
+            className="space-y-6 md:space-y-10"
           >
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-4 md:px-0">
               <div className="space-y-1">
                 <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">External <span className="text-amber-500">Participation</span></h2>
                 <div className="h-1 w-20 bg-amber-500/30 rounded-full" />
               </div>
               <button 
                 onClick={() => setShowAddExternal(true)} 
-                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+                className="w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
               >
                 <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
                 Add Participation
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-8">
+            <div className="grid grid-cols-1 gap-6 md:gap-8">
               {data.externalTournaments?.map((tournament) => (
-                <div key={tournament.id} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl space-y-8">
+                <div key={tournament.id} className="bg-slate-900/50 backdrop-blur-md p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-slate-800 shadow-2xl space-y-6 md:space-y-8">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3">
+                    <div className="space-y-3 w-full md:w-auto">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3">
                         <span className="px-3 py-1 bg-amber-500/20 text-amber-500 border border-amber-500/30 rounded-lg text-[8px] font-black uppercase tracking-widest">{tournament.currentStage}</span>
                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{tournament.startDate} • {tournament.location}</p>
                       </div>
-                      <h3 className="text-3xl font-black text-white uppercase italic tracking-tight">{tournament.name}</h3>
+                      <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tight leading-tighter">{tournament.name}</h3>
                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organized by: {tournament.organizer}</p>
                     </div>
-                    <div className="flex gap-8">
-                      <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Budget</p>
-                        <p className="text-xl font-black text-white italic">৳{tournament.budget}</p>
+                    <div className="flex gap-4 md:gap-8 w-full md:w-auto justify-between md:justify-start bg-slate-950/30 p-4 md:p-0 rounded-2xl md:rounded-none">
+                      <div className="text-left md:text-right">
+                        <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Budget</p>
+                        <p className="text-lg md:text-xl font-black text-white italic">৳{tournament.budget}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Expense</p>
-                        <p className="text-xl font-black text-rose-500 italic">৳{tournament.expenses.reduce((sum, e) => sum + e.amount, 0)}</p>
+                        <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Expense</p>
+                        <p className="text-lg md:text-xl font-black text-rose-500 italic">৳{tournament.expenses.reduce((sum, e) => sum + e.amount, 0)}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                     <div className="space-y-4">
-                      <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-[10px] md:text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
                         <Users size={14} className="text-amber-500" />
                         Squad Selection
                       </h4>
@@ -3749,14 +3722,14 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                         {tournament.squad.map(playerId => {
                           const player = data.players.find(p => p.id === playerId);
                           return player ? (
-                            <div key={playerId} className="px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 text-[10px] font-black text-white uppercase italic">
+                            <div key={playerId} className="px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 text-[9px] md:text-[10px] font-black text-white uppercase italic">
                               {player.name}
                             </div>
                           ) : null;
                         })}
                         <button 
                           onClick={() => setSelectedTournamentForSquad(tournament)}
-                          className="w-8 h-8 bg-slate-950 rounded-xl border border-slate-800 border-dashed flex items-center justify-center text-slate-600 hover:bg-slate-900 transition-all"
+                          className="w-8 h-8 md:w-10 md:h-10 bg-slate-950 rounded-xl border border-slate-800 border-dashed flex items-center justify-center text-slate-600 hover:bg-slate-900 transition-all"
                         >
                           <Plus size={14} />
                         </button>
@@ -3764,32 +3737,32 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                     </div>
 
                     <div className="space-y-4">
-                      <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-[10px] md:text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
                         <Activity size={14} className="text-amber-500" />
                         Match History
                       </h4>
                       <div className="space-y-3">
-                        {tournament.matches.map(match => (
-                          <div key={match.id} className="p-4 bg-slate-950/50 rounded-2xl border border-slate-800 flex justify-between items-center">
+                        {tournament.matches.slice(0, 3).map(match => (
+                          <div key={match.id} className="p-3 md:p-4 bg-slate-950/50 rounded-xl md:rounded-2xl border border-slate-800 flex justify-between items-center group">
                             <div>
-                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{match.date}</p>
-                              <p className="text-[10px] font-black text-white uppercase italic">{match.teamB}</p>
+                              <p className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest">{match.date}</p>
+                              <p className="text-[9px] md:text-[10px] font-black text-white uppercase italic">{match.teamB}</p>
                             </div>
-                            <p className="text-xs font-black text-amber-500 italic">{match.result || 'TBD'}</p>
+                            <p className="text-[10px] md:text-xs font-black text-amber-500 italic uppercase">{match.result || 'TBD'}</p>
                           </div>
                         ))}
-                        <button className="w-full py-3 bg-slate-950/50 rounded-2xl border border-slate-800 border-dashed text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-slate-900 transition-all">Add Match Result</button>
+                        <button className="w-full py-3 bg-slate-950/50 rounded-xl md:rounded-2xl border border-slate-800 border-dashed text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-slate-900 transition-all italic">Add Record</button>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-[10px] md:text-xs font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
                         <DollarSign size={14} className="text-amber-500" />
-                        Tournament Expenses
+                        Expenses
                       </h4>
-                      <div className="space-y-3">
+                      <div className="space-y-3 bg-slate-950/30 p-4 rounded-2xl border border-slate-800/50">
                         {tournament.expenses.map(expense => (
-                          <div key={expense.id} className="flex justify-between items-center text-[10px]">
+                          <div key={expense.id} className="flex justify-between items-center text-[9px] md:text-[10px] border-b border-slate-800/50 pb-2">
                             <p className="font-bold text-slate-300 uppercase tracking-widest">{expense.description}</p>
                             <p className="font-black text-rose-500 italic">৳{expense.amount}</p>
                           </div>
@@ -3799,24 +3772,24 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                             setSelectedTournament(tournament);
                             setShowAddExternalExpense(true);
                           }}
-                          className="w-full py-3 bg-slate-950/50 rounded-2xl border border-slate-800 border-dashed text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-slate-900 transition-all"
+                          className="w-full py-2 bg-slate-950/50 rounded-lg text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-900 transition-all"
                         >
-                          Add Expense
+                          + Add Expense
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-8 border-t border-slate-800 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Journey: {tournament.currentStage}</p>
+                  <div className="pt-6 md:pt-8 border-t border-slate-800 flex justify-between items-center">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse outline outline-4 outline-amber-500/20" />
+                      <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest italic">{tournament.currentStage}</p>
                     </div>
                     <button 
                       onClick={() => handleDelete('externalTournaments', tournament.id)}
-                      className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500 shadow-lg shadow-rose-500/5"
+                      className="w-10 h-10 md:w-12 md:h-12 bg-rose-500/10 text-rose-500 rounded-xl md:rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all duration-500"
                     >
-                      <X size={20} />
+                      <X size={18} />
                     </button>
                   </div>
                 </div>
@@ -5145,32 +5118,39 @@ const MatchesPage = ({ data }: { data: AppData }) => {
   );
 };
 
-const RankingPage = ({ data }: { data: AppData }) => {
+const RankingPage = ({ data, isAdminView = false }: { data: AppData, isAdminView?: boolean }) => {
   const sortedPlayers = [...(data.players || [])].sort((a, b) => b.stats.runs - a.stats.runs);
   const topThree = sortedPlayers.slice(0, 3);
   const others = sortedPlayers.slice(3);
 
   return (
-    <div className="min-h-screen pt-32 pb-20 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-slate-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.05),transparent_50%)]" />
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-      </div>
-
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-20">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-4"
-          >
-            Player <span className="text-amber-500">Rankings</span>
-          </motion.h1>
-          <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-sm italic">The Elite Performers</p>
+    <div className={cn(
+      "relative overflow-hidden",
+      isAdminView ? "p-0" : "min-h-screen pt-32 pb-20 px-4"
+    )}>
+      {!isAdminView && (
+        <div className="absolute inset-0 bg-slate-950">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.05),transparent_50%)]" />
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
         </div>
+      )}
+
+      <div className={cn("relative z-10", !isAdminView && "max-w-7xl mx-auto")}>
+        {!isAdminView && (
+          <div className="text-center mb-12 md:mb-20">
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-4"
+            >
+              Player <span className="text-amber-500">Rankings</span>
+            </motion.h1>
+            <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-xs md:text-sm italic px-4 text-center">The Elite Performers</p>
+          </div>
+        )}
 
         {/* Podium */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-20">
           {topThree.map((player, index) => (
             <motion.div 
               key={player.id}
@@ -5178,34 +5158,34 @@ const RankingPage = ({ data }: { data: AppData }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                "relative bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 p-10 text-center shadow-2xl",
-                index === 0 ? "md:-mt-8 border-amber-500/30 scale-105 z-20" : "z-10"
+                "relative bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 p-8 md:p-10 text-center shadow-2xl",
+                index === 0 ? "md:-mt-8 border-amber-500/30 md:scale-105 z-20" : "z-10"
               )}
             >
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-amber-500 text-gray-950 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-xl shadow-amber-500/20">
+              <div className="absolute -top-4 md:-top-6 left-1/2 -translate-x-1/2 w-10 h-10 md:w-12 md:h-12 bg-amber-500 text-gray-950 rounded-xl md:rounded-2xl flex items-center justify-center font-black text-lg md:text-xl italic shadow-xl shadow-amber-500/20">
                 #{index + 1}
               </div>
               <img 
                 src={player.photo} 
                 alt={player.name} 
-                className="w-32 h-32 rounded-[2.5rem] object-contain bg-slate-950/50 mx-auto mb-6 border-4 border-slate-800" 
+                className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] md:rounded-[2.5rem] object-contain bg-slate-950/50 mx-auto mb-6 border-4 border-slate-800" 
                 referrerPolicy="no-referrer"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "https://placehold.co/200x200/1e293b/fbbf24?text=N/A";
                 }}
               />
-              <h3 className="text-2xl font-black text-white uppercase italic mb-2">{player.name}</h3>
-              <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-6">{player.role}</p>
+              <h3 className="text-xl md:text-2xl font-black text-white uppercase italic mb-2 tracking-tight leading-tighter">{player.name}</h3>
+              <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-6">{player.role}</p>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
-                  <p className="text-[10px] font-black text-slate-600 uppercase mb-1">Runs</p>
-                  <p className="text-2xl font-black text-white italic">{player.stats.runs}</p>
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="bg-slate-950/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-800">
+                  <p className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase mb-1">Runs</p>
+                  <p className="text-xl md:text-2xl font-black text-white italic">{player.stats.runs}</p>
                 </div>
-                <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
-                  <p className="text-[10px] font-black text-slate-600 uppercase mb-1">Avg</p>
-                  <p className="text-2xl font-black text-white italic">{player.stats.avg}</p>
+                <div className="bg-slate-950/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-800">
+                  <p className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase mb-1">Avg</p>
+                  <p className="text-xl md:text-2xl font-black text-white italic">{player.stats.avg}</p>
                 </div>
               </div>
             </motion.div>
@@ -5213,48 +5193,50 @@ const RankingPage = ({ data }: { data: AppData }) => {
         </div>
 
         {/* Leaderboard Table */}
-        <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
-          <table className="w-full text-left">
-            <thead className="bg-slate-950/50 border-b border-slate-800">
-              <tr>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Rank</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Player</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Matches</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Runs</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Wickets</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Avg</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {others.map((player, index) => (
-                <tr key={player.id} className="hover:bg-slate-900/50 transition-colors group">
-                  <td className="px-8 py-6 font-black text-slate-600 italic">#{index + 4}</td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <img 
-                        src={player.photo} 
-                        alt={player.name} 
-                        className="w-12 h-12 rounded-xl object-contain bg-slate-950/50 border border-slate-800" 
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
-                        }}
-                      />
-                      <div>
-                        <div className="font-black text-white uppercase italic">{player.name}</div>
-                        <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{player.role}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6 font-black text-white italic">{player.stats.matches}</td>
-                  <td className="px-8 py-6 font-black text-white italic">{player.stats.runs}</td>
-                  <td className="px-8 py-6 font-black text-white italic">{player.stats.wickets}</td>
-                  <td className="px-8 py-6 font-black text-white italic">{player.stats.avg}</td>
+        <div className="bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left min-w-[600px] md:min-w-0">
+              <thead className="bg-slate-950/50 border-b border-slate-800">
+                <tr>
+                  <th className="px-6 md:px-8 py-4 md:py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Rank</th>
+                  <th className="px-6 md:px-8 py-4 md:py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Player</th>
+                  <th className="px-6 md:px-8 py-4 md:py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Matches</th>
+                  <th className="px-6 md:px-8 py-4 md:py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Runs</th>
+                  <th className="px-6 md:px-8 py-4 md:py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Wickets</th>
+                  <th className="px-6 md:px-8 py-4 md:py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Avg</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {others.map((player, index) => (
+                  <tr key={player.id} className="hover:bg-slate-900/50 transition-colors group">
+                    <td className="px-6 md:px-8 py-4 md:py-6 font-black text-slate-600 italic">#{index + 4}</td>
+                    <td className="px-6 md:px-8 py-4 md:py-6">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <img 
+                          src={player.photo} 
+                          alt={player.name} 
+                          className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl object-contain bg-slate-950/50 border border-slate-800" 
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
+                          }}
+                        />
+                        <div>
+                          <div className="font-black text-white uppercase italic text-xs md:text-sm">{player.name}</div>
+                          <div className="text-[8px] md:text-[10px] font-black text-amber-500 uppercase tracking-widest">{player.role}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{player.stats.matches}</td>
+                    <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{player.stats.runs}</td>
+                    <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{player.stats.wickets}</td>
+                    <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{player.stats.avg}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

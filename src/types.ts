@@ -9,18 +9,28 @@ export interface CommitteeMember {
 export interface Player {
   id: number;
   name: string;
+  fatherName?: string;
+  dob?: string;
+  bloodGroup?: string;
+  address?: string;
   role: 'Batsman' | 'Bowler' | 'All-rounder' | 'Wicket Keeper';
+  battingStyle?: 'Right Hand' | 'Left Hand';
+  bowlingStyle?: string;
+  jerseySize?: 'S' | 'M' | 'L' | 'XL' | 'XXL';
   jerseyNumber: string;
   photo: string;
   phone: string;
   status: 'Active' | 'Injured' | 'Inactive';
+  monthlyFee?: number;
   stats: {
     matches: number;
     runs: number;
     wickets: number;
     avg: number;
     sr: number;
+    bestInnings?: string;
   };
+  matchHistory?: any[];
 }
 
 export interface Match {
@@ -71,12 +81,14 @@ export interface Admission {
   bloodGroup?: string;
   phone: string;
   address?: string;
+  photo?: string;
   role: 'Batsman' | 'Bowler' | 'All-rounder' | 'Wicket Keeper';
   battingStyle?: 'Right Hand' | 'Left Hand';
   bowlingStyle?: string;
   jerseySize?: 'S' | 'M' | 'L' | 'XL' | 'XXL';
   jerseyNumber?: string;
   status: 'pending' | 'approved' | 'rejected';
+  paymentStatus?: 'Unpaid' | 'Paid';
   registrationDate?: string;
 }
 
@@ -163,6 +175,8 @@ export interface AppData {
     whatsapp: string;
     facebook: string;
     logo: string;
+    admissionFee?: number;
+    monthlyFee?: number;
   };
   committee: CommitteeMember[];
   players: Player[];

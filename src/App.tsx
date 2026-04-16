@@ -1012,6 +1012,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
       bloodGroup: "",
       phone: "", 
       address: "",
+      photo: "",
       role: "Batsman", 
       battingStyle: "Right Hand",
       bowlingStyle: "",
@@ -1079,6 +1080,16 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="md:col-span-2 flex justify-center">
+              <div className="space-y-4 w-full max-w-xs">
+                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1 block text-center">Player Photo / প্লেয়ারের ছবি</label>
+                <FileUploader 
+                  label="Upload Photo" 
+                  currentUrl={formData.photo} 
+                  onUpload={(url) => setFormData({...formData, photo: url})} 
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Full Name / পুরো নাম</label>
               <input 
@@ -1336,7 +1347,20 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
           </div>
         </div>
 
-        <div className="pt-10">
+        <div className="pt-10 space-y-8">
+          {data.settings.admissionFee > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-8 flex items-center gap-6">
+              <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-xl shadow-amber-500/20 shrink-0">
+                <DollarSign size={32} />
+              </div>
+              <div>
+                <h4 className="text-xl font-black text-white uppercase italic tracking-tight">Admission Fee: <span className="text-amber-500">{data.settings.admissionFee} BDT</span></h4>
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">ভর্তি ফি: {data.settings.admissionFee} টাকা (এককালীন)</p>
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-2">Please pay this amount during admission / ভর্তির সময় এই টাকা পরিশোধ করতে হবে</p>
+              </div>
+            </div>
+          )}
+
           <button 
             type="submit" 
             disabled={!agreed}
@@ -1583,19 +1607,44 @@ const PlayerProfile = ({ player, onBack }: { player: any, onBack: () => void }) 
               </ResponsiveContainer>
             </div>
           </div>
+
+          <div className="glass-card p-8 rounded-[2.5rem] space-y-6">
+            <h3 className="text-sm font-black text-white uppercase italic tracking-widest flex items-center gap-3">
+              <User size={18} className="text-amber-500" /> Personal Details
+            </h3>
+            <div className="space-y-4">
+              {[
+                { label: "Father's Name", value: player.fatherName },
+                { label: "Date of Birth", value: player.dob },
+                { label: "Blood Group", value: player.bloodGroup },
+                { label: "Address", value: player.address },
+                { label: "Batting Style", value: player.battingStyle },
+                { label: "Bowling Style", value: player.bowlingStyle },
+                { label: "Jersey Size", value: player.jerseySize },
+                { label: "Monthly Fee", value: player.monthlyFee ? `${player.monthlyFee} BDT` : null },
+              ].map((detail, i) => detail.value && (
+                <div key={i} className="flex justify-between items-center py-2 border-b border-slate-800/50 last:border-0">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{detail.label}</span>
+                  <span className="text-xs font-bold text-white">{detail.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="lg:col-span-2 space-y-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               { label: 'Matches', value: player.stats?.matches || 0 },
               { label: 'Runs', value: player.stats?.runs || 0 },
               { label: 'Wickets', value: player.stats?.wickets || 0 },
               { label: 'Avg', value: player.stats?.avg || '0.0' },
+              { label: 'SR', value: player.stats?.sr || '0.0' },
+              { label: 'Best', value: player.stats?.bestInnings || 'N/A' },
             ].map((stat, i) => (
-              <div key={i} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-6 rounded-3xl text-center">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
-                <p className="text-2xl font-black text-white scoreboard-font">{stat.value}</p>
+              <div key={i} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-4 rounded-2xl text-center">
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+                <p className="text-lg font-black text-white scoreboard-font">{stat.value}</p>
               </div>
             ))}
           </div>
@@ -1617,11 +1666,7 @@ const PlayerProfile = ({ player, onBack }: { player: any, onBack: () => void }) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {(player.matchHistory || [
-                    { opponent: 'Lions CC', runs: 45, wickets: 2, motm: true },
-                    { opponent: 'Eagles XI', runs: 12, wickets: 0, motm: false },
-                    { opponent: 'Titans', runs: 88, wickets: 1, motm: true },
-                  ]).map((match: any, i: number) => (
+                  {(player.matchHistory || []).map((match: any, i: number) => (
                     <tr key={i} className="hover:bg-slate-900/50 transition-colors">
                       <td className="px-10 py-6 text-xs font-bold text-white uppercase italic">{match.opponent}</td>
                       <td className="px-10 py-6 text-xs font-black text-amber-500 scoreboard-font">{match.runs}</td>
@@ -1652,6 +1697,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
   const [showAddHosted, setShowAddHosted] = useState(false);
   const [showAddRegistration, setShowAddRegistration] = useState(false);
   const [showAddAdmission, setShowAddAdmission] = useState(false);
+  const [admissionPhoto, setAdmissionPhoto] = useState("");
   const [selectedTournamentForReg, setSelectedTournamentForReg] = useState<any>(null);
   const [showAddSponsor, setShowAddSponsor] = useState(false);
   const [showAddFixture, setShowAddFixture] = useState(false);
@@ -1677,7 +1723,23 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
   const [newGallery, setNewGallery] = useState({ type: "Photo", url: "", caption: "", thumbnail: "" });
   const [newEvent, setNewEvent] = useState({ title: "", date: "", location: "", description: "" });
   const [newFinance, setNewFinance] = useState({ type: "Income", amount: 0, category: "", description: "", date: new Date().toISOString().split('T')[0] });
-  const [newPlayer, setNewPlayer] = useState({ name: "", role: "Batsman", jerseyNumber: "", photo: "", phone: "", status: "Active" });
+  const [newPlayer, setNewPlayer] = useState<Omit<Player, 'id'>>({ 
+    name: "", 
+    fatherName: "",
+    dob: "",
+    bloodGroup: "",
+    address: "",
+    role: "Batsman", 
+    battingStyle: "Right Hand",
+    bowlingStyle: "",
+    jerseySize: "M",
+    jerseyNumber: "", 
+    photo: "", 
+    phone: "", 
+    status: "Active",
+    stats: { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0, bestInnings: "N/A" },
+    matchHistory: []
+  });
   const [newMatch, setNewMatch] = useState({ teamA: "IRB Warriors", teamB: "", date: "", time: "", venue: "", type: "Short Pitch", overs: 8, status: "Upcoming" });
   const [newHosted, setNewHosted] = useState({ name: "", startDate: "", endDate: "", entryFee: 0, prizePool: "", status: "Upcoming" });
   const [newExternal, setNewExternal] = useState({ name: "", organizer: "", location: "", startDate: "", budget: 0, currentStage: "Group Stage", status: "Upcoming" });
@@ -1691,11 +1753,51 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
     location: "Abdur Rob Bazar, Islam Gonj, Kamal Nagor, Laksmipur",
     whatsapp: "+880 1892-128292",
     facebook: "https://www.facebook.com/share/1DzscJ3sCS/",
-    logo: "/logo.png"
+    logo: "/logo.png",
+    admissionFee: 0,
+    monthlyFee: 0
   });
 
   const handleApprove = async (id: number) => {
-    await fetch(`/api/admissions/${id}/approve`, { method: "POST" });
+    const admission = data.admissions.find(a => a.id === id);
+    if (!admission) return;
+
+    try {
+      // Update admission status
+      await supabaseService.updateAdmission(id, { status: 'approved' });
+      
+      // Create player
+      const newPlayer: Omit<Player, 'id'> = {
+        name: admission.name,
+        fatherName: admission.fatherName,
+        dob: admission.dob,
+        bloodGroup: admission.bloodGroup,
+        address: admission.address,
+        role: admission.role,
+        battingStyle: admission.battingStyle,
+        bowlingStyle: admission.bowlingStyle,
+        jerseySize: admission.jerseySize,
+        jerseyNumber: admission.jerseyNumber || "TBD",
+        photo: admission.photo || "https://picsum.photos/seed/new/200/200",
+        phone: admission.phone,
+        status: "Active",
+        monthlyFee: settings.monthlyFee,
+        stats: { 
+          matches: 0, 
+          runs: 0, 
+          wickets: 0, 
+          avg: 0, 
+          sr: 0,
+          bestInnings: "N/A"
+        },
+        matchHistory: []
+      };
+      await supabaseService.addPlayer(newPlayer);
+    } catch (error) {
+      console.error("Supabase approve failed, falling back to local API:", error);
+      await fetch(`/api/admissions/${id}/approve`, { method: "POST" });
+    }
+    
     setNotification({ message: "Application approved!", type: 'success' });
     setTimeout(() => setNotification(null), 3000);
     onRefresh();
@@ -1885,7 +1987,23 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
         body: JSON.stringify(newPlayer),
       });
     }
-    setNewPlayer({ name: "", role: "Batsman", jerseyNumber: "", photo: "", phone: "", status: "Active" });
+    setNewPlayer({ 
+      name: "", 
+      fatherName: "",
+      dob: "",
+      bloodGroup: "",
+      address: "",
+      role: "Batsman", 
+      battingStyle: "Right Hand",
+      bowlingStyle: "",
+      jerseySize: "M",
+      jerseyNumber: "", 
+      photo: "", 
+      phone: "", 
+      status: "Active",
+      stats: { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0, bestInnings: "N/A" },
+      matchHistory: []
+    });
     setShowAddPlayer(false);
     onRefresh();
   };
@@ -2011,11 +2129,13 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...data,
+        photo: admissionPhoto,
         status: 'pending',
         registrationDate: new Date().toISOString()
       }),
     });
     setShowAddAdmission(false);
+    setAdmissionPhoto("");
     onRefresh();
     setNotification({ message: "Admission added successfully!", type: 'success' });
     setTimeout(() => setNotification(null), 3000);
@@ -2303,10 +2423,10 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { label: 'Total Runs', value: data.players.reduce((sum, p) => sum + (p.stats?.runs || 0), 0), icon: <Zap className="text-amber-500" />, trend: '+12%' },
-                { label: 'Total Wickets', value: data.players.reduce((sum, p) => sum + (p.stats?.wickets || 0), 0), icon: <BallIcon className="text-rose-500" />, trend: '+5%' },
-                { label: 'Matches Won', value: 24, icon: <Trophy className="text-amber-500" />, trend: '+8%' },
-                { label: 'Win Rate', value: '78%', icon: <Activity className="text-emerald-500" />, trend: '+2%' },
+                { label: 'Total Runs', value: data.players.reduce((sum, p) => sum + (p.stats?.runs || 0), 0), icon: <Zap className="text-amber-500" />, trend: 'Live' },
+                { label: 'Total Wickets', value: data.players.reduce((sum, p) => sum + (p.stats?.wickets || 0), 0), icon: <BallIcon className="text-rose-500" />, trend: 'Live' },
+                { label: 'Matches Won', value: data.matches.filter(m => m.status === 'Finished' && m.result?.includes('Won')).length, icon: <Trophy className="text-amber-500" />, trend: 'Live' },
+                { label: 'Win Rate', value: data.matches.filter(m => m.status === 'Finished').length > 0 ? `${Math.round((data.matches.filter(m => m.status === 'Finished' && m.result?.includes('Won')).length / data.matches.filter(m => m.status === 'Finished').length) * 100)}%` : '0%', icon: <Activity className="text-emerald-500" />, trend: 'Live' },
               ].map((stat, i) => (
                 <div key={i} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-8 rounded-[2rem] relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-amber-500/10 transition-colors" />
@@ -2335,32 +2455,11 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                     <option>Last Year</option>
                   </select>
                 </div>
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={[
-                      { name: 'Jan', runs: 400, wickets: 24 },
-                      { name: 'Feb', runs: 300, wickets: 18 },
-                      { name: 'Mar', runs: 600, wickets: 32 },
-                      { name: 'Apr', runs: 800, wickets: 45 },
-                      { name: 'May', runs: 500, wickets: 28 },
-                      { name: 'Jun', runs: 900, wickets: 52 },
-                    ]}>
-                      <defs>
-                        <linearGradient id="colorRuns" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                      <XAxis dataKey="name" stroke="#ffffff20" fontSize={10} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#ffffff20" fontSize={10} tickLine={false} axisLine={false} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '16px' }}
-                        itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                      />
-                      <Area type="monotone" dataKey="runs" stroke="#f59e0b" fillOpacity={1} fill="url(#colorRuns)" strokeWidth={3} />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                <div className="h-[300px] w-full flex items-center justify-center bg-slate-950/30 rounded-2xl border border-dashed border-slate-800">
+                  <div className="text-center space-y-2">
+                    <Activity size={40} className="text-slate-700 mx-auto" />
+                    <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Analytics will appear here as data grows</p>
+                  </div>
                 </div>
               </div>
 
@@ -2457,6 +2556,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                       <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Applicant</th>
                       <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Role</th>
                       <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Contact</th>
+                      <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Payment</th>
                       <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Status</th>
                       <th className="px-10 py-8 text-right text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Actions</th>
                     </tr>
@@ -2501,6 +2601,31 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                           <div className="space-y-1">
                             <p className="text-sm font-black text-white tracking-tight">{admission.phone}</p>
                           </div>
+                        </td>
+                        <td className="px-10 py-8">
+                          <button 
+                            onClick={async () => {
+                              const newStatus = admission.paymentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+                              try {
+                                await supabaseService.updateAdmission(admission.id, { paymentStatus: newStatus });
+                              } catch (error) {
+                                await fetch(`/api/admissions/${admission.id}/payment`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ paymentStatus: newStatus }),
+                                });
+                              }
+                              onRefresh();
+                            }}
+                            className={cn(
+                              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                              admission.paymentStatus === 'Paid' 
+                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                                : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                            )}
+                          >
+                            {admission.paymentStatus || 'Unpaid'}
+                          </button>
                         </td>
                         <td className="px-10 py-8">
                           <span className={cn(
@@ -3522,6 +3647,16 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
               </div>
               <form onSubmit={handleAddAdmission} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2 flex justify-center">
+                    <div className="space-y-2 w-full max-w-xs">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block text-center">Player Photo / প্লেয়ারের ছবি</label>
+                      <FileUploader 
+                        label="Upload Photo" 
+                        currentUrl={admissionPhoto} 
+                        onUpload={(url) => setAdmissionPhoto(url)} 
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Full Name / পুরো নাম</label>
                     <input name="name" required className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Player Name" />
@@ -4146,35 +4281,80 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                 <h2 className="text-2xl font-black text-white uppercase italic">Add <span className="text-amber-500">Player</span></h2>
                 <button onClick={() => setShowAddPlayer(false)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-500 hover:text-white"><X /></button>
               </div>
-              <form onSubmit={handleAddPlayer} className="space-y-4">
+              <form onSubmit={handleAddPlayer} className="space-y-4 overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
                     <input required value={newPlayer.name} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                   <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Father's Name</label>
+                    <input value={newPlayer.fatherName} onChange={e => setNewPlayer({...newPlayer, fatherName: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date of Birth</label>
+                    <input type="date" value={newPlayer.dob} onChange={e => setNewPlayer({...newPlayer, dob: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Blood Group</label>
+                    <input value={newPlayer.bloodGroup} onChange={e => setNewPlayer({...newPlayer, bloodGroup: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Address</label>
+                  <textarea value={newPlayer.address} onChange={e => setNewPlayer({...newPlayer, address: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700 min-h-[80px]" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
+                    <select value={newPlayer.role} onChange={e => setNewPlayer({...newPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="Batsman" className="bg-slate-900">Batsman</option>
+                      <option value="Bowler" className="bg-slate-900">Bowler</option>
+                      <option value="All-rounder" className="bg-slate-900">All-rounder</option>
+                      <option value="Wicket Keeper" className="bg-slate-900">Wicket Keeper</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey #</label>
                     <input required value={newPlayer.jerseyNumber} onChange={e => setNewPlayer({...newPlayer, jerseyNumber: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
-                  <select value={newPlayer.role} onChange={e => setNewPlayer({...newPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
-                    <option value="Batsman" className="bg-slate-900">Batsman</option>
-                    <option value="Bowler" className="bg-slate-900">Bowler</option>
-                    <option value="All-rounder" className="bg-slate-900">All-rounder</option>
-                    <option value="Wicket Keeper" className="bg-slate-900">Wicket Keeper</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Batting Style</label>
+                    <select value={newPlayer.battingStyle} onChange={e => setNewPlayer({...newPlayer, battingStyle: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="Right Hand" className="bg-slate-900">Right Hand</option>
+                      <option value="Left Hand" className="bg-slate-900">Left Hand</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Bowling Style</label>
+                    <input value={newPlayer.bowlingStyle} onChange={e => setNewPlayer({...newPlayer, bowlingStyle: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Right Arm Fast" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey Size</label>
+                    <select value={newPlayer.jerseySize} onChange={e => setNewPlayer({...newPlayer, jerseySize: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="S" className="bg-slate-900">S</option>
+                      <option value="M" className="bg-slate-900">M</option>
+                      <option value="L" className="bg-slate-900">L</option>
+                      <option value="XL" className="bg-slate-900">XL</option>
+                      <option value="XXL" className="bg-slate-900">XXL</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
+                    <input required value={newPlayer.phone} onChange={e => setNewPlayer({...newPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
                 </div>
                 <FileUploader 
                   label="Player Photo" 
                   currentUrl={newPlayer.photo} 
                   onUpload={(url) => setNewPlayer({...newPlayer, photo: url})} 
                 />
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
-                  <input required value={newPlayer.phone} onChange={e => setNewPlayer({...newPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
-                </div>
                 <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Save Player</button>
               </form>
             </motion.div>
@@ -4195,26 +4375,71 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                     <input required value={editingPlayer.name} onChange={e => setEditingPlayer({...editingPlayer, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                   <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Father's Name</label>
+                    <input value={editingPlayer.fatherName || ""} onChange={e => setEditingPlayer({...editingPlayer, fatherName: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date of Birth</label>
+                    <input type="date" value={editingPlayer.dob || ""} onChange={e => setEditingPlayer({...editingPlayer, dob: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Blood Group</label>
+                    <input value={editingPlayer.bloodGroup || ""} onChange={e => setEditingPlayer({...editingPlayer, bloodGroup: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Address</label>
+                  <textarea value={editingPlayer.address || ""} onChange={e => setEditingPlayer({...editingPlayer, address: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700 min-h-[80px]" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
+                    <select value={editingPlayer.role} onChange={e => setEditingPlayer({...editingPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="Batsman" className="bg-slate-900">Batsman</option>
+                      <option value="Bowler" className="bg-slate-900">Bowler</option>
+                      <option value="All-rounder" className="bg-slate-900">All-rounder</option>
+                      <option value="Wicket Keeper" className="bg-slate-900">Wicket Keeper</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey #</label>
                     <input required value={editingPlayer.jerseyNumber} onChange={e => setEditingPlayer({...editingPlayer, jerseyNumber: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
-                  <select value={editingPlayer.role} onChange={e => setEditingPlayer({...editingPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
-                    <option value="Batsman" className="bg-slate-900">Batsman</option>
-                    <option value="Bowler" className="bg-slate-900">Bowler</option>
-                    <option value="All-rounder" className="bg-slate-900">All-rounder</option>
-                    <option value="Wicket Keeper" className="bg-slate-900">Wicket Keeper</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Batting Style</label>
+                    <select value={editingPlayer.battingStyle || "Right Hand"} onChange={e => setEditingPlayer({...editingPlayer, battingStyle: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="Right Hand" className="bg-slate-900">Right Hand</option>
+                      <option value="Left Hand" className="bg-slate-900">Left Hand</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Bowling Style</label>
+                    <input value={editingPlayer.bowlingStyle || ""} onChange={e => setEditingPlayer({...editingPlayer, bowlingStyle: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Right Arm Fast" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</label>
-                  <select value={editingPlayer.status} onChange={e => setEditingPlayer({...editingPlayer, status: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
-                    <option value="Active" className="bg-slate-900">Active</option>
-                    <option value="Injured" className="bg-slate-900">Injured</option>
-                    <option value="Inactive" className="bg-slate-900">Inactive</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey Size</label>
+                    <select value={editingPlayer.jerseySize || "M"} onChange={e => setEditingPlayer({...editingPlayer, jerseySize: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="S" className="bg-slate-900">S</option>
+                      <option value="M" className="bg-slate-900">M</option>
+                      <option value="L" className="bg-slate-900">L</option>
+                      <option value="XL" className="bg-slate-900">XL</option>
+                      <option value="XXL" className="bg-slate-900">XXL</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</label>
+                    <select value={editingPlayer.status} onChange={e => setEditingPlayer({...editingPlayer, status: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="Active" className="bg-slate-900">Active</option>
+                      <option value="Injured" className="bg-slate-900">Injured</option>
+                      <option value="Inactive" className="bg-slate-900">Inactive</option>
+                    </select>
+                  </div>
                 </div>
                 <FileUploader 
                   label="Player Photo" 
@@ -4596,6 +4821,33 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-slate-800">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Admission Fee (BDT)</label>
+                    <input 
+                      type="number"
+                      required 
+                      value={settings.admissionFee} 
+                      onChange={e => setSettings({...settings, admissionFee: parseInt(e.target.value)})} 
+                      className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
+                      placeholder="e.g. 50"
+                    />
+                    <p className="text-[10px] font-bold text-slate-500 ml-4">One-time fee for new applications</p>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Monthly Fee (BDT)</label>
+                    <input 
+                      type="number"
+                      required 
+                      value={settings.monthlyFee} 
+                      onChange={e => setSettings({...settings, monthlyFee: parseInt(e.target.value)})} 
+                      className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
+                      placeholder="e.g. 20"
+                    />
+                    <p className="text-[10px] font-bold text-slate-500 ml-4">Monthly subscription for members</p>
+                  </div>
+                </div>
+
                 <div className="pt-6 border-t border-slate-800">
                   <button 
                     type="submit" 
@@ -4610,6 +4862,7 @@ const AdminPanel = ({ data, onRefresh }: { data: AppData, onRefresh: () => void 
           </motion.div>
         )}
       </AnimatePresence>
+      <PrintableAdmissions selectedAdmissions={selectedAdmissions} data={data} />
     </main>
   </div>
 </div>

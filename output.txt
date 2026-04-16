@@ -1,0 +1,556 @@
+73:  const [uploading, setUploading] = useState(false);
+76:    const file = e.target.files?.[0];
+159:  const [isOpen, setIsOpen] = useState(false);
+160:  const [scrolled, setScrolled] = useState(false);
+166:  }, []);
+168:  const navLinks = [
+206:                {data.settings?.clubName.split(' ')[0]} <span className="text-amber-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
+216:                className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-amber-500 hover:bg-white/5 transition-all"
+221:            <Link to="/admin" className="px-4 py-2 bg-amber-500 text-gray-950 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-amber-400 transition-all flex items-center gap-2 ml-2">
+269:        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-slate-950 to-slate-950 z-0" />
+278:            <div className="w-32 h-32 md:w-40 md:h-40 bg-black rounded-full border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] overflow-hidden flex items-center justify-center">
+294:            className="inline-block px-4 py-1 bg-amber-500 text-gray-950 rounded-lg text-[10px] font-black tracking-[0.2em] uppercase"
+306:              {data.settings?.clubName.split(' ')[0]} <span className="text-amber-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>
+312:              className="text-lg md:text-2xl font-black text-white tracking-[0.2em] uppercase italic"
+364:            {[
+380:                  <p className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">{stat.label}</p>
+381:                  <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">{stat.sub}</p>
+391:        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_0%_0%,_var(--tw-gradient-stops))] from-amber-500/5 via-transparent to-transparent z-0" />
+396:                <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">About Us</span>
+411:                <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-[2.5rem] border border-slate-800 space-y-4">
+418:                <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-[2.5rem] border border-slate-800 space-y-4">
+429:              <div className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 space-y-8">
+432:                  {[
+443:                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{detail.label}</p>
+451:              <div className="bg-amber-500 p-10 rounded-[3rem] space-y-6 shadow-2xl shadow-amber-500/20">
+472:            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Our Team</span>
+478:            <div className="bg-slate-900/50 backdrop-blur-md p-20 rounded-[4rem] border border-slate-800 text-center space-y-4">
+493:                  className="group bg-slate-900/50 backdrop-blur-md rounded-[3rem] overflow-hidden border border-slate-800 hover:border-amber-500/50 transition-all duration-500 shadow-2xl"
+495:                  <div className="aspect-[4/5] overflow-hidden relative bg-slate-950/50">
+508:                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{member.role}</p>
+524:            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Gallery</span>
+530:            <div className="bg-slate-900/50 backdrop-blur-md p-20 rounded-[4rem] border border-slate-800 text-center space-y-4">
+543:                  className="break-inside-avoid bg-slate-900/50 rounded-[2.5rem] overflow-hidden group relative border border-slate-800 shadow-2xl"
+551:                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">{item.type}</p>
+571:            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Events</span>
+577:            <div className="bg-slate-900/50 backdrop-blur-md p-20 rounded-[4rem] border border-slate-800 text-center space-y-4">
+586:                <div key={event.id} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 flex gap-8 items-start group hover:border-amber-500/50 transition-colors shadow-2xl">
+588:                    <span className="text-2xl leading-none">{event.date.split('-')[2]}</span>
+589:                    <span className="text-[10px] uppercase tracking-widest">{new Date(event.date).toLocaleString('default', { month: 'short' })}</span>
+594:                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+612:            <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Tournaments</span>
+618:            <div className="bg-slate-900/50 backdrop-blur-md p-20 rounded-[4rem] border border-slate-800 text-center space-y-4">
+627:                <div key={tournament.id} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[4rem] border border-slate-800 shadow-2xl space-y-10 group hover:border-amber-500/30 transition-all duration-500">
+632:                          "px-4 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border",
+636:                          "px-4 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border",
+645:                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Entry Fee</p>
+649:                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Prize Pool</p>
+656:                    <div className="bg-slate-950/50 p-8 rounded-[2.5rem] border border-slate-800 space-y-2">
+657:                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Max Teams</p>
+660:                    <div className="bg-slate-950/50 p-8 rounded-[2.5rem] border border-slate-800 space-y-2">
+661:                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Registered</p>
+664:                    <div className="bg-slate-950/50 p-8 rounded-[2.5rem] border border-slate-800 space-y-2">
+665:                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Sponsors</p>
+677:                          className="w-full h-full py-8 bg-amber-500 text-gray-950 rounded-[2.5rem] font-black text-sm uppercase tracking-widest hover:bg-amber-400 hover:scale-105 transition-all shadow-xl shadow-amber-500/20"
+682:                        <div className="w-full h-full py-8 bg-slate-900 border border-slate-800 text-slate-500 rounded-[2.5rem] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2">
+692:                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-6 text-center">Tournament Sponsors</p>
+714:            <span className="px-4 py-1 bg-emerald-500 text-gray-950 rounded-full text-[10px] font-black uppercase tracking-widest">Registration</span>
+719:          <div className="bg-slate-900/50 backdrop-blur-md p-2 md:p-3 rounded-[4.5rem] border border-slate-800 shadow-2xl space-y-10">
+732:            <span className="px-4 py-1 bg-amber-500 text-gray-950 rounded-full text-[10px] font-black uppercase tracking-widest">Join Us</span>
+737:          <div className="bg-slate-900/50 backdrop-blur-md p-2 md:p-3 rounded-[4.5rem] border border-slate-800 shadow-2xl space-y-10">
+747:  const [formData, setFormData] = useState({ 
+759:  const [submitted, setSubmitted] = useState(false);
+761:  const publicTournaments = data.hostedTournaments?.filter(t => t.status !== 'Finished' && t.type === 'Public' && t.isPublished) || [];
+821:      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6 py-20 bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800">
+822:        <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+837:    <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] p-8 md:p-12 relative overflow-hidden border border-slate-800">
+838:      <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] -mr-48 -mt-48" />
+843:          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Fill all details carefully / সব তথ্য সাবধানে পূরণ করুন</p>
+848:            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Select Tournament</label>
+863:            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Club Name / ক্লাবের নাম</label>
+874:            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Address / ঠিকানা</label>
+885:            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Captain Name (Optional) / অধিনায়কের নাম</label>
+895:            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Mobile Number / মোবাইল নম্বর</label>
+906:            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Amount Paid (Optional) / কত টাকা দিয়েছেন</label>
+917:            <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Payment Summary / পেমেন্ট সারসংক্ষেপ</h4>
+920:                <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Total Fee</p>
+924:                <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Paid</p>
+928:                <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Due</p>
+935:            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Transaction ID (Optional) / ট্রানজেকশন আইডি</label>
+955:          className="w-full py-6 bg-emerald-500 text-gray-950 rounded-[2rem] text-sm font-black uppercase tracking-widest hover:bg-emerald-400 hover:scale-[1.02] transition-all shadow-2xl shadow-emerald-500/20 italic"
+965:  const [formData, setFormData] = useState({ 
+978:  const [agreed, setAgreed] = useState(false);
+979:  const [submitted, setSubmitted] = useState(false);
+1026:      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6 py-20 bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800">
+1027:        <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+1042:    <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 p-8 md:p-12 shadow-2xl relative overflow-hidden">
+1043:      <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-[120px] -mr-48 -mt-48" />
+1049:            <div className="w-[100px] h-[100px] bg-black rounded-full border-2 border-slate-800 shadow-[0_0_20px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center">
+1065:            <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px]">IRB WARRIORS CRICKET TEAM</p>
+1077:              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ব্যক্তিগত তথ্য</p>
+1083:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Full Name / পুরো নাম</label>
+1088:                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+1093:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Father's Name / পিতার নাম</label>
+1098:                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+1103:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Date of Birth / জন্ম তারিখ</label>
+1109:                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white text-sm" 
+1113:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Blood Group / রক্তের গ্রুপ</label>
+1117:                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white text-sm"
+1120:                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(group => (
+1126:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Mobile Number / মোবাইল নম্বর</label>
+1131:                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+1136:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Current Address / বর্তমান ঠিকানা</label>
+1141:                className="w-full p-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm min-h-[100px] resize-none" 
+1156:              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ক্রিকেট প্রোফাইল</p>
+1162:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Playing Type / খেলার ধরণ</label>
+1164:                {[
+1175:                      "h-[50px] rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all border px-2",
+1188:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Batting Style / ব্যাটিং স্টাইল</label>
+1190:                {[
+1199:                      "flex-1 h-[50px] rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all border",
+1212:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Bowling Style / বোলিং স্টাইল</label>
+1216:                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+1222:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Jersey Size / জার্সি সাইজ</label>
+1224:                {['S', 'M', 'L', 'XL', 'XXL'].map((size) => (
+1243:              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Favorite Jersey Number / প্রিয় জার্সি নম্বর</label>
+1247:                className="w-full h-[56px] px-4 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 transition-all font-medium text-white placeholder:text-slate-600 text-sm" 
+1262:              <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">নিয়মাবলী</p>
+1267:            {[
+1268:              { id: "1", icon: "📌", color: "bg-red-500", title: "শৃঙ্খলা", items: ["টিমের সকল নিয়ম মেনে চলতে হবে", "ম্যানেজমেন্টের সিদ্ধান্ত চূড়ান্ত"] },
+1269:              { id: "2", icon: "⏰", color: "bg-amber-500", title: "উপস্থিতি", items: ["নিয়মিত প্র্যাকটিসে থাকতে হবে", "অনুপস্থিত হলে আগে জানাতে হবে"] },
+1270:              { id: "3", icon: "👕", color: "bg-blue-500", title: "ড্রেস কোড", items: ["টিমের নির্ধারিত জার্সি বাধ্যতামূলক"] },
+1271:              { id: "4", icon: "🤝", color: "bg-emerald-500", title: "দলীয় আচরণ", items: ["সকল সদস্যকে সম্মান করতে হবে", "টিমের ঐক্য বজায় রাখতে হবে"] },
+1272:              { id: "5", icon: "🚫", color: "bg-rose-500", title: "নিষিদ্ধ বিষয়", items: ["ধূমপান / মাদক সম্পূর্ণ নিষিদ্ধ", "মারামারি বা খারাপ আচরণ নিষিদ্ধ"] },
+1273:              { id: "6", icon: "⚖️", color: "bg-indigo-500", title: "দল নির্বাচন", items: ["পারফরম্যান্স অনুযায়ী দল নির্বাচন হবে", "কোচ/ক্যাপ্টেনের সিদ্ধান্ত চূড়ান্ত"] },
+1274:              { id: "7", icon: "💰", color: "bg-yellow-500", title: "চাঁদা ও খরচ", items: ["মাসিক/টুর্নামেন্ট ফি দিতে হবে", "সময়মতো পরিশোধ বাধ্যতামূলক"] },
+1275:              { id: "8", icon: "🏆", color: "bg-orange-500", title: "ম্যাচ নিয়ম", items: ["আম্পায়ারের সিদ্ধান্ত চূড়ান্ত", "স্পোর্টসম্যানশিপ বজায় রাখতে হবে"] },
+1276:              { id: "9", icon: "📢", color: "bg-cyan-500", title: "যোগাযোগ", items: ["টিম গ্রুপে সক্রিয় থাকতে হবে", "গুরুত্বপূর্ণ মিটিংয়ে উপস্থিত থাকতে হবে"] },
+1277:              { id: "10", icon: "❗", color: "bg-pink-500", title: "শাস্তি", items: ["নিয়ম ভঙ্গ করলে সতর্কবার্তা", "গুরুতর হলে দল থেকে বহিষ্কার"] },
+1279:              <div key={rule.id} className="bg-white/[0.03] p-8 rounded-[2rem] border border-white/5 space-y-4 hover:bg-white/[0.05] transition-all group">
+1288:                    <li key={i} className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+1310:          <div className="bg-white/[0.03] p-10 rounded-[3rem] border border-white/5 space-y-8 relative overflow-hidden">
+1311:            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px] -mr-32 -mt-32" />
+1317:              <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold leading-relaxed">
+1344:              "w-full py-10 rounded-[3rem] font-black text-2xl transition-all flex items-center justify-center gap-5 uppercase italic tracking-tighter group shadow-2xl relative overflow-hidden",
+1346:                ? "bg-amber-500 text-gray-950 hover:bg-amber-400 shadow-amber-500/30 scale-[1.02]" 
+1355:            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">
+1366:const PrintableAdmissions = ({ selectedAdmissions, data }: { selectedAdmissions: number[], data: AppData }) => {
+1408:  const rounds = [
+1415:    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
+1421:        className="relative w-full max-w-6xl bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-[3rem] p-10 overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl"
+1426:            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{tournament.name}</p>
+1434:              <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] text-center mb-8">{round.name}</h3>
+1441:                        <span className="text-[10px] font-black text-slate-600 scoreboard-font">{match.score?.teamARuns || 0}</span>
+1446:                        <span className="text-[10px] font-black text-slate-600 scoreboard-font">{match.score?.teamBRuns || 0}</span>
+1451:                  <div className="h-32 border border-dashed border-slate-800 rounded-2xl flex items-center justify-center text-[10px] font-black text-slate-700 uppercase">TBD</div>
+1462:const SquadSelectionModal = ({ tournament, players, onClose, onSave }: { tournament: any, players: any[], onClose: () => void, onSave: (squad: number[]) => void }) => {
+1463:  const [selectedSquad, setSelectedSquad] = useState<number[]>(tournament.squad || []);
+1466:    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
+1472:        className="relative w-full max-w-4xl bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-[3rem] p-10 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl"
+1477:            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Playing XI ({selectedSquad.length}/11)</p>
+1491:                    setSelectedSquad([...selectedSquad, player.id]);
+1504:                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{player.role}</p>
+1531:  const skillData = [
+1554:            <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-amber-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+1555:            <div className="relative glass-card rounded-[3rem] overflow-hidden aspect-[4/5]">
+1560:                <p className="text-amber-500 font-black uppercase tracking-[0.3em] text-[10px] mt-2">{player.role}</p>
+1565:          <div className="glass-card p-8 rounded-[2.5rem] space-y-6">
+1569:            <div className="h-[250px] w-full">
+1574:                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+1590:            {[
+1597:                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+1603:          <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-[3rem] overflow-hidden">
+1613:                    <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Opponent</th>
+1614:                    <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</th>
+1615:                    <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Wickets</th>
+1616:                    <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">MOTM</th>
+1620:                  {(player.matchHistory || []).map((match: any, i: number) => (
+1626:                        {match.motm && <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[8px] font-black rounded-lg uppercase">Yes</span>}
+1641:  const [activeTab, setActiveTab] = useState<'admissions' | 'committee' | 'players' | 'matches' | 'finance' | 'ranking' | 'gallery' | 'events' | 'hosted' | 'external' | 'settings'>('admissions');
+1642:  const [showAddMember, setShowAddMember] = useState(false);
+1643:  const [showAddGallery, setShowAddGallery] = useState(false);
+1644:  const [showAddEvent, setShowAddEvent] = useState(false);
+1645:  const [showAddFinance, setShowAddFinance] = useState(false);
+1646:  const [showAddPlayer, setShowAddPlayer] = useState(false);
+1647:  const [showAddMatch, setShowAddMatch] = useState(false);
+1648:  const [showAddHosted, setShowAddHosted] = useState(false);
+1649:  const [showAddRegistration, setShowAddRegistration] = useState(false);
+1650:  const [showAddAdmission, setShowAddAdmission] = useState(false);
+1651:  const [selectedTournamentForReg, setSelectedTournamentForReg] = useState<any>(null);
+1652:  const [showAddSponsor, setShowAddSponsor] = useState(false);
+1653:  const [showAddFixture, setShowAddFixture] = useState(false);
+1654:  const [showTournamentScoring, setShowTournamentScoring] = useState(false);
+1655:  const [selectedTournament, setSelectedTournament] = useState<any>(null);
+1656:  const [selectedTournamentMatch, setSelectedTournamentMatch] = useState<any>(null);
+1657:  const [showAddExternal, setShowAddExternal] = useState(false);
+1658:  const [showAddExternalExpense, setShowAddExternalExpense] = useState(false);
+1659:  const [showUpdateScore, setShowUpdateScore] = useState(false);
+1660:  const [selectedMatch, setSelectedMatch] = useState<any>(null);
+1661:  const [showEditStats, setShowEditStats] = useState(false);
+1662:  const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
+1663:  const [editingMember, setEditingMember] = useState<CommitteeMember | null>(null);
+1664:  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+1665:  const [showAdmissionDetails, setShowAdmissionDetails] = useState(false);
+1666:  const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
+1667:  const [selectedAdmissions, setSelectedAdmissions] = useState<number[]>([]);
+1668:  const [showUpdatePayment, setShowUpdatePayment] = useState(false);
+1669:  const [selectedRegistration, setSelectedRegistration] = useState<any>(null);
+1670:  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+1672:  const [newMember, setNewMember] = useState({ name: "", role: "", phone: "", photo: "" });
+1673:  const [newGallery, setNewGallery] = useState({ type: "Photo", url: "", caption: "", thumbnail: "" });
+1674:  const [newEvent, setNewEvent] = useState({ title: "", date: "", location: "", description: "" });
+1675:  const [newFinance, setNewFinance] = useState({ type: "Income", amount: 0, category: "", description: "", date: new Date().toISOString().split('T')[0] });
+1676:  const [newPlayer, setNewPlayer] = useState({ name: "", role: "Batsman", jerseyNumber: "", photo: "", phone: "", status: "Active" });
+1677:  const [newMatch, setNewMatch] = useState({ teamA: "IRB Warriors", teamB: "", date: "", time: "", venue: "", type: "Short Pitch", overs: 8, status: "Upcoming" });
+1678:  const [newHosted, setNewHosted] = useState({ name: "", startDate: "", endDate: "", entryFee: 0, prizePool: "", status: "Upcoming" });
+1679:  const [newExternal, setNewExternal] = useState({ name: "", organizer: "", location: "", startDate: "", budget: 0, currentStage: "Group Stage", status: "Upcoming" });
+1680:  const [newExternalMatch, setNewExternalMatch] = useState({ teamA: "IRB Warriors", teamB: "", date: "", time: "", venue: "", type: "Short Pitch", overs: 8, status: "Upcoming" });
+1681:  const [newExternalExpense, setNewExternalExpense] = useState({ type: "Expense", amount: 0, category: "Tournament", description: "", date: new Date().toISOString().split('T')[0] });
+1682:  const [matchScore, setMatchScore] = useState({ teamARuns: 0, teamAWickets: 0, teamBRuns: 0, teamBWickets: 0 });
+1683:  const [editStats, setEditStats] = useState({ matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0 });
+1684:  const [settings, setSettings] = useState(data.settings || {
+1714:      const tableName = tableMap[type] || type;
+1739:        const form = forms[i] as HTMLElement;
+1867:    setNewFinance({ type: "Income", amount: 0, category: "", description: "", date: new Date().toISOString().split('T')[0] });
+1949:      registrations: [],
+1950:      sponsors: [],
+1951:      fixtures: []
+2120:    setNewExternalExpense({ type: "Expense", amount: 0, category: "Tournament", description: "", date: new Date().toISOString().split('T')[0] });
+2174:  const [selectedPlayerForProfile, setSelectedPlayerForProfile] = useState<any>(null);
+2175:  const [showBracket, setShowBracket] = useState(false);
+2176:  const [selectedTournamentForSquad, setSelectedTournamentForSquad] = useState<any>(null);
+2178:  const [selectedTournamentForBracket, setSelectedTournamentForBracket] = useState<any>(null);
+2180:  const handleSaveSquad = async (squad: number[]) => {
+2193:  const menuItems = [
+2212:        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-amber-500/5 rounded-full blur-[150px] -mr-40 -mt-40" />
+2219:            <div className="bg-black backdrop-blur-3xl rounded-[2rem] border-r border-slate-800 p-8 sticky top-28 h-[calc(100vh-140px)] flex flex-col space-y-8 overflow-hidden relative">
+2222:                  <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center text-gray-950 shadow-[0_0_30px_rgba(245,158,11,0.3)]">
+2227:                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mt-1">Control Center</p>
+2238:                      "w-full flex items-center gap-4 px-6 py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300 group",
+2240:                        ? "bg-amber-500 text-gray-950 shadow-lg scale-[1.02] italic" 
+2254:                <Link to="/" className="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-500/10 transition-all group">
+2268:                  <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.4em]">Management System</span>
+2271:                  {activeTab.replace(/([A-Z])/g, ' $1').trim()} <span className="text-amber-500">Hub</span>
+2273:                <p className="text-white/80 font-bold uppercase tracking-[0.2em] text-[10px] max-w-md">Comprehensive control over your club's {activeTab} ecosystem.</p>
+2301:              {[
+2307:                <div key={i} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-8 rounded-[2rem] relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+2313:                    <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
+2318:                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+2326:              <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-10 rounded-[3rem] space-y-8">
+2329:                  <select className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-[10px] font-black text-white uppercase outline-none">
+2334:                <div className="h-[300px] w-full flex items-center justify-center bg-slate-950/30 rounded-2xl border border-dashed border-slate-800">
+2337:                    <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Analytics will appear here as data grows</p>
+2342:              <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-10 rounded-[3rem] space-y-8">
+2351:                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{match.date} • {match.venue}</p>
+2355:                        <span className="text-[10px] font-black text-amber-500 bg-amber-500/10 px-3 py-1 rounded-lg uppercase italic">Upcoming</span>
+2371:            className="space-y-10 bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl"
+2382:                  className="flex items-center gap-3 px-6 py-3 bg-emerald-500 text-gray-950 rounded-2xl text-[10px] font-black hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20 uppercase tracking-widest"
+2391:                      className="flex items-center gap-3 px-6 py-3 bg-slate-900/50 text-white rounded-2xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
+2398:                      className="flex items-center gap-3 px-6 py-3 bg-amber-500 text-gray-950 rounded-2xl text-[10px] font-black hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/20 uppercase tracking-widest"
+2408:            <div className="bg-slate-950/50 backdrop-blur-3xl rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+2423:                                setSelectedAdmissions([]);
+2432:                      <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Applicant</th>
+2433:                      <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Role</th>
+2434:                      <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Contact</th>
+2435:                      <th className="px-10 py-8 text-left text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Status</th>
+2436:                      <th className="px-10 py-8 text-right text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Actions</th>
+2450:                                  setSelectedAdmissions([...selectedAdmissions, admission.id]);
+2468:                              <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-1">DOB: {admission.dob}</p>
+2473:                          <span className="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-950 text-amber-500 border border-slate-800">{admission.role}</span>
+2482:                            "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
+2541:                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+2550:                <div key={member.id} className="bg-slate-900/50 backdrop-blur-md p-8 rounded-[3rem] border border-slate-800 flex flex-col gap-6 shadow-2xl group hover:border-amber-500/50 transition-all duration-500 relative overflow-hidden">
+2555:                      <img src={member.photo} alt={member.name} className="w-24 h-24 rounded-[2rem] object-contain bg-slate-950/50 border-2 border-slate-800 group-hover:border-amber-500/50 transition-all duration-500" referrerPolicy="no-referrer" />
+2561:                      <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em]">{member.role}</p>
+2565:                        <p className="text-[10px] font-bold uppercase tracking-widest">{member.phone}</p>
+2611:              {[
+2616:                <div key={i} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+2622:                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{stat.label}</p>
+2636:                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+2643:            <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+2647:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Date</th>
+2648:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Type</th>
+2649:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Category</th>
+2650:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Amount</th>
+2651:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Action</th>
+2660:                          "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
+2731:                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+2738:            <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+2743:                      <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Player</th>
+2744:                      <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Role</th>
+2745:                      <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Stats</th>
+2746:                      <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Actions</th>
+2756:                              <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-500 text-gray-950 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">#{player.jerseyNumber}</div>
+2760:                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{player.phone}</p>
+2765:                          <span className="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-950 text-amber-500 border border-slate-800">{player.role}</span>
+2770:                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Runs</p>
+2774:                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Wickets</p>
+2835:                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+2842:            <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+2846:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Match</th>
+2847:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Status</th>
+2848:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Score</th>
+2849:                    <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Action</th>
+2858:                            <span className="text-[10px] font-black text-amber-500 uppercase">{match.date.split('-')[2]}</span>
+2859:                            <span className="text-[8px] font-black text-slate-500 uppercase">{new Date(match.date).toLocaleString('default', { month: 'short' })}</span>
+2863:                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{match.venue} • {match.time}</p>
+2869:                          "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
+2937:                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+2946:                <div key={item.id} className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden relative group shadow-2xl hover:border-amber-500/50 transition-all duration-500">
+2960:                      <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em]">{item.type}</p>
+2992:                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+3001:                <div key={event.id} className="bg-slate-900/50 backdrop-blur-md p-8 rounded-[3rem] border border-slate-800 flex flex-col md:flex-row justify-between items-center gap-8 group shadow-2xl hover:border-amber-500/50 transition-all duration-500 relative overflow-hidden">
+3002:                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[100px] -mr-32 -mt-32 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+3005:                    <div className="w-24 h-24 bg-slate-950 text-amber-500 rounded-[2rem] flex flex-col items-center justify-center border border-slate-800 shadow-xl group-hover:bg-amber-500 group-hover:text-gray-950 transition-all duration-500">
+3006:                      <span className="text-3xl font-black italic leading-none">{event.date.split('-')[2]}</span>
+3007:                      <span className="text-[10px] font-black uppercase tracking-[0.2em] mt-1">{new Date(event.date).toLocaleString('default', { month: 'short' })}</span>
+3014:                          <p className="text-[10px] font-black uppercase tracking-widest">{event.location}</p>
+3018:                          <p className="text-[10px] font-black uppercase tracking-widest">{event.date}</p>
+3044:            className="space-y-10 bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl"
+3053:                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+3062:                <div key={tournament.id} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl space-y-8">
+3067:                          "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border",
+3073:                            "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border transition-all",
+3082:                            "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border transition-all",
+3088:                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{tournament.startDate} - {tournament.endDate}</p>
+3093:                        className="flex items-center gap-2 px-4 py-2 bg-slate-950 text-white rounded-xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
+3101:                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Entry Fee</p>
+3105:                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Prize Pool</p>
+3113:                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Collected</p>
+3117:                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Expected</p>
+3121:                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Due</p>
+3138:                          className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-xl text-[10px] font-black hover:bg-emerald-500 hover:text-gray-950 transition-all uppercase italic tracking-widest border border-emerald-500/20"
+3145:                        <table className="w-full text-left text-[10px] min-w-[500px]">
+3170:                                      <p className="text-[8px] text-slate-500 leading-tight max-w-[150px] truncate" title={reg.address}>{reg.address}</p>
+3176:                                  <p className="text-[8px] text-slate-500">{reg.phone}</p>
+3190:                                    "px-2 py-0.5 rounded-md text-[8px] font-black uppercase mb-1 block w-fit",
+3196:                                    <p className="text-[7px] font-black text-slate-500 uppercase tracking-tighter truncate max-w-[80px]" title={reg.transactionId}>
+3205:                                        <span className="text-[7px] font-black text-slate-600 uppercase">Paid:</span>
+3209:                                        <span className="text-[7px] font-black text-slate-600 uppercase">Due:</span>
+3243:                      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+3247:                              <p className="text-[10px] font-black text-white uppercase italic">{fixture.teamA} vs {fixture.teamB}</p>
+3248:                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{fixture.date} • {fixture.time}</p>
+3252:                                <p className="text-[10px] font-black text-amber-500 italic">
+3256:                                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
+3276:                          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest text-center">+{tournament.fixtures.length - 3} more fixtures</p>
+3279:                          <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center py-4 border border-dashed border-slate-800 rounded-xl">No fixtures added yet</p>
+3295:                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest text-center">{sponsor.name}</p>
+3303:                          className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800 border-dashed flex flex-col items-center justify-center gap-2 hover:bg-slate-900 transition-all min-h-[100px]"
+3306:                          <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Add Sponsor</p>
+3319:                        className="px-6 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
+3328:                            setSelectedTournamentMatch(tournament.fixtures[0]);
+3335:                        className="px-6 py-3 bg-slate-950 text-white rounded-xl text-[10px] font-black hover:bg-slate-900 transition-all border border-slate-800 uppercase tracking-widest"
+3359:            className="space-y-10 bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl"
+3368:                className="group flex items-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+3377:                <div key={tournament.id} className="bg-slate-900/50 backdrop-blur-md p-10 rounded-[3rem] border border-slate-800 shadow-2xl space-y-8">
+3381:                        <span className="px-3 py-1 bg-amber-500/20 text-amber-500 border border-amber-500/30 rounded-lg text-[8px] font-black uppercase tracking-widest">{tournament.currentStage}</span>
+3382:                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{tournament.startDate} • {tournament.location}</p>
+3385:                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organized by: {tournament.organizer}</p>
+3389:                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Budget</p>
+3393:                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Expense</p>
+3409:                            <div key={playerId} className="px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 text-[10px] font-black text-white uppercase italic">
+3432:                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{match.date}</p>
+3433:                              <p className="text-[10px] font-black text-white uppercase italic">{match.teamB}</p>
+3438:                        <button className="w-full py-3 bg-slate-950/50 rounded-2xl border border-slate-800 border-dashed text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-slate-900 transition-all">Add Match Result</button>
+3449:                          <div key={expense.id} className="flex justify-between items-center text-[10px]">
+3459:                          className="w-full py-3 bg-slate-950/50 rounded-2xl border border-slate-800 border-dashed text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-slate-900 transition-all"
+3470:                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Journey: {tournament.currentStage}</p>
+3489:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+3490:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md w-full max-w-2xl rounded-[3rem] p-10 space-y-8 shadow-2xl border border-slate-800 overflow-y-auto max-h-[90vh] custom-scrollbar">
+3494:                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Enter player details manually</p>
+3501:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Full Name / পুরো নাম</label>
+3505:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Father's Name / পিতার নাম</label>
+3509:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date of Birth / জন্ম তারিখ</label>
+3513:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Blood Group / রক্তের গ্রুপ</label>
+3516:                      {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(group => (
+3522:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone Number / মোবাইল নম্বর</label>
+3526:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Address / ঠিকানা</label>
+3527:                    <textarea name="address" required className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white min-h-[100px] placeholder:text-slate-700" placeholder="Full Address" />
+3530:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role / পজিশন</label>
+3539:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Batting Style / ব্যাটিং স্টাইল</label>
+3546:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Bowling Style / বোলিং স্টাইল</label>
+3550:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey Size / জার্সি সাইজ</label>
+3560:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey Number / জার্সি নম্বর</label>
+3575:            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+3582:              className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 relative z-10 shadow-2xl"
+3590:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Sponsor Name</label>
+3594:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Logo URL</label>
+3608:            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+3615:              className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-2xl rounded-[3rem] p-10 relative z-10 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
+3624:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Team A</label>
+3628:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Team B</label>
+3632:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Date</label>
+3636:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Time</label>
+3640:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Venue</label>
+3644:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Overs</label>
+3659:            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+3666:              className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-2xl rounded-[3rem] p-10 relative z-10 shadow-2xl"
+3678:                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</label>
+3682:                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Wickets</label>
+3691:                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</label>
+3695:                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Wickets</label>
+3704:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</label>
+3712:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Result</label>
+3728:            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+3735:              className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-2xl rounded-[3rem] p-10 relative z-10 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
+3744:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Tournament Name</label>
+3748:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Prize Pool</label>
+3752:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Start Date</label>
+3756:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">End Date</label>
+3760:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Entry Fee (৳)</label>
+3764:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Max Teams</label>
+3768:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Tournament Type</label>
+3775:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Visibility</label>
+3783:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Rules & Regulations</label>
+3797:            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+3804:              className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-2xl rounded-[3rem] p-10 relative z-10 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
+3809:                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tournament: {selectedTournamentForReg.name}</p>
+3816:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Team Name</label>
+3820:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Captain Name</label>
+3824:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Phone Number</label>
+3828:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Address</label>
+3832:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Amount Paid (৳)</label>
+3836:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Transaction ID (Optional)</label>
+3843:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Select Club Players (Domestic Tournament)</label>
+3851:                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-white transition-colors">{player.name}</span>
+3869:            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+3876:              className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-2xl rounded-[3rem] p-10 relative z-10 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
+3885:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Tournament Name</label>
+3889:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Organizer</label>
+3893:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Location</label>
+3897:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Start Date</label>
+3901:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Total Budget (৳)</label>
+3905:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Current Stage</label>
+3917:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Select Squad</label>
+3925:                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-white transition-colors">{player.name}</span>
+3941:            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+3948:              className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 relative z-10 shadow-2xl"
+3956:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Description</label>
+3960:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Amount (৳)</label>
+3964:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Date</label>
+3973:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+3974:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+3981:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
+3985:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
+3997:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
+4012:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4013:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4020:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
+4024:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
+4036:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
+4051:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4052:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4059:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Type</label>
+4078:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Caption</label>
+4088:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4089:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4096:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Title</label>
+4100:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date</label>
+4104:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Location</label>
+4108:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Description</label>
+4118:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4119:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4127:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
+4131:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey #</label>
+4136:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
+4150:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
+4160:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4161:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10 overflow-y-auto max-h-[90vh] custom-scrollbar">
+4169:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
+4173:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey #</label>
+4178:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
+4187:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</label>
+4200:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
+4226:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4227:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4236:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Matches</label>
+4240:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Runs</label>
+4244:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Wickets</label>
+4248:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Average</label>
+4252:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Strike Rate</label>
+4263:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4264:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4272:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Type</label>
+4279:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Amount</label>
+4284:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Category</label>
+4288:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Description</label>
+4298:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4299:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4307:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Team A</label>
+4311:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Team B</label>
+4317:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date</label>
+4321:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Time</label>
+4326:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Venue</label>
+4331:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Type</label>
+4338:                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Overs</label>
+4349:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4350:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-2xl rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto">
+4358:                  <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] border-b border-slate-800 pb-2">Personal Information</h3>
+4360:                    {[
+4369:                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{item.label}</p>
+4377:                  <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] border-b border-slate-800 pb-2">Cricket Profile</h3>
+4379:                    {[
+4387:                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{item.label}</p>
+4422:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4423:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4431:                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-slate-800 pb-2">{selectedMatch.teamA}</h3>
+4434:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</label>
+4438:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Wickets</label>
+4444:                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-slate-800 pb-2">{selectedMatch.teamB}</h3>
+4447:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</label>
+4451:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Wickets</label>
+4463:          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+4464:            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+4471:                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Fee: ৳{selectedRegistration.totalFee}</p>
+4475:                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Amount Paid / কত টাকা দিয়েছেন</label>
+4504:            <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
+4505:              <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-[120px] -mr-48 -mt-48" />
+4511:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Club Name</label>
+4516:                        className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
+4521:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Established Year</label>
+4526:                        className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
+4531:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">WhatsApp Number</label>
+4536:                        className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
+4544:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Location</label>
+4549:                        className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
+4554:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Facebook URL</label>
+4559:                        className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
+4564:                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Club Logo</label>
+4577:                    className="w-full py-8 bg-amber-500 text-gray-950 rounded-[2.5rem] font-black text-xl hover:bg-amber-400 transition-all shadow-[0_20px_50px_rgba(245,158,11,0.3)] flex items-center justify-center gap-4 uppercase italic tracking-tighter group"
+4599:        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.05),transparent_50%)]" />
+4600:        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+4612:          <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-sm italic">Upcoming & Recent Battles</p>
+4622:              className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 p-8 md:p-12 shadow-2xl group hover:border-amber-500/50 transition-all"
+4637:                    "px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+4658:                      <p className="text-[10px] font-black text-slate-600 uppercase mb-1">{match.teamA}</p>
+4663:                      <p className="text-[10px] font-black text-slate-600 uppercase mb-1">{match.teamB}</p>
+4678:  const sortedPlayers = [...(data.players || [])].sort((a, b) => b.stats.runs - a.stats.runs);
+4685:        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.05),transparent_50%)]" />
+4686:        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+4698:          <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-sm italic">The Elite Performers</p>
+4710:                "relative bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 p-10 text-center shadow-2xl",
+4717:              <img src={player.photo} alt={player.name} className="w-32 h-32 rounded-[2.5rem] object-contain bg-slate-950/50 mx-auto mb-6 border-4 border-slate-800" referrerPolicy="no-referrer" />
+4723:                  <p className="text-[10px] font-black text-slate-600 uppercase mb-1">Runs</p>
+4727:                  <p className="text-[10px] font-black text-slate-600 uppercase mb-1">Avg</p>
+4736:        <div className="bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+4740:                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Rank</th>
+4741:                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Player</th>
+4742:                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Matches</th>
+4743:                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Runs</th>
+4744:                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Wickets</th>
+4745:                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Avg</th>
+4757:                        <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{player.role}</div>
+4782:  const [email, setEmail] = useState("");
+4783:  const [password, setPassword] = useState("");
+4784:  const [loading, setLoading] = useState(false);
+4785:  const [error, setError] = useState("");
+4811:    <div className="min-h-[60vh] flex items-center justify-center px-4 py-20">
+4815:        className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl p-10 rounded-[3rem] border border-slate-800 shadow-2xl space-y-8"
+4825:              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Email Address</label>
+4836:              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Password</label>
+4858:            className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-black py-4 rounded-2xl transition-all uppercase italic tracking-widest shadow-[0_10px_30px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2"
+4870:  const [data, setData] = useState<AppData | null>(null);
+4871:  const [loading, setLoading] = useState(true);
+4872:  const [user, setUser] = useState<any>(null);
+4927:  }, []);
+4971:                {data.settings?.clubName.split(' ')[0]} <span className="text-amber-500">{data.settings?.clubName.split(' ').slice(1).join(' ')}</span>

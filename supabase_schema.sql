@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS settings (
   whatsapp TEXT DEFAULT '+880 1892-128292',
   facebook TEXT DEFAULT 'https://www.facebook.com/share/1DzscJ3sCS/',
   logo TEXT DEFAULT '/logo.png',
+  admission_fee NUMERIC DEFAULT 0,
+  monthly_fee NUMERIC DEFAULT 0,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -30,12 +32,20 @@ CREATE TABLE IF NOT EXISTS committee (
 CREATE TABLE IF NOT EXISTS players (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL,
+  father_name TEXT,
+  dob TEXT,
+  blood_group TEXT,
+  address TEXT,
   role TEXT NOT NULL,
+  batting_style TEXT,
+  bowling_style TEXT,
+  jersey_size TEXT,
   jersey_number TEXT,
   photo TEXT,
   phone TEXT,
   status TEXT DEFAULT 'Active',
-  stats JSONB DEFAULT '{"matches": 0, "runs": 0, "wickets": 0, "avg": 0, "sr": 0}'::jsonb,
+  monthly_fee NUMERIC DEFAULT 0,
+  stats JSONB DEFAULT '{"matches": 0, "runs": 0, "wickets": 0, "avg": 0, "sr": 0, "bestInnings": "N/A"}'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -65,12 +75,14 @@ CREATE TABLE IF NOT EXISTS admissions (
   blood_group TEXT,
   phone TEXT NOT NULL,
   address TEXT,
+  photo TEXT,
   role TEXT NOT NULL,
   batting_style TEXT,
   bowling_style TEXT,
   jersey_size TEXT,
   jersey_number TEXT,
   status TEXT DEFAULT 'pending',
+  payment_status TEXT DEFAULT 'Unpaid',
   registration_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

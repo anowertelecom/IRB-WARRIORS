@@ -38,13 +38,23 @@ export const supabaseService = {
         phone: settings?.phone || '',
         whatsapp: settings?.whatsapp || '',
         facebook: settings?.facebook || '',
-        logo: settings?.logo || '/logo.png'
+        logo: settings?.logo || '/logo.png',
+        admissionFee: settings?.admission_fee || 0,
+        monthlyFee: settings?.monthly_fee || 0
       },
       committee: (committee || []) as CommitteeMember[],
       players: (players || []).map(p => ({
         ...p,
+        fatherName: p.father_name,
+        dob: p.dob,
+        bloodGroup: p.blood_group,
+        address: p.address,
+        battingStyle: p.batting_style,
+        bowlingStyle: p.bowling_style,
+        jerseySize: p.jersey_size,
         jerseyNumber: p.jersey_number,
-        stats: p.stats || { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0 }
+        monthlyFee: p.monthly_fee,
+        stats: p.stats || { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0, bestInnings: "N/A" }
       })) as Player[],
       matches: (matches || []).map(m => ({
         ...m,
@@ -60,6 +70,7 @@ export const supabaseService = {
         bowlingStyle: a.bowling_style,
         jerseySize: a.jersey_size,
         jerseyNumber: a.jersey_number,
+        paymentStatus: a.payment_status,
         registrationDate: a.registration_date
       })) as Admission[],
       finance: (finance || []).map(f => ({
@@ -86,7 +97,9 @@ export const supabaseService = {
         phone: settings.phone,
         whatsapp: settings.whatsapp,
         facebook: settings.facebook,
-        logo: settings.logo
+        logo: settings.logo,
+        admission_fee: settings.admissionFee,
+        monthly_fee: settings.monthlyFee
       });
     if (error) throw error;
     return data;
@@ -103,12 +116,14 @@ export const supabaseService = {
         blood_group: admission.bloodGroup,
         phone: admission.phone,
         address: admission.address,
+        photo: admission.photo,
         role: admission.role,
         batting_style: admission.battingStyle,
         bowling_style: admission.bowlingStyle,
         jersey_size: admission.jerseySize,
         jersey_number: admission.jerseyNumber,
         status: admission.status,
+        payment_status: admission.paymentStatus,
         registration_date: admission.registrationDate
       }])
       .select()
@@ -132,11 +147,19 @@ export const supabaseService = {
       .from('players')
       .insert([{
         name: player.name,
+        father_name: player.fatherName,
+        dob: player.dob,
+        blood_group: player.bloodGroup,
+        address: player.address,
         role: player.role,
+        batting_style: player.battingStyle,
+        bowling_style: player.bowlingStyle,
+        jersey_size: player.jerseySize,
         jersey_number: player.jerseyNumber,
         photo: player.photo,
         phone: player.phone,
         status: player.status,
+        monthly_fee: player.monthlyFee,
         stats: player.stats
       }])
       .select()
@@ -316,12 +339,46 @@ export const supabaseService = {
       .from('players')
       .update({
         name: updates.name,
+        father_name: updates.fatherName,
+        dob: updates.dob,
+        blood_group: updates.bloodGroup,
+        address: updates.address,
         role: updates.role,
+        batting_style: updates.battingStyle,
+        bowling_style: updates.bowlingStyle,
+        jersey_size: updates.jerseySize,
         jersey_number: updates.jerseyNumber,
         photo: updates.photo,
         phone: updates.phone,
         status: updates.status,
+        monthly_fee: updates.monthlyFee,
         stats: updates.stats
+      })
+      .eq('id', id);
+    if (error) throw error;
+    return data;
+  },
+
+  async updateAdmission(id: number, updates: Partial<Admission>) {
+    if (!supabase) throw new Error("Supabase client not initialized.");
+    const { data, error } = await supabase
+      .from('admissions')
+      .update({
+        name: updates.name,
+        father_name: updates.fatherName,
+        dob: updates.dob,
+        blood_group: updates.bloodGroup,
+        phone: updates.phone,
+        address: updates.address,
+        photo: updates.photo,
+        role: updates.role,
+        batting_style: updates.battingStyle,
+        bowling_style: updates.bowlingStyle,
+        jersey_size: updates.jerseySize,
+        jersey_number: updates.jerseyNumber,
+        status: updates.status,
+        payment_status: updates.paymentStatus,
+        registration_date: updates.registrationDate
       })
       .eq('id', id);
     if (error) throw error;

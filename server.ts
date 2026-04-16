@@ -23,7 +23,9 @@ async function startServer() {
       phone: "+880 1892-128292",
       whatsapp: "+880 1892-128292",
       facebook: "https://www.facebook.com/share/1DzscJ3sCS/",
-      logo: "/logo.png"
+      logo: "/logo.png",
+      admissionFee: 0,
+      monthlyFee: 0
     },
     committee: [],
     players: [],
@@ -104,21 +106,40 @@ async function startServer() {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
     const admissionIdx = data.admissions.findIndex((a: any) => a.id === parseInt(req.params.id));
     if (admissionIdx !== -1) {
-      data.admissions[admissionIdx].status = "approved";
+      const admission = data.admissions[admissionIdx];
+      admission.status = "approved";
+      
       // Auto-create player from approved admission
       const newPlayer = {
         id: Date.now(),
-        name: data.admissions[admissionIdx].name,
-        role: data.admissions[admissionIdx].role,
-        jerseyNumber: "TBD",
-        photo: "https://picsum.photos/seed/new/200/200",
-        phone: data.admissions[admissionIdx].phone,
+        name: admission.name,
+        fatherName: admission.fatherName,
+        dob: admission.dob,
+        bloodGroup: admission.bloodGroup,
+        address: admission.address,
+        role: admission.role,
+        battingStyle: admission.battingStyle,
+        bowlingStyle: admission.bowlingStyle,
+        jerseySize: admission.jerseySize,
+        jerseyNumber: admission.jerseyNumber || "TBD",
+        photo: admission.photo || "https://picsum.photos/seed/new/200/200",
+        phone: admission.phone,
         status: "Active",
-        stats: { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0 }
+        monthlyFee: data.settings.monthlyFee || 0,
+        stats: { 
+          matches: 0, 
+          runs: 0, 
+          wickets: 0, 
+          avg: 0, 
+          sr: 0,
+          bestInnings: "N/A"
+        },
+        matchHistory: []
       };
+      
       data.players.push(newPlayer);
       fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-      res.json(data.admissions[admissionIdx]);
+      res.json(admission);
     } else {
       res.status(404).send("Not found");
     }
@@ -129,6 +150,18 @@ async function startServer() {
     data.admissions = data.admissions.filter((a: any) => a.id !== parseInt(req.params.id));
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
+  });
+
+  app.post("/api/admissions/:id/payment", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const admission = data.admissions.find((a: any) => a.id === parseInt(req.params.id));
+    if (admission) {
+      admission.paymentStatus = req.body.paymentStatus;
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(admission);
+    } else {
+      res.status(404).send("Not found");
+    }
   });
 
   // Committee

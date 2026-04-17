@@ -2035,7 +2035,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
         fatherName: admission.fatherName,
         dob: admission.dob,
         bloodGroup: admission.bloodGroup,
-        address: admission.address,
+        address: admission.address || "",
         role: admission.role,
         battingStyle: admission.battingStyle,
         bowlingStyle: admission.bowlingStyle,
@@ -2055,7 +2055,27 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
         },
         matchHistory: []
       };
-      await supabaseService.addPlayer(newPlayer);
+      
+      try {
+        await supabaseService.addPlayer(newPlayer);
+      } catch (playerError: any) {
+        // Fallback to minimal schema if needed
+        console.warn("Supabase player creation error (might be schema mismatch):", playerError.message);
+        
+        // Let's try the absolute minimal payload
+        const minimalPlayer = {
+          name: newPlayer.name,
+          role: newPlayer.role,
+          status: newPlayer.status,
+          phone: newPlayer.phone,
+        };
+        try {
+          await supabase.from('players').insert([minimalPlayer]);
+        } catch (minimalError) {
+          throw minimalError; // Bubble up to main local fallback
+        }
+      }
+
     } catch (error) {
       console.error("Supabase approve failed, falling back to local API:", error);
       await fetch(`/api/admissions/${id}/approve`, { method: "POST" });
@@ -2855,25 +2875,53 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                           <button 
                             onClick={async () => {
                               const newStatus = admission.paymentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+                              
                               try {
                                 await supabaseService.updateAdmission(admission.id, { paymentStatus: newStatus });
+                                
+                                // Auto-add to Finance if marked as Paid
+                                if (newStatus === 'Paid') {
+                                  await supabaseService.addFinance({
+                                    type: 'Income',
+                                    amount: settings.admissionFee || 0,
+                                    category: 'Admission Fee',
+                                    description: `Admission fee for ${admission.name}`,
+                                    date: new Date().toISOString().split('T')[0]
+                                  });
+                                }
                               } catch (error) {
+                                console.error('Supabase failed, using local API', error);
                                 await fetch(`/api/admissions/${admission.id}/payment`, {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify({ paymentStatus: newStatus }),
                                 });
+                                
+                                if (newStatus === 'Paid') {
+                                  await fetch("/api/finance", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      type: 'Income',
+                                      amount: settings.admissionFee || 0,
+                                      category: 'Admission Fee',
+                                      description: `Admission fee for ${admission.name}`,
+                                      date: new Date().toISOString().split('T')[0]
+                                    }),
+                                  });
+                                }
                               }
                               onRefresh();
                             }}
                             className={cn(
-                              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border hover:scale-105",
                               admission.paymentStatus === 'Paid' 
-                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
-                                : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20" 
+                                : "bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500/20"
                             )}
+                            title="Click to toggle payment status"
                           >
-                            {admission.paymentStatus || 'Unpaid'}
+                            {admission.paymentStatus === 'Paid' ? 'PAID' : 'MARK PAID'}
                           </button>
                         </td>
                         <td className="px-10 py-8">
@@ -2894,6 +2942,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                                 setShowAdmissionDetails(true);
                               }}
                               className="w-12 h-12 bg-slate-900/50 text-slate-500 rounded-2xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all duration-500 border border-slate-800"
+                              title="View Details"
                             >
                               <Activity size={18} />
                             </button>
@@ -2901,14 +2950,25 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                               <button 
                                 onClick={() => handleApprove(admission.id)}
                                 className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all duration-500 shadow-lg shadow-emerald-500/5"
+                                title="Approve & Add to Players"
                               >
                                 <ShieldCheck size={18} />
+                              </button>
+                            )}
+                            {isAdmin && admission.status === 'approved' && !data.players.find(p => p.phone === admission.phone || p.name === admission.name) && (
+                              <button 
+                                onClick={() => handleApprove(admission.id)}
+                                className="w-12 h-12 bg-cyan-500/10 text-cyan-500 rounded-2xl flex items-center justify-center hover:bg-cyan-500 hover:text-white transition-all duration-500 shadow-lg shadow-cyan-500/5"
+                                title="Sync to Players List"
+                              >
+                                <Users size={18} />
                               </button>
                             )}
                             {isAdmin && (
                               <button 
                                 onClick={() => handleDelete('admissions', admission.id)}
                                 className="w-12 h-12 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all duration-500 shadow-lg shadow-red-500/5"
+                                title="Delete Admission"
                               >
                                 <X size={18} />
                               </button>
@@ -5445,7 +5505,16 @@ export default function App() {
         setData(allData);
       }
     } catch (error) {
-      console.error("Failed to load data", error);
+      console.warn("Supabase failed or not initialized, falling back to local /api/data");
+      try {
+        const res = await fetch("/api/data");
+        if (res.ok) {
+          const localData = await res.json();
+          setData(localData);
+        }
+      } catch (err) {
+        console.error("Failed to load local data", err);
+      }
     } finally {
       if (showLoading) setLoading(false);
     }

@@ -160,28 +160,39 @@ export const supabaseService = {
 
   async addPlayer(player: Omit<Player, 'id'>) {
     if (!supabase) throw new Error("Supabase client not initialized.");
+    
+    // Create an object with only the properties we know we have, filtering out undefined
+    const playerData: any = {
+      name: player.name,
+      role: player.role,
+      status: player.status,
+    };
+    
+    // Conditionally add optional fields so we don't send undefined
+    if (player.fatherName) playerData.father_name = player.fatherName;
+    if (player.dob) playerData.dob = player.dob;
+    if (player.bloodGroup) playerData.blood_group = player.bloodGroup;
+    if (player.address) playerData.address = player.address;
+    if (player.battingStyle) playerData.batting_style = player.battingStyle;
+    if (player.bowlingStyle) playerData.bowling_style = player.bowlingStyle;
+    if (player.jerseySize) playerData.jersey_size = player.jerseySize;
+    if (player.jerseyNumber) playerData.jersey_number = player.jerseyNumber;
+    if (player.photo) playerData.photo = player.photo;
+    if (player.phone) playerData.phone = player.phone;
+    if (player.monthlyFee !== undefined) playerData.monthly_fee = player.monthlyFee;
+    if (player.stats) playerData.stats = player.stats;
+
+    // First try the full insert
     const { data, error } = await supabase
       .from('players')
-      .insert([{
-        name: player.name,
-        father_name: player.fatherName,
-        dob: player.dob,
-        blood_group: player.bloodGroup,
-        address: player.address,
-        role: player.role,
-        batting_style: player.battingStyle,
-        bowling_style: player.bowlingStyle,
-        jersey_size: player.jerseySize,
-        jersey_number: player.jerseyNumber,
-        photo: player.photo,
-        phone: player.phone,
-        status: player.status,
-        monthly_fee: player.monthlyFee,
-        stats: player.stats
-      }])
+      .insert([playerData])
       .select()
       .single();
-    if (error) throw error;
+      
+    if (error) {
+      console.warn("Supabase addPlayer error:", error);
+      throw error;
+    }
     return data;
   },
 

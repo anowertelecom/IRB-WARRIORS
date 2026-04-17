@@ -3,6 +3,24 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
+import nodemailer from "nodemailer";
+import 'dotenv/config';
+
+// Email transporter configuration
+const getEmailTransporter = () => {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    return null;
+  }
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "465"),
+    secure: parseInt(process.env.SMTP_PORT || "465") === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+};
 
 async function startServer() {
   const app = express();
@@ -84,6 +102,31 @@ async function startServer() {
   app.get("/api/data", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
     res.json(data);
+  });
+
+  // Email Notification Endpoint
+  app.post("/api/send-email", async (req, res) => {
+    const { subject, text, html } = req.body;
+    const transporter = getEmailTransporter();
+    
+    if (!transporter) {
+      console.warn("Email requested but SMTP credentials are not configured in .env");
+      return res.status(500).json({ error: "SMTP credentials not configured" });
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"IRB Warriors Portal" <${process.env.SMTP_USER}>`,
+        to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
+        subject: subject,
+        text: text,
+        html: html,
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      res.status(500).json({ error: "Failed to send email" });
+    }
   });
 
   // Settings

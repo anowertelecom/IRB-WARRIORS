@@ -1207,6 +1207,22 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
         }),
       });
     }
+
+    // Trigger Email Notification safely
+    try {
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: `New Admission Application: ${formData.name}`,
+          text: `A new player has applied for admission!\n\nName: ${formData.name}\nPhone: ${formData.phone}\nRole: ${formData.role}\n\nPlease check the admin dashboard to review and approve their application.`,
+          html: `<div style="font-family: sans-serif; padding: 20px; text-align: center;"><h2>New Application Received!</h2><p><strong>${formData.name}</strong> has just applied as a <strong>${formData.role}</strong>.</p><p>Phone Number: ${formData.phone}</p><p><a href="https://irbwarriors.com/admin" style="background: #f59e0b; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Admin Panel</a></p></div>`
+        })
+      });
+    } catch (e) {
+      console.error("Failed to trigger email notification:", e);
+    }
+
     setSubmitted(true);
     onRefresh();
     setTimeout(() => setSubmitted(false), 5000);
@@ -5366,6 +5382,17 @@ const Login = ({ onLogin }: { onLogin: (user: any) => void }) => {
               />
             </div>
             <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Password</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-amber-500 transition-colors font-bold"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <div className="space-y-2 pt-2">
               <button 
                 type="submit" 
                 disabled={loading}

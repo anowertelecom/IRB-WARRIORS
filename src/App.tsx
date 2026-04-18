@@ -16,6 +16,8 @@ import {
   Plus,
   Bell,
   Edit3,
+  CreditCard,
+  Wallet,
   LayoutDashboard,
   Settings,
   Activity,
@@ -1461,6 +1463,33 @@ const TournamentRegistrationForm = ({ data, onRefresh }: { data: AppData, onRefr
         registrationDate: new Date().toISOString()
       }),
     });
+
+    // Trigger Email Notification for Tournament Registration
+    try {
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: `New Tournament Registration: ${formData.teamName}`,
+          text: `A new team has registered for a tournament!\n\nTeam: ${formData.teamName}\nTournament: ${selectedTournament?.name}\nPhone: ${formData.phone}\nAmount Paid: ৳${paid}\n\nPlease check the admin dashboard to verify payment and registration.`,
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+              <h2 style="color: #10b981;">New Tournament Entry!</h2>
+              <p><strong>${formData.teamName}</strong> has registered for <strong>${selectedTournament?.name}</strong>.</p>
+              <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p><strong>Phone:</strong> ${formData.phone}</p>
+                <p><strong>Amount Paid:</strong> ৳${paid}</p>
+                <p><strong>Transaction ID:</strong> ${formData.transactionId || 'N/A'}</p>
+              </div>
+              <p><a href="https://irbwarriors.com/admin" style="display: inline-block; background: #10b981; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 30px; font-weight: bold;">Verify in Admin Panel</a></p>
+            </div>
+          `
+        })
+      });
+    } catch (e) {
+      console.error("Failed to trigger tournament email notification:", e);
+    }
+
     setSubmitted(true);
     onRefresh();
     setTimeout(() => setSubmitted(false), 5000);
@@ -1631,6 +1660,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
     bloodGroup: "",
     phone: "", 
     address: "",
+    photo: "",
     role: "Batsman" as 'Batsman' | 'Bowler' | 'All-rounder' | 'Wicket Keeper', 
     battingStyle: "Right Hand" as 'Right Hand' | 'Left Hand',
     bowlingStyle: "",
@@ -2393,12 +2423,13 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
   setSelectedPlayerForProfile: (player: any) => void 
 }) => {
   const isAdmin = userRole === 'admin';
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'admissions' | 'committee' | 'players' | 'matches' | 'match-day' | 'finance' | 'ranking' | 'gallery' | 'events' | 'hosted' | 'external' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'admissions' | 'committee' | 'players' | 'payments' | 'matches' | 'match-day' | 'finance' | 'ranking' | 'gallery' | 'events' | 'hosted' | 'external' | 'settings'>('dashboard');
   
   // Tabs configuration based on roles
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'staff'] },
     { id: 'match-day', label: 'Match Day', icon: Zap, roles: ['admin', 'staff'] },
+    { id: 'payments', label: 'Payments', icon: CreditCard, roles: ['admin', 'staff'] },
     { id: 'finance', label: 'Finance', icon: DollarSign, roles: ['admin', 'staff'] },
     { id: 'admissions', label: 'Admissions', icon: ClipboardList, roles: ['admin', 'staff'] },
     { id: 'players', label: 'Players', icon: Users, roles: ['admin', 'staff'] },
@@ -4106,6 +4137,106 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                     </table>
                 </div>
               </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'payments' && (
+          <motion.div 
+            key="payments"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-10"
+          >
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-4 md:px-0">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Player <span className="text-amber-500">Payments</span></h2>
+                <div className="h-1 w-20 bg-amber-500/30 rounded-full" />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                <div className="relative group">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-500 transition-colors" size={18} />
+                  <input 
+                    type="month" 
+                    value={paymentMonth}
+                    onChange={(e) => setPaymentMonth(e.target.value)}
+                    className="pl-12 pr-6 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white uppercase"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-collapse min-w-[800px] md:min-w-0">
+                  <thead>
+                    <tr className="bg-slate-950/50">
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Player</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Monthly Fee</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Status</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {data.players.map((player) => {
+                      const isPaid = checkPaymentStatus(player.id, paymentMonth);
+                      return (
+                        <tr key={player.id} className="hover:bg-slate-900/50 transition-all duration-300 group">
+                          <td className="px-6 md:px-10 py-6 md:py-8">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-amber-500/50 transition-all overflow-hidden shrink-0">
+                                <img 
+                                  src={player.photo} 
+                                  className="w-full h-full object-cover" 
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/100x100/1e293b/fbbf24?text=P"; }}
+                                />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-black text-white uppercase italic tracking-tight">{player.name}</h3>
+                                <p className="text-[10px] font-bold text-slate-500">{player.phone}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 md:px-10 py-6 md:py-8">
+                            <span className="text-sm font-black text-white italic whitespace-nowrap">৳{player.monthlyFee || settings.monthlyFee}</span>
+                          </td>
+                          <td className="px-6 md:px-10 py-6 md:py-8">
+                            <span className={cn(
+                              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border whitespace-nowrap",
+                              isPaid 
+                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                                : "bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
+                            )}>
+                              {isPaid ? 'Paid' : 'Due'}
+                            </span>
+                          </td>
+                          <td className="px-6 md:px-10 py-6 md:py-8 text-right">
+                            {!isPaid && (
+                              <button 
+                                onClick={() => {
+                                  setSelectedPlayerForPayment(player);
+                                  setShowUpdatePayment(true);
+                                }}
+                                className="px-6 py-2 bg-amber-500 text-gray-950 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-amber-500/20 italic whitespace-nowrap"
+                              >
+                                Record Payment
+                              </button>
+                            )}
+                            {isPaid && (
+                              <div className="flex justify-end gap-2 text-emerald-500 opacity-60">
+                                <Check size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest italic">Completed</span>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </motion.div>
         )}
 

@@ -9,16 +9,23 @@ import 'dotenv/config';
 // Email transporter configuration
 const getEmailTransporter = () => {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn("SMTP_USER or SMTP_PASS is missing in environment variables.");
     return null;
   }
+  
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  const port = parseInt(process.env.SMTP_PORT || "465");
+  
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "465"),
-    secure: parseInt(process.env.SMTP_PORT || "465") === 465,
+    host: host,
+    port: port,
+    secure: port === 465, // Use SSL for port 465, STARTTLS for others
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    debug: true, // Enable debug output
+    logger: true // Log information into console
   });
 };
 
@@ -123,9 +130,21 @@ async function startServer() {
         html: html,
       });
       res.json({ success: true });
-    } catch (error) {
-      console.error("Error sending email:", error);
-      res.status(500).json({ error: "Failed to send email" });
+    } catch (error: any) {
+      console.error("--- EMAIL SENDING ERROR ---");
+      console.error("Error Message:", error.message);
+      console.error("Error Code:", error.code);
+      console.error("Command:", error.command);
+      
+      if (error.message.includes("Invalid login") || error.message.includes("auth")) {
+        console.error("HINT: SMTP login failed. If using Gmail, make sure you are using an 'App Password', not your regular password.");
+      }
+      
+      res.status(500).json({ 
+        error: "Failed to send email", 
+        message: error.message,
+        code: error.code 
+      });
     }
   });
 

@@ -39,9 +39,21 @@ CREATE TABLE IF NOT EXISTS public.players (
     photo TEXT,
     phone TEXT,
     status TEXT NOT NULL DEFAULT 'Active',
+    is_captain BOOLEAN DEFAULT FALSE,
+    is_vice_captain BOOLEAN DEFAULT FALSE,
     monthly_fee NUMERIC DEFAULT 0,
-    stats JSONB DEFAULT '{"matches": 0, "runs": 0, "wickets": 0, "avg": 0, "sr": 0, "bestInnings": "N/A"}'::jsonb
+    stats JSONB DEFAULT '{"matches": 0, "innings": 0, "notOut": 0, "runs": 0, "highestScore": 0, "avg": 0, "sr": 0, "fours": 0, "sixes": 0, "fifties": 0, "hundreds": 0, "bowlInnings": 0, "overs": 0, "wickets": 0, "runsConceded": 0, "bestBowling": "N/A", "economy": 0, "bowlSr": 0, "maidens": 0, "bestInnings": "N/A", "impactScore": 0}'::jsonb,
+    tournament_stats JSONB DEFAULT '[]'::jsonb,
+    last_matches JSONB DEFAULT '[]'::jsonb,
+    match_history JSONB DEFAULT '[]'::jsonb
 );
+
+-- Alter table statements for existing databases
+ALTER TABLE public.players ADD COLUMN IF NOT EXISTS is_captain BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.players ADD COLUMN IF NOT EXISTS is_vice_captain BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.players ADD COLUMN IF NOT EXISTS tournament_stats JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.players ADD COLUMN IF NOT EXISTS last_matches JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.players ADD COLUMN IF NOT EXISTS match_history JSONB DEFAULT '[]'::jsonb;
 
 -- Alter table just in case it was created without address initially
 ALTER TABLE public.players ADD COLUMN IF NOT EXISTS address TEXT;
@@ -79,7 +91,9 @@ CREATE TABLE IF NOT EXISTS public.matches (
     status TEXT DEFAULT 'Upcoming',
     result TEXT,
     score JSONB,
-    playing_xi JSONB
+    playing_xi JSONB,
+    performances JSONB,
+    man_of_the_match INTEGER
 );
 
 -- 6. Finance Table

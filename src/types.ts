@@ -14,6 +14,7 @@ export interface Player {
   bloodGroup?: string;
   address?: string;
   role: 'Batsman' | 'Bowler' | 'All-rounder' | 'Wicket Keeper';
+  battingPosition?: 'Opener' | 'Middle Order' | 'Finisher';
   battingStyle?: 'Right Hand' | 'Left Hand';
   bowlingStyle?: string;
   jerseySize?: 'S' | 'M' | 'L' | 'XL' | 'XXL';
@@ -21,15 +22,58 @@ export interface Player {
   photo: string;
   phone: string;
   status: 'Active' | 'Injured' | 'Inactive';
+  isCaptain?: boolean;
+  isViceCaptain?: boolean;
+  potmCount?: number;
+  pottCount?: number;
   monthlyFee?: number;
   stats: {
     matches: number;
+    innings: number;
+    notOut: number;
     runs: number;
-    wickets: number;
+    highestScore: number;
     avg: number;
     sr: number;
+    fours: number;
+    sixes: number;
+    fifties: number;
+    hundreds: number;
+    balls?: number;
+    
+    // Bowling
+    bowlInnings: number;
+    overs: number;
+    wickets: number;
+    runsConceded: number;
+    bestBowling: string;
+    economy: number;
+    bowlSr: number;
+    maidens: number;
+    
+    // Best overall
+    careerRuns?: number;
+    careerWickets?: number;
     bestInnings?: string;
+    impactScore?: number;
   };
+  tournamentStats?: {
+    tournamentName: string;
+    matches: number;
+    runs: number;
+    wickets: number;
+    hs: number;
+    bestBowling: string;
+    sr: number;
+    econ: number;
+  }[];
+  lastMatches?: {
+    opponent: string;
+    runs: number;
+    wickets: number;
+    balls: number;
+    date: string;
+  }[];
   matchHistory?: any[];
 }
 
@@ -53,6 +97,25 @@ export interface Match {
     teamBOvers: string;
   };
   playingXI?: number[]; // Array of player IDs
+  performances?: {
+    playerId: number;
+    isGuest?: boolean;
+    guestName?: string;
+    batting: {
+      runs: number;
+      balls: number;
+      fours: number;
+      sixes: number;
+      isOut: boolean;
+    };
+    bowling: {
+      overs: number;
+      maidens: number;
+      runsConceded: number;
+      wickets: number;
+    };
+  }[];
+  manOfTheMatch?: number;
 }
 
 export interface FinanceRecord {

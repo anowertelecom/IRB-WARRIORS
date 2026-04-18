@@ -42,6 +42,7 @@ import {
   Columns,
   Target,
   Zap,
+  Flag,
   ArrowUpRight,
   ArrowDownRight,
   Target as BallIcon,
@@ -68,6 +69,424 @@ import html2canvas from "html2canvas";
 import { cn } from "./lib/utils";
 import { AppData, CommitteeMember, Player } from "./types";
 import { supabase } from "./lib/supabase";
+
+const PlayerCard = ({ player, onClick }: { player: Player; onClick: () => void; key?: any }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      onClick={onClick}
+      className="group relative bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-slate-800 hover:border-amber-500/50 transition-all duration-500 cursor-pointer shadow-2xl hover:shadow-[0_20px_50px_rgba(245,158,11,0.15)] h-full flex flex-col"
+    >
+      {(player.isCaptain || player.isViceCaptain) && (
+        <div className="absolute top-6 left-6 z-20 flex flex-col gap-2">
+          {player.isCaptain && (
+            <span className="px-3 py-1 bg-amber-500 text-gray-950 text-[8px] font-black rounded-lg uppercase tracking-widest shadow-lg shadow-amber-500/20">Captain</span>
+          )}
+          {player.isViceCaptain && (
+            <span className="px-3 py-1 bg-slate-800 text-white text-[8px] font-black rounded-lg uppercase tracking-widest border border-slate-700">Vice Captain</span>
+          )}
+        </div>
+      )}
+
+      <div className="absolute top-6 right-6 z-20">
+        <span className="text-4xl font-black text-white/5 italic opacity-50 group-hover:opacity-100 transition-opacity">#{player.jerseyNumber}</span>
+      </div>
+
+      <div className="relative aspect-[4/5] overflow-hidden bg-slate-950/50 shrink-0">
+        <img 
+          src={player.photo} 
+          alt={player.name} 
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
+          referrerPolicy="no-referrer"
+          onError={(e) => { e.currentTarget.src = "https://placehold.co/400x500/1e293b/fbbf24?text=N/A"; }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+        
+        <div className="absolute bottom-6 left-6 right-6 flex justify-around items-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+          <div className="text-center">
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Runs</p>
+            <p className="text-xl font-black text-white italic">{player.stats?.runs || 0}</p>
+          </div>
+          <div className="w-px h-8 bg-white/10" />
+          <div className="text-center">
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Wickets</p>
+            <p className="text-xl font-black text-amber-500 italic">{player.stats?.wickets || 0}</p>
+          </div>
+          <div className="w-px h-8 bg-white/10" />
+          <div className="text-center">
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">SR</p>
+            <p className="text-xl font-black text-white italic">{player.stats?.sr || 0.0}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-8 flex-1 flex flex-col justify-between bg-gradient-to-b from-transparent to-slate-950/80">
+        <div className="space-y-1">
+          <div className="flex justify-between items-start">
+            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest drop-shadow-md">{player.role}</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">IRB Warriors</p>
+          </div>
+          <h3 className="text-2xl font-black text-white tracking-tight italic uppercase leading-none">{player.name}</h3>
+        </div>
+        
+        <div className="pt-6 flex justify-between items-center border-t border-white/5 mt-6">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{player.status}</span>
+          </div>
+          <div className="flex items-center gap-2 text-white/40 group-hover:text-white transition-colors">
+            <span className="text-[10px] font-black uppercase tracking-widest">Profile</span>
+            <ChevronRight size={14} />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const PlayerProfileModal = ({ player, onClose }: { player: Player, onClose: () => void }) => {
+  const [activeTab, setActiveTab] = useState<'stats' | 'tournaments' | 'career' | 'matches'>('stats');
+
+  const battingStats = [
+    { label: 'Matches', value: player.stats?.matches || 0 },
+    { label: 'Innings', value: player.stats?.innings || 0 },
+    { label: 'Not Out', value: player.stats?.notOut || 0 },
+    { label: 'Runs', value: player.stats?.runs || 0 },
+    { label: 'Highest', value: player.stats?.highestScore || 0 },
+    { label: 'Avg', value: player.stats?.avg || '0.00' },
+    { label: 'SR', value: player.stats?.sr || '0.00' },
+    { label: '100s', value: player.stats?.hundreds || 0 },
+    { label: '50s', value: player.stats?.fifties || 0 },
+    { label: '4s', value: player.stats?.fours || 0 },
+    { label: '6s', value: player.stats?.sixes || 0 },
+  ];
+
+  const bowlingStats = [
+    { label: 'Innings', value: player.stats?.bowlInnings || 0 },
+    { label: 'Overs', value: player.stats?.overs || 0 },
+    { label: 'Wickets', value: player.stats?.wickets || 0 },
+    { label: 'Runs Conc', value: player.stats?.runsConceded || 0 },
+    { label: 'Best Bowl', value: player.stats?.bestBowling || 'N/A' },
+    { label: 'Economy', value: player.stats?.economy || '0.00' },
+    { label: 'Avg', value: player.stats?.bowlSr || '0.00' },
+    { label: 'Maidens', value: player.stats?.maidens || 0 },
+  ];
+  
+  const careerStats = [
+    { label: 'Total Matches', value: player.stats?.matches || 0 },
+    { label: 'Career Runs', value: player.stats?.careerRuns || player.stats?.runs || 0 },
+    { label: 'Career Wickets', value: player.stats?.careerWickets || player.stats?.wickets || 0 },
+    { label: 'Best Score', value: player.stats?.highestScore || 0 },
+    { label: 'Best Bowling', value: player.stats?.bestBowling || 'N/A' },
+    { label: 'POTM', value: player.potmCount || 0 },
+    { label: 'POTT', value: player.pottCount || 0 },
+    { label: 'Impact Score', value: player.stats?.impactScore || 0 },
+  ];
+
+  const skillData = [
+    { subject: 'Batting', A: Math.min(100, ((player.stats?.runs || 0) / 1000) * 100 + 50) || 70, fullMark: 100 },
+    { subject: 'Bowling', A: Math.min(100, ((player.stats?.wickets || 0) / 50) * 100 + 40) || 60, fullMark: 100 },
+    { subject: 'Fielding', A: 85, fullMark: 100 },
+    { subject: 'Fitness', A: 90, fullMark: 100 },
+    { subject: 'Pressure', A: (player.stats?.highestScore || 0) > 50 ? 95 : 75, fullMark: 100 },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose} className="absolute inset-0 bg-gray-950/95 backdrop-blur-2xl" />
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative w-full max-w-7xl bg-slate-900 border border-slate-800 rounded-[3rem] overflow-hidden max-h-[90vh] flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.5)]"
+      >
+        {/* Banner Section */}
+        <div className="relative h-64 md:h-80 shrink-0 overflow-hidden bg-slate-950">
+          <div className="absolute inset-0 opacity-20">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={[
+                { name: 'A', value: 40 },
+                { name: 'B', value: 30 },
+                { name: 'C', value: 65 },
+                { name: 'D', value: 45 },
+                { name: 'E', value: 90 },
+                { name: 'F', value: 70 },
+                { name: 'G', value: 100 }
+              ]}>
+                <Area type="monotone" dataKey="value" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-900 to-transparent" />
+          
+          <div className="absolute bottom-8 left-12 right-12 flex flex-col md:flex-row items-end gap-10 z-10">
+            <div className="relative">
+              <div className="absolute inset-0 bg-amber-500 rounded-[2.5rem] blur-2xl opacity-20 animate-pulse" />
+              <img 
+                src={player.photo} 
+                alt={player.name} 
+                className="w-40 h-40 md:w-56 md:h-56 object-contain bg-slate-900 border-4 border-slate-800 rounded-[2.5rem] relative shrink-0" 
+                referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = "https://placehold.co/400x500/1e293b/fbbf24?text=N/A"; }}
+              />
+            </div>
+            <div className="flex-1 space-y-4 pb-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="px-4 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black rounded-lg uppercase tracking-widest italic">IRB Warriors</span>
+                {player.isCaptain && <span className="px-4 py-1.5 bg-amber-500 text-gray-950 text-[10px] font-black rounded-lg uppercase tracking-widest italic">Captain</span>}
+                {player.isViceCaptain && <span className="px-4 py-1.5 bg-slate-800 text-white text-[10px] font-black rounded-lg uppercase tracking-widest italic">Vice Captain</span>}
+              </div>
+              <div>
+                <h2 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tight">{player.name}</h2>
+                <div className="flex items-center gap-6 mt-2">
+                  <span className="text-amber-500 text-2xl font-black italic">#{player.jerseyNumber}</span>
+                  <div className="w-px h-6 bg-white/10" />
+                  <span className="text-white/60 text-lg font-black italic uppercase">{player.role}</span>
+                  <div className="w-px h-6 bg-white/10" />
+                  <span className="text-white/60 text-lg font-black italic uppercase">{player.battingPosition || 'Middle Order'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button onClick={onClose} className="absolute top-8 right-8 z-30 p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-8 md:p-12">
+            {/* Left Sidebar - Quick Stats */}
+            <div className="lg:col-span-4 space-y-8">
+              <div className="bg-slate-950/50 p-8 rounded-[2rem] border border-slate-800 space-y-8">
+                <h3 className="text-xl font-black text-white italic uppercase tracking-widest flex items-center gap-3">
+                  <Target className="text-amber-500" size={20} />
+                  Skill Radar
+                </h3>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillData}>
+                      <PolarGrid stroke="#ffffff10" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#ffffff40', fontSize: 10, fontWeight: 'bold' }} />
+                      <Radar name="Skills" dataKey="A" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                <div className="space-y-4 pt-8 border-t border-white/5">
+                  <div className="flex justify-between items-center bg-slate-900/50 p-4 rounded-2xl">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Status</span>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-2 h-2 rounded-full", player.status === 'Active' ? "bg-emerald-500" : "bg-rose-500")} />
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">{player.status}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center bg-slate-900/50 p-4 rounded-2xl">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Phone</span>
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">{player.phone}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="lg:col-span-8 space-y-8">
+              {/* Tab Navigation */}
+              <div className="flex flex-wrap gap-4 bg-slate-950/50 p-2 rounded-2xl w-fit border border-slate-800">
+                {[
+                  { id: 'stats', label: 'Batting | Bowling', icon: Sword },
+                  { id: 'tournaments', label: 'Tournaments', icon: Trophy },
+                  { id: 'career', label: 'Overall Career', icon: History },
+                  { id: 'matches', label: 'Match History', icon: Calendar }
+                ].map((tab) => (
+                  <button 
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={cn(
+                      "flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                      activeTab === tab.id ? "bg-amber-500 text-gray-950 shadow-lg shadow-amber-500/20 shadow-[0_10px_30px_rgba(245,158,11,0.2)]" : "text-slate-500 hover:text-white"
+                    )}
+                  >
+                    <tab.icon size={14} />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <AnimatePresence mode="wait">
+                {activeTab === 'stats' && (
+                  <motion.div key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-12">
+                    {/* Batting Secton */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-4">
+                        <Sword className="text-amber-500" />
+                        <h3 className="text-2xl font-black text-white italic uppercase tracking-tight">Batting Analysis</h3>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {battingStats.map((stat, i) => (
+                          <div key={i} className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 group hover:border-amber-500/30 transition-all">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+                            <p className="text-2xl font-black text-white italic scoreboard-font">{stat.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Bowling Section */}
+                    <div className="space-y-6 pt-12 border-t border-white/5">
+                      <div className="flex items-center gap-4">
+                        <CircleDot className="text-emerald-500" />
+                        <h3 className="text-2xl font-black text-white italic uppercase tracking-tight">Bowling Analysis</h3>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {bowlingStats.map((stat, i) => (
+                          <div key={i} className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 group hover:border-emerald-500/30 transition-all">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+                            <p className="text-2xl font-black text-white italic scoreboard-font">{stat.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'tournaments' && (
+                  <motion.div key="tournaments" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+                    {(player.tournamentStats || []).length === 0 ? (
+                      <div className="text-center py-20 bg-slate-950/30 rounded-3xl border border-slate-800">
+                        <Trophy size={48} className="mx-auto text-slate-800 mb-4" />
+                        <p className="text-slate-500 font-black uppercase tracking-widest">No Tournament Data Available</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {player.tournamentStats.map((t: any, i: number) => (
+                          <div key={i} className="bg-slate-950/50 p-8 rounded-3xl border border-slate-800 hover:border-amber-500/30 transition-all flex flex-col md:flex-row justify-between items-center gap-8 group">
+                            <div className="space-y-2">
+                              <h4 className="text-2xl font-black text-white uppercase italic tracking-tight">{t.tournamentName}</h4>
+                              <div className="flex gap-4">
+                                <span className="text-[10px] font-black text-slate-500 uppercase">Played: {t.matches}</span>
+                                <span className="text-[10px] font-black text-slate-500 uppercase">HS: {t.hs}</span>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-4 gap-8">
+                              <div className="text-center">
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Runs</p>
+                                <p className="text-2xl font-black text-white italic scoreboard-font">{t.runs}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Wkts</p>
+                                <p className="text-2xl font-black text-emerald-500 italic scoreboard-font">{t.wickets}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">SR</p>
+                                <p className="text-xl font-black text-white italic scoreboard-font">{t.sr}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Econ</p>
+                                <p className="text-xl font-black text-white italic scoreboard-font">{t.econ}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {activeTab === 'career' && (
+                  <motion.div key="career" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-12">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {careerStats.map((stat, i) => (
+                        <div key={i} className="bg-slate-950/50 p-8 rounded-3xl border border-slate-800 group hover:border-amber-500/30 transition-all text-center">
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{stat.label}</p>
+                          <p className="text-3xl font-black text-white italic scoreboard-font">{stat.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Progress Indicator */}
+                    <div className="bg-slate-950/50 p-10 rounded-[2.5rem] border border-slate-800 space-y-8">
+                      <div className="flex justify-between items-end">
+                        <div className="space-y-1">
+                          <h4 className="text-xl font-black text-white italic uppercase">Form Indicator</h4>
+                          <p className="text-[10px] font-black text-slate-500 uppercase">Performance over last 5 matches</p>
+                        </div>
+                        <div className="flex gap-2">
+                          {(player.lastMatches || [
+                            { runs: 45 }, { runs: 12 }, { runs: 88 }, { runs: 30 }, { runs: 5 }
+                          ]).slice(-5).map((m, i) => {
+                            const height = Math.min(100, (m.runs / 100) * 100);
+                            return (
+                              <div key={i} className="w-4 h-24 bg-slate-900 rounded-full relative overflow-hidden flex items-end">
+                                <motion.div 
+                                  initial={{ height: 0 }}
+                                  animate={{ height: `${height}%` }}
+                                  transition={{ delay: i * 0.1 }}
+                                  className="w-full bg-amber-500 rounded-full"
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'matches' && (
+                  <motion.div key="matches" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="bg-slate-950/50 rounded-3xl border border-slate-800 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead className="bg-slate-950/80 border-b border-slate-800">
+                          <tr>
+                            <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date | Opponent</th>
+                            <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</th>
+                            <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Wkts</th>
+                            <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Match Result</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800">
+                          {(player.matchHistory || []).length === 0 ? (
+                            <tr>
+                              <td colSpan={4} className="px-10 py-20 text-center text-slate-600 font-bold uppercase tracking-widest italic leading-loose">
+                                Recording History...<br/>
+                                <span className="text-[10px] opacity-50">Match data is being compiled for the current season</span>
+                              </td>
+                            </tr>
+                          ) : (
+                            player.matchHistory.map((m: any, i: number) => (
+                              <tr key={i} className="hover:bg-amber-500/5 transition-colors">
+                                <td className="px-10 py-6">
+                                  <p className="text-[10px] font-black text-slate-500 uppercase mb-1">{m.date}</p>
+                                  <p className="text-xs font-black text-white uppercase italic">{m.opponent}</p>
+                                </td>
+                                <td className="px-10 py-6 text-2xl font-black text-amber-500 scoreboard-font">{m.runs}</td>
+                                <td className="px-10 py-6 text-2xl font-black text-white scoreboard-font">{m.wickets}</td>
+                                <td className="px-10 py-6">
+                                  <span className={cn(
+                                    "px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest",
+                                    m.result === 'Win' ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+                                  )}>
+                                    {m.result || 'Finished'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 // --- Components ---
 
@@ -454,7 +873,7 @@ const Navbar = ({ data, user }: { data: AppData, user?: any }) => {
   );
 };
 
-const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }) => {
+const Portfolio = ({ data, onRefresh, setSelectedPlayerForProfile }: { data: AppData, onRefresh: () => void, setSelectedPlayerForProfile: (player: any) => void }) => {
   return (
     <div className="bg-slate-950 min-h-screen">
       {/* Hero Section */}
@@ -661,12 +1080,50 @@ const Portfolio = ({ data, onRefresh }: { data: AppData, onRefresh: () => void }
 
       {/* Team Section */}
       <section id="team" className="py-32 relative overflow-hidden bg-slate-950">
+        <div className="absolute inset-0 bg-carbon opacity-10 z-0" />
+        <div className="max-w-7xl mx-auto px-4 relative z-10 space-y-16">
+          <div className="flex flex-col md:flex-row justify-between items-end gap-8">
+            <div className="space-y-4">
+              <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)] text-shadow-glow">The Warriors</span>
+              <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow italic underline decoration-amber-500 decoration-8 underline-offset-[-10px]">Active <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Roster</span></h2>
+              <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-xs">আইআরবি ওয়ারিয়র্স খেলোয়াড়বৃন্দ</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {data.players.map((player) => (
+              <PlayerCard 
+                key={player.id} 
+                player={player} 
+                onClick={() => setSelectedPlayerForProfile(player)} 
+              />
+            ))}
+          </div>
+
+          <div className="pt-20 border-t border-white/5 text-center">
+             <div className="inline-flex flex-col md:flex-row items-center gap-4 bg-slate-900/50 backdrop-blur-md px-10 py-6 rounded-[2.5rem] border border-slate-800">
+               <div className="flex -space-x-4">
+                  {data.players.slice(0, 5).map(p => (
+                    <img key={p.id} src={p.photo} className="w-12 h-12 rounded-full border-2 border-slate-900 object-cover" referrerPolicy="no-referrer" />
+                  ))}
+                  <div className="w-12 h-12 rounded-full bg-amber-500 border-2 border-slate-900 flex items-center justify-center text-gray-950 font-black text-xs">+{data.players.length}</div>
+               </div>
+               <div className="h-8 w-px bg-slate-800 hidden md:block" />
+               <p className="text-sm font-black text-white italic uppercase tracking-tight">Join the legacy of IRB Warriors. <span className="text-amber-500">Apply Today.</span></p>
+               <button onClick={() => document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })} className="px-6 py-2 bg-white text-gray-950 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-colors">Register Now</button>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Leadership Section */}
+      <section id="leadership" className="py-32 relative overflow-hidden bg-slate-950 border-t border-white/5">
         <div className="absolute inset-0 bg-hex opacity-5 z-0" />
         <div className="max-w-7xl mx-auto px-4 relative z-10 space-y-16">
           <div className="text-center space-y-4">
             <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)]">Our Team</span>
-            <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow">Leadership <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Team</span></h2>
-            <p className="text-slate-400 font-bold uppercase tracking-widest">আমাদের নেতৃত্ব</p>
+            <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow">Club <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Executive</span></h2>
+            <p className="text-slate-400 font-bold uppercase tracking-widest">ক্লাব ম্যানেজমেন্ট</p>
           </div>
 
           {data.committee.length === 0 ? (
@@ -1052,7 +1509,7 @@ const TournamentRegistrationForm = ({ data, onRefresh }: { data: AppData, onRefr
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Select Tournament</label>
             <select 
-              value={formData.tournamentId}
+              value={formData.tournamentId ?? ""}
               onChange={(e) => setFormData({...formData, tournamentId: e.target.value})}
               required
               className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white text-xs font-bold focus:border-emerald-500 transition-all outline-none appearance-none"
@@ -1067,7 +1524,7 @@ const TournamentRegistrationForm = ({ data, onRefresh }: { data: AppData, onRefr
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Club Name / ক্লাবের নাম</label>
             <input 
-              value={formData.teamName}
+              value={formData.teamName ?? ""}
               onChange={(e) => setFormData({...formData, teamName: e.target.value})}
               required
               className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white text-xs font-bold focus:border-emerald-500 transition-all outline-none placeholder:text-slate-600"
@@ -1078,7 +1535,7 @@ const TournamentRegistrationForm = ({ data, onRefresh }: { data: AppData, onRefr
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Address / ঠিকানা</label>
             <input 
-              value={formData.address}
+              value={formData.address ?? ""}
               onChange={(e) => setFormData({...formData, address: e.target.value})}
               required
               className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white text-xs font-bold focus:border-emerald-500 transition-all outline-none placeholder:text-slate-600"
@@ -1089,7 +1546,7 @@ const TournamentRegistrationForm = ({ data, onRefresh }: { data: AppData, onRefr
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Captain Name (Optional) / অধিনায়কের নাম</label>
             <input 
-              value={formData.captainName}
+              value={formData.captainName ?? ""}
               onChange={(e) => setFormData({...formData, captainName: e.target.value})}
               className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white text-xs font-bold focus:border-emerald-500 transition-all outline-none placeholder:text-slate-600"
               placeholder="Full Name"
@@ -1099,7 +1556,7 @@ const TournamentRegistrationForm = ({ data, onRefresh }: { data: AppData, onRefr
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Mobile Number / মোবাইল নম্বর</label>
             <input 
-              value={formData.phone}
+              value={formData.phone ?? ""}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
               required
               className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white text-xs font-bold focus:border-emerald-500 transition-all outline-none placeholder:text-slate-600"
@@ -1110,7 +1567,7 @@ const TournamentRegistrationForm = ({ data, onRefresh }: { data: AppData, onRefr
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Amount Paid (Optional) / কত টাকা দিয়েছেন</label>
             <input 
-              value={formData.amountPaid}
+              value={formData.amountPaid ?? ""}
               onChange={(e) => setFormData({...formData, amountPaid: e.target.value})}
               type="number"
               className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white text-xs font-bold focus:border-emerald-500 transition-all outline-none placeholder:text-slate-600"
@@ -1139,7 +1596,7 @@ const TournamentRegistrationForm = ({ data, onRefresh }: { data: AppData, onRefr
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Transaction ID (Optional) / ট্রানজেকশন আইডি</label>
             <input 
-              value={formData.transactionId}
+              value={formData.transactionId ?? ""}
               onChange={(e) => setFormData({...formData, transactionId: e.target.value})}
               className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white text-xs font-bold focus:border-emerald-500 transition-all outline-none placeholder:text-slate-600"
               placeholder="Bkash/Nagad TrxID"
@@ -1316,7 +1773,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Full Name / পুরো নাম</label>
               <input 
                 required 
-                value={formData.name} 
+                value={formData.name ?? ""} 
                 onChange={e => setFormData({...formData, name: e.target.value})} 
                 className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="Enter your full name" 
@@ -1326,7 +1783,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Father's Name / পিতার নাম</label>
               <input 
                 required 
-                value={formData.fatherName} 
+                value={formData.fatherName ?? ""} 
                 onChange={e => setFormData({...formData, fatherName: e.target.value})} 
                 className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="Enter father's name" 
@@ -1337,7 +1794,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
               <input 
                 required 
                 type="date"
-                value={formData.dob} 
+                value={formData.dob ?? ""} 
                 onChange={e => setFormData({...formData, dob: e.target.value})} 
                 className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white text-sm shadow-inner" 
               />
@@ -1345,7 +1802,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Blood Group / রক্তের গ্রুপ</label>
               <select 
-                value={formData.bloodGroup} 
+                value={formData.bloodGroup ?? ""} 
                 onChange={e => setFormData({...formData, bloodGroup: e.target.value})} 
                 className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white text-sm shadow-inner"
               >
@@ -1359,7 +1816,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Mobile Number / মোবাইল নম্বর</label>
               <input 
                 required 
-                value={formData.phone} 
+                value={formData.phone ?? ""} 
                 onChange={e => setFormData({...formData, phone: e.target.value})} 
                 className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="Enter phone number" 
@@ -1369,7 +1826,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Current Address / বর্তমান ঠিকানা</label>
               <textarea 
                 required 
-                value={formData.address} 
+                value={formData.address ?? ""} 
                 onChange={e => setFormData({...formData, address: e.target.value})} 
                 className="w-full p-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm min-h-[100px] resize-none shadow-inner" 
                 placeholder="Enter your full address" 
@@ -1444,7 +1901,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Bowling Style / বোলিং স্টাইল</label>
               <input 
-                value={formData.bowlingStyle} 
+                value={formData.bowlingStyle ?? ""} 
                 onChange={e => setFormData({...formData, bowlingStyle: e.target.value})} 
                 className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="e.g. Fast / Spin" 
@@ -1475,7 +1932,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Favorite Jersey Number / প্রিয় জার্সি নম্বর</label>
               <input 
-                value={formData.jerseyNumber} 
+                value={formData.jerseyNumber ?? ""} 
                 onChange={e => setFormData({...formData, jerseyNumber: e.target.value})} 
                 className="w-full h-[56px] px-4 bg-white/[0.03] border border-white/[0.05] hover:border-white/10 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white/[0.05] transition-all font-medium text-white placeholder:text-slate-600 text-sm shadow-inner" 
                 placeholder="e.g. 07" 
@@ -1929,13 +2386,19 @@ const PlayerProfile = ({ player, onBack }: { player: any, onBack: () => void }) 
   );
 };
 
-const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: () => void, userRole?: string }) => {
+const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: { 
+  data: AppData, 
+  onRefresh: () => void, 
+  userRole?: string, 
+  setSelectedPlayerForProfile: (player: any) => void 
+}) => {
   const isAdmin = userRole === 'admin';
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'admissions' | 'committee' | 'players' | 'matches' | 'finance' | 'ranking' | 'gallery' | 'events' | 'hosted' | 'external' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'admissions' | 'committee' | 'players' | 'matches' | 'match-day' | 'finance' | 'ranking' | 'gallery' | 'events' | 'hosted' | 'external' | 'settings'>('dashboard');
   
   // Tabs configuration based on roles
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'staff'] },
+    { id: 'match-day', label: 'Match Day', icon: Zap, roles: ['admin', 'staff'] },
     { id: 'finance', label: 'Finance', icon: DollarSign, roles: ['admin', 'staff'] },
     { id: 'admissions', label: 'Admissions', icon: ClipboardList, roles: ['admin', 'staff'] },
     { id: 'players', label: 'Players', icon: Users, roles: ['admin', 'staff'] },
@@ -1979,14 +2442,53 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
   const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
   const [selectedAdmissions, setSelectedAdmissions] = useState<number[]>([]);
   const [showUpdatePayment, setShowUpdatePayment] = useState(false);
+  const [selectedPlayerForPayment, setSelectedPlayerForPayment] = useState<Player | null>(null);
+  const [showQuickScore, setShowQuickScore] = useState(false);
+  const [showGraphicGenerator, setShowGraphicGenerator] = useState(false);
+  const [selectedMatchForQuickScore, setSelectedMatchForQuickScore] = useState<any>(null);
+  const [selectedMatchForGraphic, setSelectedMatchForGraphic] = useState<any>(null);
+  const [selectedPlayersForMatch, setSelectedPlayersForMatch] = useState<number[]>([]);
+  
+  useEffect(() => {
+    if (selectedMatchForQuickScore?.playing_xi) {
+      setSelectedPlayersForMatch(selectedMatchForQuickScore.playing_xi);
+    }
+  }, [selectedMatchForQuickScore]);
+
+  const [paymentMonth, setPaymentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  
+  const checkPaymentStatus = (playerId: number, monthId: string) => {
+    return data.finance.some(f => 
+      f.type === 'Income' && 
+      f.category === 'Monthly Fee' && 
+      f.description.includes(`ID: ${playerId}`) && 
+      f.date.startsWith(monthId)
+    );
+  };
   const [selectedRegistration, setSelectedRegistration] = useState<any>(null);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("All");
+  const [sortBy, setSortBy] = useState<'name' | 'runs' | 'wickets'>('name');
+  
+  const filteredPlayers = data.players
+    .filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.jerseyNumber.includes(searchTerm);
+      const matchesRole = filterRole === "All" || p.role === filterRole;
+      return matchesSearch && matchesRole;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'runs') return (b.stats?.runs || 0) - (a.stats?.runs || 0);
+      if (sortBy === 'wickets') return (b.stats?.wickets || 0) - (a.stats?.wickets || 0);
+      return a.name.localeCompare(b.name);
+    });
   
   const [newMember, setNewMember] = useState({ name: "", role: "", phone: "", photo: "" });
   const [newGallery, setNewGallery] = useState({ type: "Photo", url: "", caption: "", thumbnail: "" });
   const [newEvent, setNewEvent] = useState({ title: "", date: "", location: "", description: "" });
   const [newFinance, setNewFinance] = useState({ type: "Income", amount: 0, category: "", description: "", date: new Date().toISOString().split('T')[0] });
-  const [newPlayer, setNewPlayer] = useState<Omit<Player, 'id'>>({ 
+    const [newPlayer, setNewPlayer] = useState<Omit<Player, 'id'>>({ 
     name: "", 
     fatherName: "",
     dob: "",
@@ -2000,8 +2502,34 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
     photo: "", 
     phone: "", 
     status: "Active",
-    stats: { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0, bestInnings: "N/A" },
-    matchHistory: []
+    isCaptain: false,
+    isViceCaptain: false,
+    stats: { 
+          matches: 0, 
+          innings: 0, 
+          notOut: 0, 
+          runs: 0, 
+          highestScore: 0, 
+          avg: 0, 
+          sr: 0, 
+          fours: 0, 
+          sixes: 0, 
+          fifties: 0, 
+          hundreds: 0,
+          bowlInnings: 0,
+          overs: 0,
+          wickets: 0,
+          runsConceded: 0,
+          bestBowling: "N/A",
+          economy: 0,
+          bowlSr: 0,
+          maidens: 0,
+          bestInnings: "N/A",
+          impactScore: 0
+        },
+        tournamentStats: [],
+        lastMatches: [],
+        matchHistory: []
   });
   const [newMatch, setNewMatch] = useState({ teamA: "IRB Warriors", teamB: "", date: "", time: "", venue: "", type: "Short Pitch", overs: 8, status: "Upcoming" });
   const [newHosted, setNewHosted] = useState({ name: "", startDate: "", endDate: "", entryFee: 0, prizePool: "", status: "Upcoming" });
@@ -2045,19 +2573,48 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
         phone: admission.phone,
         status: "Active",
         monthlyFee: settings.monthlyFee,
+        isCaptain: false,
+        isViceCaptain: false,
         stats: { 
           matches: 0, 
+          innings: 0,
+          notOut: 0,
           runs: 0, 
-          wickets: 0, 
+          highestScore: 0,
           avg: 0, 
           sr: 0,
+          fours: 0,
+          sixes: 0,
+          fifties: 0,
+          hundreds: 0,
+          bowlInnings: 0,
+          overs: 0,
+          wickets: 0,
+          runsConceded: 0,
+          bestBowling: "N/A",
+          economy: 0,
+          bowlSr: 0,
+          maidens: 0,
           bestInnings: "N/A"
         },
+        tournamentStats: [],
+        lastMatches: [],
         matchHistory: []
       };
       
       try {
         await supabaseService.addPlayer(newPlayer);
+        
+        // If paid, record finance
+        if (admission.paymentStatus === 'Paid') {
+          await supabaseService.addFinance({
+            type: 'Income',
+            amount: settings.admissionFee || 0,
+            category: 'Admission Fee',
+            description: `Admission fee for ${admission.name}`,
+            date: new Date().toISOString().split('T')[0]
+          });
+        }
       } catch (playerError: any) {
         // Fallback to minimal schema if needed
         console.warn("Supabase player creation error (might be schema mismatch):", playerError.message);
@@ -2277,6 +2834,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
       bloodGroup: "",
       address: "",
       role: "Batsman", 
+      battingPosition: "Middle Order",
       battingStyle: "Right Hand",
       bowlingStyle: "",
       jerseySize: "M",
@@ -2284,7 +2842,34 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
       photo: "", 
       phone: "", 
       status: "Active",
-      stats: { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0, bestInnings: "N/A" },
+      potmCount: 0,
+      pottCount: 0,
+      stats: { 
+        matches: 0, 
+        innings: 0,
+        notOut: 0,
+        runs: 0, 
+        highestScore: 0,
+        avg: 0, 
+        sr: 0, 
+        fours: 0,
+        sixes: 0,
+        fifties: 0,
+        hundreds: 0,
+        balls: 0,
+        bowlInnings: 0,
+        overs: 0,
+        wickets: 0,
+        runsConceded: 0,
+        bestBowling: "N/A",
+        economy: 0,
+        bowlSr: 0,
+        maidens: 0,
+        careerRuns: 0,
+        careerWickets: 0,
+        bestInnings: "N/A",
+        impactScore: 0
+      },
       matchHistory: []
     });
     setShowAddPlayer(false);
@@ -2490,15 +3075,44 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
     if (paid >= total) status = 'Paid';
     else if (paid > 0) status = 'Partial';
 
-    await fetch(`/api/hostedTournaments/${selectedTournament.id}/registrations/${selectedRegistration.id}/payment`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amountPaid: paid,
-        amountDue: due,
-        paymentStatus: status
-      }),
-    });
+    const difference = paid - (selectedRegistration.amountPaid || 0);
+
+    try {
+      if (supabase) {
+        const updatedRegistrations = selectedTournament.registrations.map((r: any) => 
+          r.id === selectedRegistration.id 
+            ? { ...r, amountPaid: paid, amountDue: due, paymentStatus: status }
+            : r
+        );
+        
+        await supabaseService.updateHostedTournament(selectedTournament.id, {
+          registrations: updatedRegistrations
+        });
+        
+        if (difference > 0) {
+          await supabaseService.addFinance({
+            type: "Income",
+            amount: difference,
+            category: "Tournament Fee",
+            description: `Payment from ${selectedRegistration.teamName} for ${selectedTournament.name}`,
+            date: new Date().toISOString().split('T')[0]
+          });
+        }
+      } else {
+        await fetch(`/api/hostedTournaments/${selectedTournament.id}/registrations/${selectedRegistration.id}/payment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amountPaid: paid,
+            amountDue: due,
+            paymentStatus: status
+          }),
+        });
+      }
+    } catch (error) {
+      console.error("Payment update failed:", error);
+    }
+
     setShowUpdatePayment(false);
     setSelectedRegistration(null);
     onRefresh();
@@ -2561,6 +3175,130 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
     onRefresh();
   };
 
+  const handleQuickScore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMatchForQuickScore) return;
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const performances: any[] = [];
+    
+    // Squad from playing XI
+    const squad = data.players.filter(p => selectedPlayersForMatch.includes(p.id));
+    
+    squad.forEach(player => {
+      performances.push({
+        playerId: player.id,
+        batting: {
+          runs: parseInt(formData.get(`runs_${player.id}`) as string) || 0,
+          balls: parseInt(formData.get(`balls_${player.id}`) as string) || 0,
+          fours: parseInt(formData.get(`fours_${player.id}`) as string) || 0,
+          sixes: parseInt(formData.get(`sixes_${player.id}`) as string) || 0,
+          isOut: formData.get(`isOut_${player.id}`) === 'on'
+        },
+        bowling: {
+          overs: parseFloat(formData.get(`overs_${player.id}`) as string) || 0,
+          maidens: parseInt(formData.get(`maidens_${player.id}`) as string) || 0,
+          runsConceded: parseInt(formData.get(`runsConceded_${player.id}`) as string) || 0,
+          wickets: parseInt(formData.get(`wickets_${player.id}`) as string) || 0
+        }
+      });
+    });
+
+    const potmId = parseInt(formData.get('potm') as string);
+
+    const matchUpdate = {
+      status: 'Finished',
+      result: formData.get('result') as string,
+      score: {
+        teamARuns: parseInt(formData.get('teamARuns') as string) || 0,
+        teamAWickets: parseInt(formData.get('teamAWickets') as string) || 0,
+        teamAOvers: formData.get('teamAOvers') as string || "0.0",
+        teamBRuns: parseInt(formData.get('teamBRuns') as string) || 0,
+        teamBWickets: parseInt(formData.get('teamBWickets') as string) || 0,
+        teamBOvers: formData.get('teamBOvers') as string || "0.0",
+      },
+      performances,
+      manOfTheMatch: potmId || undefined
+    };
+
+    try {
+       await supabaseService.updateMatch(selectedMatchForQuickScore.id, matchUpdate as any);
+       
+       // Update each player's stats
+       for (const perf of performances) {
+         const player = data.players.find(p => p.id === perf.playerId);
+         if (player) {
+           const newStats = { ...player.stats };
+           newStats.matches += 1;
+           const isBatted = perf.batting.balls > 0 || perf.batting.runs > 0 || perf.batting.isOut;
+           if (isBatted) {
+             newStats.innings += 1;
+             newStats.notOut += !perf.batting.isOut ? 1 : 0;
+             newStats.runs += perf.batting.runs;
+             newStats.highestScore = Math.max(newStats.highestScore, perf.batting.runs);
+             newStats.fours += perf.batting.fours;
+             newStats.sixes += perf.batting.sixes;
+             newStats.fifties += (perf.batting.runs >= 50 && perf.batting.runs < 100) ? 1 : 0;
+             newStats.hundreds += (perf.batting.runs >= 100) ? 1 : 0;
+             
+             // Recalculate average
+             const outs = newStats.innings - newStats.notOut;
+             newStats.avg = outs > 0 ? parseFloat((newStats.runs / outs).toFixed(2)) : newStats.runs;
+           }
+           
+           if (perf.bowling.overs > 0) {
+             newStats.bowlInnings += 1;
+             newStats.overs += perf.bowling.overs;
+             newStats.wickets += perf.bowling.wickets;
+             newStats.runsConceded += perf.bowling.runsConceded;
+             newStats.maidens += perf.bowling.maidens;
+             
+             // Simple economy calculation
+             newStats.economy = newStats.overs > 0 ? parseFloat((newStats.runsConceded / newStats.overs).toFixed(2)) : 0;
+           }
+
+           await supabaseService.updatePlayer(player.id, { 
+             stats: newStats,
+             potmCount: (player.potmCount || 0) + (perf.playerId === potmId ? 1 : 0)
+           });
+         }
+       }
+       
+       setNotification({ message: "Match statistics updated and player profiles synced!", type: 'success' });
+       setShowQuickScore(false);
+       setSelectedMatchForQuickScore(null);
+       setSelectedPlayersForMatch([]);
+       onRefresh();
+    } catch (e) {
+      console.error(e);
+      setNotification({ message: "Failed to update match stats", type: 'error' });
+    }
+  };
+
+  const downloadScorecard = async () => {
+    const element = document.getElementById('match-scorecard-graphic');
+    if (!element) return;
+    
+    try {
+      setNotification({ message: "Generating high-quality graphic...", type: 'success' });
+      const canvas = await html2canvas(element, {
+        scale: 4, // High resolution
+        backgroundColor: '#000000',
+        useCORS: true,
+        logging: false
+      });
+      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      const link = document.createElement('a');
+      link.download = `IRB-Warriors-Scorecard-${selectedMatchForGraphic?.teamA}-VS-${selectedMatchForGraphic?.teamB}.png`;
+      link.href = dataUrl;
+      link.click();
+      setNotification({ message: "Graphic downloaded successfully!", type: 'success' });
+    } catch (err) {
+      console.error("Failed to generate graphic", err);
+      setNotification({ message: "Failed to generate graphic", type: 'error' });
+    }
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -2578,7 +3316,28 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const [selectedPlayerForProfile, setSelectedPlayerForProfile] = useState<any>(null);
+  const handlePlayerPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPlayerForPayment) return;
+    
+    try {
+      await supabaseService.addFinance({
+        type: 'Income',
+        amount: selectedPlayerForPayment.monthlyFee || settings.monthlyFee,
+        category: 'Monthly Fee',
+        description: `Monthly fee for ${selectedPlayerForPayment.name} (ID: ${selectedPlayerForPayment.id}) - ${paymentMonth}`,
+        date: new Date().toISOString().split('T')[0]
+      });
+      
+      setNotification({ message: "Payment recorded successfully!", type: 'success' });
+      setShowUpdatePayment(false);
+      setSelectedPlayerForPayment(null);
+      onRefresh();
+    } catch (error) {
+      console.error("Payment recording failed:", error);
+      setNotification({ message: "Failed to record payment.", type: 'error' });
+    }
+  };
   const [showBracket, setShowBracket] = useState(false);
   const [selectedTournamentForSquad, setSelectedTournamentForSquad] = useState<any>(null);
 
@@ -3177,28 +3936,59 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
             exit={{ opacity: 0, y: -20 }}
             className="space-y-10"
           >
-            {selectedPlayerForProfile ? (
-              <PlayerProfile 
-                player={selectedPlayerForProfile} 
-                onBack={() => setSelectedPlayerForProfile(null)} 
-              />
-            ) : (
-              <>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-4 md:px-0">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-4 md:px-0">
                   <div className="space-y-1">
                     <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Player <span className="text-amber-500">Roster</span></h2>
                     <div className="h-1 w-20 bg-amber-500/30 rounded-full" />
                   </div>
-                  <button 
-                    onClick={() => setShowAddPlayer(true)}
-                    className="w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
-                  >
-                    <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-                    Add Player
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                    <div className="relative group flex-1 sm:w-64">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-500 transition-colors" size={18} />
+                      <input 
+                        type="text" 
+                        placeholder="Search Players..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-12 pr-6 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700"
+                      />
+                    </div>
+                    <select 
+                      value={filterRole}
+                      onChange={(e) => setFilterRole(e.target.value)}
+                      className="px-6 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white"
+                    >
+                      <option value="All">All Roles</option>
+                      <option value="Batsman">Batsman</option>
+                      <option value="Bowler">Bowler</option>
+                      <option value="All-rounder">All-rounder</option>
+                      <option value="Wicket Keeper">Wicket Keeper</option>
+                    </select>
+                    <button 
+                      onClick={() => setShowAddPlayer(true)}
+                      className="group flex items-center justify-center gap-3 px-8 py-4 bg-amber-500 text-gray-950 rounded-2xl text-xs font-black hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] uppercase italic tracking-widest"
+                    >
+                      <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
+                      Add Player
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
+                  <div className="p-6 md:p-8 flex flex-wrap gap-4 border-b border-slate-800">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest self-center mr-2">Sort By:</span>
+                    <button 
+                      onClick={() => setSortBy('name')}
+                      className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'name' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
+                    >Name</button>
+                    <button 
+                      onClick={() => setSortBy('runs')}
+                      className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'runs' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
+                    >Runs</button>
+                    <button 
+                      onClick={() => setSortBy('wickets')}
+                      className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'wickets' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
+                    >Wickets</button>
+                  </div>
                   <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left border-collapse min-w-[800px] md:min-w-0">
                       <thead>
@@ -3210,7 +4000,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800">
-                        {data.players.map((player) => (
+                        {filteredPlayers.map((player) => (
                           <tr key={player.id} className="hover:bg-slate-900/50 transition-all duration-300 group cursor-pointer" onClick={() => setSelectedPlayerForProfile(player)}>
                             <td className="px-6 md:px-10 py-6 md:py-8">
                               <div className="flex items-center gap-4 md:gap-5">
@@ -3228,7 +4018,15 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                                   <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-5 h-5 md:w-7 md:h-7 bg-amber-500 text-gray-950 rounded-lg flex items-center justify-center text-[8px] md:text-[10px] font-black shadow-lg">#{player.jerseyNumber}</div>
                                 </div>
                                 <div>
-                                  <h3 className="text-sm md:text-base font-black text-white uppercase italic tracking-tight">{player.name}</h3>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="text-sm md:text-base font-black text-white uppercase italic tracking-tight">{player.name}</h3>
+                                    {player.isCaptain && (
+                                      <span className="px-2 py-0.5 bg-amber-500 text-gray-950 text-[6px] md:text-[8px] font-black rounded uppercase tracking-tighter">C</span>
+                                    )}
+                                    {player.isViceCaptain && (
+                                      <span className="px-2 py-0.5 bg-slate-800 text-amber-500 text-[6px] md:text-[8px] font-black rounded border border-slate-700 uppercase tracking-tighter">VC</span>
+                                    )}
+                                  </div>
                                   <p className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{player.phone}</p>
                                 </div>
                               </div>
@@ -3248,8 +4046,26 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 md:px-10 py-6 md:py-8">
+                            <td className="px-6 md:px-10 py-6 md:py-8 text-right">
                               <div className="flex justify-end gap-2 md:gap-3">
+                                {isAdmin && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedPlayerForPayment(player);
+                                      setShowUpdatePayment(true);
+                                    }}
+                                    className={cn(
+                                      "w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg",
+                                      checkPaymentStatus(player.id, paymentMonth)
+                                        ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white shadow-emerald-500/5"
+                                        : "bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-gray-950 shadow-amber-500/5"
+                                    )}
+                                    title={checkPaymentStatus(player.id, paymentMonth) ? "Paid" : "Record Payment"}
+                                  >
+                                    <DollarSign size={16} />
+                                  </button>
+                                )}
                                 {isAdmin && (
                                   <button 
                                     onClick={(e) => {
@@ -3288,10 +4104,8 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                         ))}
                       </tbody>
                     </table>
-                  </div>
                 </div>
-              </>
-            )}
+              </div>
           </motion.div>
         )}
 
@@ -3362,6 +4176,30 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                         </td>
                         <td className="px-6 md:px-10 py-6 md:py-8 text-right">
                           <div className="flex justify-end gap-3">
+                          {isAdmin && (
+                            <button 
+                              onClick={() => {
+                                setSelectedMatchForQuickScore(match);
+                                setShowQuickScore(true);
+                              }}
+                              className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all duration-500 shadow-lg shadow-emerald-500/5"
+                              title="Quick Score"
+                            >
+                              <Zap size={18} />
+                            </button>
+                          )}
+                          {isAdmin && match.status === 'Finished' && (
+                             <button 
+                               onClick={() => {
+                                 setSelectedMatchForGraphic(match);
+                                 setShowGraphicGenerator(true);
+                               }}
+                               className="w-12 h-12 bg-purple-500/10 text-purple-500 rounded-2xl flex items-center justify-center hover:bg-purple-500 hover:text-white transition-all duration-500 shadow-lg shadow-purple-500/5"
+                               title="Generate Graphic"
+                             >
+                               <ImageIcon size={18} />
+                             </button>
+                          )}
                           {isAdmin && (
                             <button 
                               onClick={() => {
@@ -3526,6 +4364,92 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                   </div>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'match-day' && (
+          <motion.div 
+            key="match-day"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-10"
+          >
+            <div className="flex justify-between items-center">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Active <span className="text-amber-500">Match Day</span></h2>
+                <div className="h-1 w-20 bg-amber-500/30 rounded-full" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-[3rem] border border-slate-800 space-y-8 shadow-2xl">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center">
+                    <Activity size={24} />
+                  </div>
+                  <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Select Active Match</h3>
+                </div>
+                <div className="space-y-4">
+                  {data.matches.filter(m => m.status !== 'Finished').map(match => (
+                    <div key={match.id} className="p-6 bg-slate-950 rounded-3xl border border-slate-800 group hover:border-amber-500/50 transition-all cursor-pointer flex justify-between items-center">
+                      <div>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{match.date} • {match.venue}</p>
+                        <h4 className="text-lg font-black text-white uppercase italic mt-1">{match.teamA} VS {match.teamB}</h4>
+                      </div>
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={() => {
+                            setSelectedMatchForQuickScore(match);
+                            setShowQuickScore(true);
+                          }}
+                          className="px-6 py-3 bg-amber-500 text-gray-950 rounded-xl text-[10px] font-black uppercase italic tracking-widest hover:scale-105 transition-all shadow-lg shadow-amber-500/20"
+                        >
+                          Quick Score
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {data.matches.filter(m => m.status !== 'Finished').length === 0 && (
+                    <div className="text-center py-20 bg-slate-950/30 rounded-[2rem] border border-dashed border-slate-800">
+                      <p className="text-slate-500 font-black uppercase italic">No active or upcoming matches</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-slate-950 p-8 rounded-[3rem] border border-slate-800 space-y-8 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[100px] -mr-32 -mt-32" />
+                <div className="relative z-10 space-y-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center">
+                      <LayoutDashboard size={24} />
+                    </div>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Today's Summary</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Matches</p>
+                      <p className="text-3xl font-black text-white italic mt-2">{data.matches.filter(m => m.status === 'Live').length}</p>
+                    </div>
+                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Scheduled</p>
+                      <p className="text-3xl font-black text-white italic mt-2">{data.matches.filter(m => m.status === 'Upcoming').length}</p>
+                    </div>
+                  </div>
+                  <div className="p-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-[2.5rem] shadow-xl shadow-amber-500/10 space-y-6">
+                    <h4 className="text-xl font-black text-gray-950 uppercase italic">Overlay Control</h4>
+                    <p className="text-[10px] font-black text-gray-950/70 uppercase tracking-widest">Use this URL in OBS for professional score overlay:</p>
+                    <div className="bg-gray-950/20 backdrop-blur-md p-4 rounded-xl border border-white/10 select-all">
+                      <code className="text-[10px] text-white font-mono break-all">https://irbwarriors.com/overlay/live</code>
+                    </div>
+                    <button className="w-full py-4 bg-gray-950 text-white rounded-2xl text-[10px] font-black uppercase italic tracking-widest hover:scale-[1.02] transition-all">
+                      Open Overlay Panel
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -4453,11 +5377,11 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               <form onSubmit={handleAddMember} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
-                  <input required value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter name" />
+                  <input required value={newMember.name ?? ""} onChange={e => setNewMember({...newMember, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter name" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
-                  <select required value={newMember.role} onChange={e => setNewMember({...newMember, role: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white appearance-none">
+                  <select required value={newMember.role ?? ""} onChange={e => setNewMember({...newMember, role: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white appearance-none">
                     <option value="" className="bg-slate-900">Select a role</option>
                     <option value="সভাপতি (President)" className="bg-slate-900">সভাপতি (President)</option>
                     <option value="সহ সভাপতি (Vice President)" className="bg-slate-900">সহ সভাপতি (Vice President)</option>
@@ -4469,7 +5393,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
-                  <input required value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter phone" />
+                  <input required value={newMember.phone ?? ""} onChange={e => setNewMember({...newMember, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter phone" />
                 </div>
                 <FileUploader 
                   label="Member Photo" 
@@ -4492,11 +5416,11 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               <form onSubmit={handleUpdateMember} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
-                  <input required value={editingMember.name} onChange={e => setEditingMember({...editingMember, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter name" />
+                  <input required value={editingMember.name ?? ""} onChange={e => setEditingMember({...editingMember, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter name" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
-                  <select required value={editingMember.role} onChange={e => setEditingMember({...editingMember, role: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white appearance-none">
+                  <select required value={editingMember.role ?? ""} onChange={e => setEditingMember({...editingMember, role: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white appearance-none">
                     <option value="" className="bg-slate-900">Select a role</option>
                     <option value="সভাপতি (President)" className="bg-slate-900">সভাপতি (President)</option>
                     <option value="সহ সভাপতি (Vice President)" className="bg-slate-900">সহ সভাপতি (Vice President)</option>
@@ -4508,7 +5432,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
-                  <input required value={editingMember.phone} onChange={e => setEditingMember({...editingMember, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter phone" />
+                  <input required value={editingMember.phone ?? ""} onChange={e => setEditingMember({...editingMember, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter phone" />
                 </div>
                 <FileUploader 
                   label="Member Photo" 
@@ -4531,7 +5455,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               <form onSubmit={handleAddGallery} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Type</label>
-                  <select value={newGallery.type} onChange={e => setNewGallery({...newGallery, type: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                  <select value={newGallery.type ?? ""} onChange={e => setNewGallery({...newGallery, type: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
                     <option value="Photo" className="bg-slate-900">Photo</option>
                     <option value="Video" className="bg-slate-900">Video</option>
                   </select>
@@ -4550,7 +5474,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 )}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Caption</label>
-                  <input required value={newGallery.caption} onChange={e => setNewGallery({...newGallery, caption: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter caption" />
+                  <input required value={newGallery.caption ?? ""} onChange={e => setNewGallery({...newGallery, caption: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter caption" />
                 </div>
                 <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Save Item</button>
               </form>
@@ -4568,19 +5492,19 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
               <form onSubmit={handleAddEvent} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Title</label>
-                  <input required value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter title" />
+                  <input required value={newEvent.title ?? ""} onChange={e => setNewEvent({...newEvent, title: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter title" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date</label>
-                  <input required type="date" value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                  <input required type="date" value={newEvent.date ?? ""} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Location</label>
-                  <input required value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter location" />
+                  <input required value={newEvent.location ?? ""} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter location" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Description</label>
-                  <textarea required value={newEvent.description} onChange={e => setNewEvent({...newEvent, description: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter description" rows={3} />
+                  <textarea required value={newEvent.description ?? ""} onChange={e => setNewEvent({...newEvent, description: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter description" rows={3} />
                 </div>
                 <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Save Event</button>
               </form>
@@ -4599,31 +5523,31 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
-                    <input required value={newPlayer.name} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input required value={newPlayer.name ?? ""} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Father's Name</label>
-                    <input value={newPlayer.fatherName} onChange={e => setNewPlayer({...newPlayer, fatherName: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input value={newPlayer.fatherName ?? ""} onChange={e => setNewPlayer({...newPlayer, fatherName: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date of Birth</label>
-                    <input type="date" value={newPlayer.dob} onChange={e => setNewPlayer({...newPlayer, dob: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    <input type="date" value={newPlayer.dob ?? ""} onChange={e => setNewPlayer({...newPlayer, dob: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Blood Group</label>
-                    <input value={newPlayer.bloodGroup} onChange={e => setNewPlayer({...newPlayer, bloodGroup: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input value={newPlayer.bloodGroup ?? ""} onChange={e => setNewPlayer({...newPlayer, bloodGroup: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Address</label>
-                  <textarea value={newPlayer.address} onChange={e => setNewPlayer({...newPlayer, address: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700 min-h-[80px]" />
+                  <textarea value={newPlayer.address ?? ""} onChange={e => setNewPlayer({...newPlayer, address: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700 min-h-[80px]" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
-                    <select value={newPlayer.role} onChange={e => setNewPlayer({...newPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <select value={newPlayer.role ?? ""} onChange={e => setNewPlayer({...newPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
                       <option value="Batsman" className="bg-slate-900">Batsman</option>
                       <option value="Bowler" className="bg-slate-900">Bowler</option>
                       <option value="All-rounder" className="bg-slate-900">All-rounder</option>
@@ -4631,27 +5555,79 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                     </select>
                   </div>
                   <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Batting Pos</label>
+                    <select value={newPlayer.battingPosition ?? "Middle Order"} onChange={e => setNewPlayer({...newPlayer, battingPosition: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="Opener" className="bg-slate-900">Opener</option>
+                      <option value="Middle Order" className="bg-slate-900">Middle Order</option>
+                      <option value="Finisher" className="bg-slate-900">Finisher</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">POTM Count</label>
+                    <input type="number" value={newPlayer.potmCount ?? 0} onChange={e => setNewPlayer({...newPlayer, potmCount: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">POTT Count</label>
+                    <input type="number" value={newPlayer.pottCount ?? 0} onChange={e => setNewPlayer({...newPlayer, pottCount: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-6 pt-2">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input 
+                        type="checkbox" 
+                        checked={newPlayer.isCaptain ?? false} 
+                        onChange={e => setNewPlayer({...newPlayer, isCaptain: e.target.checked, isViceCaptain: e.target.checked ? false : newPlayer.isViceCaptain})} 
+                        className="peer hidden" 
+                      />
+                      <div className="w-6 h-6 rounded-lg bg-slate-950/50 border border-slate-800 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all" />
+                      <Check className="absolute inset-0 text-gray-950 opacity-0 peer-checked:opacity-100 transition-opacity p-1" size={14} />
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Captain</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input 
+                        type="checkbox" 
+                        checked={newPlayer.isViceCaptain ?? false} 
+                        onChange={e => setNewPlayer({...newPlayer, isViceCaptain: e.target.checked, isCaptain: e.target.checked ? false : newPlayer.isCaptain})} 
+                        className="peer hidden" 
+                      />
+                      <div className="w-6 h-6 rounded-lg bg-slate-950/50 border border-slate-800 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all" />
+                      <Check className="absolute inset-0 text-gray-950 opacity-0 peer-checked:opacity-100 transition-opacity p-1" size={14} />
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Vice Captain</span>
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey #</label>
-                    <input required value={newPlayer.jerseyNumber} onChange={e => setNewPlayer({...newPlayer, jerseyNumber: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input required value={newPlayer.jerseyNumber ?? ""} onChange={e => setNewPlayer({...newPlayer, jerseyNumber: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
+                    <input required value={newPlayer.phone ?? ""} onChange={e => setNewPlayer({...newPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Batting Style</label>
-                    <select value={newPlayer.battingStyle} onChange={e => setNewPlayer({...newPlayer, battingStyle: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <select value={newPlayer.battingStyle ?? ""} onChange={e => setNewPlayer({...newPlayer, battingStyle: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
                       <option value="Right Hand" className="bg-slate-900">Right Hand</option>
                       <option value="Left Hand" className="bg-slate-900">Left Hand</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Bowling Style</label>
-                    <input value={newPlayer.bowlingStyle} onChange={e => setNewPlayer({...newPlayer, bowlingStyle: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Right Arm Fast" />
+                    <input value={newPlayer.bowlingStyle ?? ""} onChange={e => setNewPlayer({...newPlayer, bowlingStyle: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Right Arm Fast" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey Size</label>
-                    <select value={newPlayer.jerseySize} onChange={e => setNewPlayer({...newPlayer, jerseySize: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <select value={newPlayer.jerseySize ?? ""} onChange={e => setNewPlayer({...newPlayer, jerseySize: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
                       <option value="S" className="bg-slate-900">S</option>
                       <option value="M" className="bg-slate-900">M</option>
                       <option value="L" className="bg-slate-900">L</option>
@@ -4661,7 +5637,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
-                    <input required value={newPlayer.phone} onChange={e => setNewPlayer({...newPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input required value={newPlayer.phone ?? ""} onChange={e => setNewPlayer({...newPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
                 <FileUploader 
@@ -4686,31 +5662,31 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Name</label>
-                    <input required value={editingPlayer.name} onChange={e => setEditingPlayer({...editingPlayer, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input required value={editingPlayer.name ?? ""} onChange={e => setEditingPlayer({...editingPlayer, name: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Father's Name</label>
-                    <input value={editingPlayer.fatherName || ""} onChange={e => setEditingPlayer({...editingPlayer, fatherName: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input value={editingPlayer.fatherName ?? ""} onChange={e => setEditingPlayer({...editingPlayer, fatherName: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date of Birth</label>
-                    <input type="date" value={editingPlayer.dob || ""} onChange={e => setEditingPlayer({...editingPlayer, dob: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    <input type="date" value={editingPlayer.dob ?? ""} onChange={e => setEditingPlayer({...editingPlayer, dob: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Blood Group</label>
-                    <input value={editingPlayer.bloodGroup || ""} onChange={e => setEditingPlayer({...editingPlayer, bloodGroup: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input value={editingPlayer.bloodGroup ?? ""} onChange={e => setEditingPlayer({...editingPlayer, bloodGroup: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Address</label>
-                  <textarea value={editingPlayer.address || ""} onChange={e => setEditingPlayer({...editingPlayer, address: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700 min-h-[80px]" />
+                  <textarea value={editingPlayer.address ?? ""} onChange={e => setEditingPlayer({...editingPlayer, address: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700 min-h-[80px]" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Role</label>
-                    <select value={editingPlayer.role} onChange={e => setEditingPlayer({...editingPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <select value={editingPlayer.role ?? "Batsman"} onChange={e => setEditingPlayer({...editingPlayer, role: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
                       <option value="Batsman" className="bg-slate-900">Batsman</option>
                       <option value="Bowler" className="bg-slate-900">Bowler</option>
                       <option value="All-rounder" className="bg-slate-900">All-rounder</option>
@@ -4718,8 +5694,64 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                     </select>
                   </div>
                   <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Batting Pos</label>
+                    <select value={editingPlayer.battingPosition ?? "Middle Order"} onChange={e => setEditingPlayer({...editingPlayer, battingPosition: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="Opener" className="bg-slate-900">Opener</option>
+                      <option value="Middle Order" className="bg-slate-900">Middle Order</option>
+                      <option value="Finisher" className="bg-slate-900">Finisher</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">POTM Count</label>
+                    <input type="number" value={editingPlayer.potmCount ?? 0} onChange={e => setEditingPlayer({...editingPlayer, potmCount: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">POTT Count</label>
+                    <input type="number" value={editingPlayer.pottCount ?? 0} onChange={e => setEditingPlayer({...editingPlayer, pottCount: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-6 pt-2">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input 
+                        type="checkbox" 
+                        checked={editingPlayer.isCaptain ?? false} 
+                        onChange={e => setEditingPlayer({...editingPlayer, isCaptain: e.target.checked, isViceCaptain: e.target.checked ? false : editingPlayer.isViceCaptain})} 
+                        className="peer hidden" 
+                      />
+                      <div className="w-6 h-6 rounded-lg bg-slate-950/50 border border-slate-800 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all" />
+                      <Check className="absolute inset-0 text-gray-950 opacity-0 peer-checked:opacity-100 transition-opacity p-1" size={14} />
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Captain</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input 
+                        type="checkbox" 
+                        checked={editingPlayer.isViceCaptain ?? false} 
+                        onChange={e => setEditingPlayer({...editingPlayer, isViceCaptain: e.target.checked, isCaptain: e.target.checked ? false : editingPlayer.isCaptain})} 
+                        className="peer hidden" 
+                      />
+                      <div className="w-6 h-6 rounded-lg bg-slate-950/50 border border-slate-800 peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all" />
+                      <Check className="absolute inset-0 text-gray-950 opacity-0 peer-checked:opacity-100 transition-opacity p-1" size={14} />
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Vice Captain</span>
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Jersey #</label>
-                    <input required value={editingPlayer.jerseyNumber} onChange={e => setEditingPlayer({...editingPlayer, jerseyNumber: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input required value={editingPlayer.jerseyNumber ?? ""} onChange={e => setEditingPlayer({...editingPlayer, jerseyNumber: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</label>
+                    <select value={editingPlayer.status ?? ""} onChange={e => setEditingPlayer({...editingPlayer, status: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                      <option value="Active" className="bg-slate-900">Active</option>
+                      <option value="Injured" className="bg-slate-900">Injured</option>
+                      <option value="Inactive" className="bg-slate-900">Inactive</option>
+                    </select>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -4732,7 +5764,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Bowling Style</label>
-                    <input value={editingPlayer.bowlingStyle || ""} onChange={e => setEditingPlayer({...editingPlayer, bowlingStyle: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Right Arm Fast" />
+                    <input value={editingPlayer.bowlingStyle ?? ""} onChange={e => setEditingPlayer({...editingPlayer, bowlingStyle: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Right Arm Fast" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -4748,7 +5780,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</label>
-                    <select value={editingPlayer.status} onChange={e => setEditingPlayer({...editingPlayer, status: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <select value={editingPlayer.status ?? ""} onChange={e => setEditingPlayer({...editingPlayer, status: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
                       <option value="Active" className="bg-slate-900">Active</option>
                       <option value="Injured" className="bg-slate-900">Injured</option>
                       <option value="Inactive" className="bg-slate-900">Inactive</option>
@@ -4762,7 +5794,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 />
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
-                  <input required value={editingPlayer.phone} onChange={e => setEditingPlayer({...editingPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                  <input required value={editingPlayer.phone ?? ""} onChange={e => setEditingPlayer({...editingPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                 </div>
                 <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Update Player</button>
               </form>
@@ -4786,6 +5818,36 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
           />
         )}
 
+        {showUpdatePayment && selectedPlayerForPayment && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-black text-white uppercase italic">Record <span className="text-amber-500">Payment</span></h2>
+                <button onClick={() => { setShowUpdatePayment(false); setSelectedPlayerForPayment(null); }} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-500 hover:text-white"><X /></button>
+              </div>
+              <div className="flex items-center gap-4 p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
+                <img src={selectedPlayerForPayment.photo} className="w-12 h-12 rounded-xl object-cover" alt="" />
+                <div>
+                  <p className="text-sm font-black text-white uppercase italic">{selectedPlayerForPayment.name}</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Jersey #{selectedPlayerForPayment.jerseyNumber}</p>
+                </div>
+              </div>
+              <form onSubmit={handlePlayerPayment} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Select Month</label>
+                  <input required type="month" value={paymentMonth ?? ""} onChange={e => setPaymentMonth(e.target.value)} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Amount (৳)</label>
+                  <input required type="number" readOnly value={selectedPlayerForPayment.monthlyFee || settings.monthlyFee} className="w-full px-6 py-4 bg-slate-950/20 border border-slate-800 rounded-2xl focus:outline-none font-bold text-slate-400" />
+                </div>
+                <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter flex items-center justify-center gap-3">
+                  <DollarSign size={20} /> Record Income
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
         {showEditStats && selectedPlayer && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
@@ -4794,30 +5856,119 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 <button onClick={() => setShowEditStats(false)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-500 hover:text-white"><X /></button>
               </div>
               <p className="text-sm font-bold text-slate-500">Updating stats for <span className="text-white">{selectedPlayer.name}</span></p>
-              <form onSubmit={handleUpdateStats} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Matches</label>
-                    <input required type="number" value={editStats.matches} onChange={e => setEditStats({...editStats, matches: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Runs</label>
-                    <input required type="number" value={editStats.runs} onChange={e => setEditStats({...editStats, runs: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Wickets</label>
-                    <input required type="number" value={editStats.wickets} onChange={e => setEditStats({...editStats, wickets: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Average</label>
-                    <input required type="number" step="0.01" value={editStats.avg} onChange={e => setEditStats({...editStats, avg: parseFloat(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Strike Rate</label>
-                    <input required type="number" step="0.1" value={editStats.sr} onChange={e => setEditStats({...editStats, sr: parseFloat(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+              <form onSubmit={handleUpdateStats} className="space-y-6 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+                {/* Batting Section */}
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] border-b border-slate-800 pb-2">Batting Stats</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Matches</label>
+                      <input required type="number" value={editStats.matches ?? 0} onChange={e => setEditStats({...editStats, matches: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white shadow-inner" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Innings</label>
+                      <input required type="number" value={editStats.innings ?? 0} onChange={e => setEditStats({...editStats, innings: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Not Out</label>
+                      <input required type="number" value={editStats.notOut ?? 0} onChange={e => setEditStats({...editStats, notOut: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Runs</label>
+                      <input required type="number" value={editStats.runs ?? 0} onChange={e => setEditStats({...editStats, runs: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Balls Faced</label>
+                      <input required type="number" value={editStats.balls ?? 0} onChange={e => setEditStats({...editStats, balls: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Highest Score</label>
+                      <input required type="number" value={editStats.highestScore ?? 0} onChange={e => setEditStats({...editStats, highestScore: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Batting Avg</label>
+                      <input required type="number" step="0.01" value={editStats.avg ?? 0} onChange={e => setEditStats({...editStats, avg: parseFloat(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Strike Rate</label>
+                      <input required type="number" step="0.01" value={editStats.sr ?? 0} onChange={e => setEditStats({...editStats, sr: parseFloat(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">100s</label>
+                      <input required type="number" value={editStats.hundreds ?? 0} onChange={e => setEditStats({...editStats, hundreds: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">50s</label>
+                      <input required type="number" value={editStats.fifties ?? 0} onChange={e => setEditStats({...editStats, fifties: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
                   </div>
                 </div>
-                <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Update Stats</button>
+
+                {/* Bowling Section */}
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] border-b border-slate-800 pb-2">Bowling Stats</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Bowl Innings</label>
+                      <input required type="number" value={editStats.bowlInnings ?? 0} onChange={e => setEditStats({...editStats, bowlInnings: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Bowling Balls</label>
+                      <input required type="number" value={editStats.ballsBowled ?? 0} onChange={e => setEditStats({...editStats, ballsBowled: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Overs</label>
+                      <input required type="number" step="0.1" value={editStats.overs ?? 0} onChange={e => setEditStats({...editStats, overs: parseFloat(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Wickets</label>
+                      <input required type="number" value={editStats.wickets ?? 0} onChange={e => setEditStats({...editStats, wickets: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Runs Conceded</label>
+                      <input required type="number" value={editStats.runsConceded ?? 0} onChange={e => setEditStats({...editStats, runsConceded: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Economy</label>
+                      <input required type="number" step="0.01" value={editStats.economy ?? 0} onChange={e => setEditStats({...editStats, economy: parseFloat(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Best Bowling</label>
+                      <input required type="text" placeholder="e.g. 5/20" value={editStats.bestBowling ?? ""} onChange={e => setEditStats({...editStats, bestBowling: e.target.value})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Maidens</label>
+                      <input required type="number" value={editStats.maidens ?? 0} onChange={e => setEditStats({...editStats, maidens: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Bowl SR</label>
+                      <input required type="number" step="0.01" value={editStats.bowlSr ?? 0} onChange={e => setEditStats({...editStats, bowlSr: parseFloat(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Career Section */}
+                <div className="space-y-4 pt-4 pb-4">
+                  <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] border-b border-slate-800 pb-2">Career Overview</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Career Runs</label>
+                      <input required type="number" value={editStats.careerRuns ?? 0} onChange={e => setEditStats({...editStats, careerRuns: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Career Wickets</label>
+                      <input required type="number" value={editStats.careerWickets ?? 0} onChange={e => setEditStats({...editStats, careerWickets: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Impact Score</label>
+                      <input required type="number" value={editStats.impactScore ?? 0} onChange={e => setEditStats({...editStats, impactScore: parseInt(e.target.value)})} className="w-full px-4 md:px-6 py-3 md:py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="sticky bottom-0 bg-slate-900/80 backdrop-blur-md pt-4 pb-2">
+                  <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Update Performance</button>
+                </div>
               </form>
             </motion.div>
           </motion.div>
@@ -4834,23 +5985,23 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Type</label>
-                    <select value={newFinance.type} onChange={e => setNewFinance({...newFinance, type: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <select value={newFinance.type ?? ""} onChange={e => setNewFinance({...newFinance, type: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
                       <option value="Income" className="bg-slate-900">Income</option>
                       <option value="Expense" className="bg-slate-900">Expense</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Amount</label>
-                    <input required type="number" value={newFinance.amount} onChange={e => setNewFinance({...newFinance, amount: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    <input required type="number" value={newFinance.amount ?? ""} onChange={e => setNewFinance({...newFinance, amount: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Category</label>
-                  <input required value={newFinance.category} onChange={e => setNewFinance({...newFinance, category: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Sponsorship" />
+                  <input required value={newFinance.category ?? ""} onChange={e => setNewFinance({...newFinance, category: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Sponsorship" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Description</label>
-                  <textarea required value={newFinance.description} onChange={e => setNewFinance({...newFinance, description: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter description" rows={3} />
+                  <textarea required value={newFinance.description ?? ""} onChange={e => setNewFinance({...newFinance, description: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter description" rows={3} />
                 </div>
                 <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Save Record</button>
               </form>
@@ -4869,38 +6020,38 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Team A</label>
-                    <input required value={newMatch.teamA} onChange={e => setNewMatch({...newMatch, teamA: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input required value={newMatch.teamA ?? ""} onChange={e => setNewMatch({...newMatch, teamA: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Team B</label>
-                    <input required value={newMatch.teamB} onChange={e => setNewMatch({...newMatch, teamB: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
+                    <input required value={newMatch.teamB ?? ""} onChange={e => setNewMatch({...newMatch, teamB: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Date</label>
-                    <input required type="date" value={newMatch.date} onChange={e => setNewMatch({...newMatch, date: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    <input required type="date" value={newMatch.date ?? ""} onChange={e => setNewMatch({...newMatch, date: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Time</label>
-                    <input required type="time" value={newMatch.time} onChange={e => setNewMatch({...newMatch, time: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    <input required type="time" value={newMatch.time ?? ""} onChange={e => setNewMatch({...newMatch, time: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Venue</label>
-                  <input required value={newMatch.venue} onChange={e => setNewMatch({...newMatch, venue: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter venue" />
+                  <input required value={newMatch.venue ?? ""} onChange={e => setNewMatch({...newMatch, venue: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="Enter venue" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Type</label>
-                    <select value={newMatch.type} onChange={e => setNewMatch({...newMatch, type: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
+                    <select value={newMatch.type ?? ""} onChange={e => setNewMatch({...newMatch, type: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
                       <option value="Short Pitch" className="bg-slate-900">Short Pitch</option>
                       <option value="Long Pitch" className="bg-slate-900">Long Pitch</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Overs</label>
-                    <input required type="number" value={newMatch.overs} onChange={e => setNewMatch({...newMatch, overs: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
+                    <input required type="number" value={newMatch.overs ?? ""} onChange={e => setNewMatch({...newMatch, overs: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white" />
                   </div>
                 </div>
                 <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Save Match</button>
@@ -4982,6 +6133,326 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
           </motion.div>
         )}
 
+        {showGraphicGenerator && selectedMatchForGraphic && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-[3rem] p-8 md:p-10 shadow-3xl relative z-10 max-h-[95vh] overflow-y-auto custom-scrollbar space-y-8">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Graphics <span className="text-amber-500">Generator</span></h2>
+                <button onClick={() => setShowGraphicGenerator(false)} className="p-3 bg-slate-800/50 hover:bg-slate-800 rounded-2xl transition-colors text-slate-300"><X size={24} /></button>
+              </div>
+
+              {/* Graphic Stage */}
+              <div className="flex flex-col items-center gap-10">
+                <div id="match-scorecard-graphic" className="w-[600px] h-[800px] bg-black relative flex flex-col overflow-hidden shadow-2xl border-4 border-amber-500/20">
+                   {/* Background Elements */}
+                   <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-gray-900 to-amber-950/20" />
+                   <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-[100px] -mr-48 -mt-48" />
+                   <div className="absolute bottom-0 left-0 w-80 h-80 bg-orange-600/10 rounded-full blur-[100px] -ml-40 -mb-40" />
+                   
+                   {/* Overlay Texture */}
+                   <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/carbon-fibre.png")' }} />
+
+                   {/* Header */}
+                   <div className="relative z-10 p-10 flex justify-between items-start border-b border-white/5">
+                      <div className="space-y-1">
+                        <img src={settings.logo} alt="Club Logo" className="h-16 w-16 object-contain" referrerPolicy="no-referrer" />
+                        <h1 className="text-2xl font-black text-white uppercase italic tracking-tighter mt-4">{settings.clubName} <span className="text-amber-500">Official</span></h1>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em]">{selectedMatchForGraphic.type} • {selectedMatchForGraphic.date}</p>
+                      </div>
+                      <div className="bg-amber-500 px-6 py-2 rounded-full shadow-lg shadow-amber-500/20">
+                         <span className="text-[10px] font-black text-gray-950 uppercase italic tracking-widest">Match Result</span>
+                      </div>
+                   </div>
+
+                   {/* Teams & Score */}
+                   <div className="relative z-10 p-10 space-y-12">
+                      <div className="flex justify-between items-center gap-8">
+                         <div className="space-y-2 text-left flex-1">
+                            <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">{selectedMatchForGraphic.teamA}</h2>
+                            <p className="text-5xl font-black text-amber-500 italic tracking-tighter">
+                               {selectedMatchForGraphic.score?.teamARuns}/{selectedMatchForGraphic.score?.teamAWickets}
+                               <span className="text-sm text-slate-500 ml-2 font-black">({selectedMatchForGraphic.score?.teamAOvers} OV)</span>
+                            </p>
+                         </div>
+                         <div className="w-px h-20 bg-white/10" />
+                         <div className="space-y-2 text-right flex-1">
+                            <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">{selectedMatchForGraphic.teamB}</h2>
+                            <p className="text-5xl font-black text-white italic tracking-tighter opacity-80">
+                               {selectedMatchForGraphic.score?.teamBRuns}/{selectedMatchForGraphic.score?.teamBWickets}
+                               <span className="text-sm text-slate-500 mr-2 font-black">({selectedMatchForGraphic.score?.teamBOvers} OV)</span>
+                            </p>
+                         </div>
+                      </div>
+
+                      <div className="bg-amber-500/5 border border-amber-500/20 p-6 rounded-[2rem] text-center">
+                         <p className="text-2xl font-black text-amber-500 uppercase italic tracking-tight">{selectedMatchForGraphic.result}</p>
+                      </div>
+                   </div>
+
+                   {/* Key Performances */}
+                   <div className="relative z-10 px-10 flex-1 space-y-8">
+                      <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-3">
+                         <div className="h-0.5 flex-1 bg-white/10" />
+                         Key Performances
+                         <div className="h-0.5 flex-1 bg-white/10" />
+                      </h3>
+
+                      <div className="grid grid-cols-2 gap-6">
+                         <div className="space-y-4">
+                            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest italic">Top Batters</p>
+                            <div className="space-y-3">
+                               {selectedMatchForGraphic.performances?.sort((a:any,b:any) => b.batting.runs - a.batting.runs).slice(0,3).map((perf:any, i:number) => {
+                                 const p = data.players.find(pl => pl.id === perf.playerId);
+                                 return (
+                                   <div key={i} className="flex justify-between items-baseline border-b border-white/5 pb-2">
+                                      <span className="text-xs font-black text-white uppercase truncate max-w-[120px]">{p?.name || 'Guest'}</span>
+                                      <span className="text-sm font-black text-amber-500 italic">{perf.batting.runs}({perf.batting.balls})</span>
+                                   </div>
+                                 );
+                               })}
+                            </div>
+                         </div>
+                         <div className="space-y-4">
+                            <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic">Top Bowlers</p>
+                            <div className="space-y-3">
+                               {selectedMatchForGraphic.performances?.sort((a:any,b:any) => b.bowling.wickets - a.bowling.wickets).slice(0,3).map((perf:any, i:number) => {
+                                 const p = data.players.find(pl => pl.id === perf.playerId);
+                                 return (
+                                   <div key={i} className="flex justify-between items-baseline border-b border-white/5 pb-2">
+                                      <span className="text-xs font-black text-white uppercase truncate max-w-[120px]">{p?.name || 'Guest'}</span>
+                                      <span className="text-sm font-black text-blue-500 italic">{perf.bowling.wickets}/{perf.bowling.runsConceded}</span>
+                                   </div>
+                                 );
+                               })}
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* POTM */}
+                      {selectedMatchForGraphic.manOfTheMatch && (
+                        <div className="mt-8 p-6 bg-slate-900 border border-amber-500/20 rounded-3xl flex items-center gap-6">
+                           <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center">
+                              <Trophy size={32} className="text-gray-950" />
+                           </div>
+                           <div>
+                              <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Player Of The Match</p>
+                              <p className="text-xl font-black text-white uppercase italic">{data.players.find(p => p.id === selectedMatchForGraphic.manOfTheMatch)?.name}</p>
+                           </div>
+                        </div>
+                      )}
+                   </div>
+
+                   {/* Footer */}
+                   <div className="relative z-10 p-10 mt-auto bg-amber-500">
+                      <div className="flex justify-between items-center text-gray-950">
+                         <div className="flex items-center gap-3">
+                            <Globe size={14} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">irbwarriors.com</span>
+                         </div>
+                         <div className="flex items-center gap-3">
+                            <Facebook size={14} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">/irbwarriors</span>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="flex gap-6">
+                  <button 
+                    onClick={downloadScorecard}
+                    className="group px-10 py-5 bg-amber-500 text-gray-950 rounded-3xl font-black text-sm uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-amber-500/20"
+                  >
+                    <Download size={20} className="group-hover:-translate-y-1 transition-transform" />
+                    Download HD Image
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showQuickScore && selectedMatchForQuickScore && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900 border border-slate-800 w-full max-w-5xl rounded-[3rem] p-8 md:p-12 shadow-2xl relative z-10 max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex justify-between items-center mb-8">
+                <div className="space-y-1">
+                  <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Quick <span className="text-amber-500">Score</span></h2>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{selectedMatchForQuickScore.teamA} VS {selectedMatchForQuickScore.teamB} • {selectedMatchForQuickScore.date}</p>
+                </div>
+                <button onClick={() => {setShowQuickScore(false); setSelectedPlayersForMatch([]);}} className="p-3 bg-slate-800/50 hover:bg-slate-800 rounded-2xl transition-colors text-slate-300"><X size={24} /></button>
+              </div>
+
+              <form onSubmit={handleQuickScore} className="space-y-10 overflow-y-auto pr-4 custom-scrollbar flex-1 pb-10">
+                {/* Step 1: Squad Selection */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center">
+                      <UserPlus size={20} />
+                    </div>
+                    <h3 className="text-xl font-black text-white uppercase italic">Select Playing XI (Squad)</h3>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {data.players.sort((a,b) => a.name.localeCompare(b.name)).map(player => (
+                      <button
+                        key={player.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlayersForMatch(prev => 
+                            prev.includes(player.id) ? prev.filter(id => id !== player.id) : [...prev, player.id]
+                          );
+                        }}
+                        className={cn(
+                          "p-4 rounded-2xl border transition-all text-left flex items-center gap-3 relative group",
+                          selectedPlayersForMatch.includes(player.id) 
+                            ? "bg-amber-500 border-amber-500 shadow-lg shadow-amber-500/20" 
+                            : "bg-slate-950 border-slate-800 hover:border-slate-700"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center border",
+                          selectedPlayersForMatch.includes(player.id) ? "bg-white/20 border-white/30" : "bg-slate-900 border-slate-800"
+                        )}>
+                          {selectedPlayersForMatch.includes(player.id) && <Check size={14} className="text-white" />}
+                        </div>
+                        <div>
+                          <p className={cn("text-[9px] font-black uppercase tracking-tight truncate max-w-[80px]", selectedPlayersForMatch.includes(player.id) ? "text-gray-950" : "text-white")}>{player.name}</p>
+                          <p className={cn("text-[7px] font-black uppercase opacity-60", selectedPlayersForMatch.includes(player.id) ? "text-gray-950" : "text-amber-500")}>{player.role}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {selectedPlayersForMatch.length > 0 && (
+                  <>
+                    {/* Step 2: Individual Performances */}
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center">
+                          <Trophy size={20} />
+                        </div>
+                        <h3 className="text-xl font-black text-white uppercase italic">Player Performances</h3>
+                      </div>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-separate border-spacing-y-2">
+                          <thead>
+                            <tr className="text-left">
+                              <th className="px-4 py-2 text-[8px] font-black text-slate-500 uppercase tracking-widest">Player</th>
+                              <th className="px-4 py-2 text-[8px] font-black text-slate-500 uppercase tracking-widest">Batting (R/B/4/6/Out)</th>
+                              <th className="px-4 py-2 text-[8px] font-black text-slate-500 uppercase tracking-widest">Bowling (O/M/R/W)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data.players.filter(p => selectedPlayersForMatch.includes(p.id)).map(player => (
+                              <tr key={player.id} className="bg-slate-950 rounded-2xl">
+                                <td className="px-4 py-3 rounded-l-2xl border-l border-t border-b border-slate-800">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-amber-500 font-bold text-[10px]">{player.name.substring(0,2).toUpperCase()}</div>
+                                    <span className="text-[10px] font-black text-white uppercase tracking-tight">{player.name}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 border-t border-b border-slate-800">
+                                  <div className="flex items-center gap-2">
+                                    <input name={`runs_${player.id}`} type="number" placeholder="R" className="w-12 h-10 bg-slate-900 border border-slate-800 rounded-lg text-center text-[10px] font-bold text-white focus:border-amber-500 outline-none" />
+                                    <input name={`balls_${player.id}`} type="number" placeholder="B" className="w-12 h-10 bg-slate-900 border border-slate-800 rounded-lg text-center text-[10px] font-bold text-white focus:border-amber-500 outline-none" />
+                                    <input name={`fours_${player.id}`} type="number" placeholder="4s" className="w-10 h-10 bg-slate-900 border border-slate-800 rounded-lg text-center text-[10px] font-bold text-white focus:border-amber-500 outline-none" />
+                                    <input name={`sixes_${player.id}`} type="number" placeholder="6s" className="w-10 h-10 bg-slate-900 border border-slate-800 rounded-lg text-center text-[10px] font-bold text-white focus:border-amber-500 outline-none" />
+                                    <div className="flex items-center gap-1 ml-2">
+                                      <input name={`isOut_${player.id}`} type="checkbox" id={`out_${player.id}`} className="w-4 h-4 rounded border-slate-800 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+                                      <label htmlFor={`out_${player.id}`} className="text-[9px] font-black text-slate-500 uppercase">Out</label>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 rounded-r-2xl border-r border-t border-b border-slate-800">
+                                  <div className="flex items-center gap-2">
+                                    <input name={`overs_${player.id}`} type="number" step="0.1" placeholder="O" className="w-12 h-10 bg-slate-900 border border-slate-800 rounded-lg text-center text-[10px] font-bold text-white focus:border-amber-500 outline-none" />
+                                    <input name={`maidens_${player.id}`} type="number" placeholder="M" className="w-10 h-10 bg-slate-900 border border-slate-800 rounded-lg text-center text-[10px] font-bold text-white focus:border-amber-500 outline-none" />
+                                    <input name={`runsConceded_${player.id}`} type="number" placeholder="R" className="w-12 h-10 bg-slate-900 border border-slate-800 rounded-lg text-center text-[10px] font-bold text-white focus:border-amber-500 outline-none" />
+                                    <input name={`wickets_${player.id}`} type="number" placeholder="W" className="w-12 h-10 bg-slate-900 border border-slate-800 rounded-lg text-center text-[10px] font-bold text-white focus:border-amber-500 outline-none" />
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Step 3: Match Summary */}
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
+                          <Flag size={20} />
+                        </div>
+                        <h3 className="text-xl font-black text-white uppercase italic">Match Summary</h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-slate-950 p-8 rounded-[2.5rem] border border-slate-800 space-y-6">
+                          <h4 className="text-sm font-black text-amber-500 uppercase italic tracking-widest">{selectedMatchForQuickScore.teamA} (Home)</h4>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</label>
+                              <input name="teamARuns" type="number" required placeholder="0" className="w-full h-14 bg-slate-900 border border-slate-800 rounded-2xl text-center text-xl font-black text-white focus:border-amber-500 outline-none" />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Wkts</label>
+                              <input name="teamAWickets" type="number" required placeholder="0" className="w-full h-14 bg-slate-900 border border-slate-800 rounded-2xl text-center text-xl font-black text-white focus:border-amber-500 outline-none" />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Overs</label>
+                              <input name="teamAOvers" step="0.1" type="number" required placeholder="0.0" className="w-full h-14 bg-slate-900 border border-slate-800 rounded-2xl text-center text-xl font-black text-white focus:border-amber-500 outline-none" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-950 p-8 rounded-[2.5rem] border border-slate-800 space-y-6">
+                          <h4 className="text-sm font-black text-amber-500 uppercase italic tracking-widest">{selectedMatchForQuickScore.teamB} (Opponent)</h4>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</label>
+                              <input name="teamBRuns" type="number" required placeholder="0" className="w-full h-14 bg-slate-900 border border-slate-800 rounded-2xl text-center text-xl font-black text-white focus:border-amber-500 outline-none" />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Wkts</label>
+                              <input name="teamBWickets" type="number" required placeholder="0" className="w-full h-14 bg-slate-900 border border-slate-800 rounded-2xl text-center text-xl font-black text-white focus:border-amber-500 outline-none" />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Overs</label>
+                              <input name="teamBOvers" step="0.1" type="number" required placeholder="0.0" className="w-full h-14 bg-slate-900 border border-slate-800 rounded-2xl text-center text-xl font-black text-white focus:border-amber-500 outline-none" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-4">Final Result (e.g. IRB Warriors won by 20 runs)</label>
+                          <input name="result" required placeholder="Game outcome description..." className="w-full px-8 py-5 bg-slate-950 border border-slate-800 rounded-[2rem] focus:outline-none focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 italic" />
+                        </div>
+                        <div className="space-y-3">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-4">Man of the Match</label>
+                          <select name="potm" className="w-full px-8 py-5 bg-slate-950 border border-slate-800 rounded-[2rem] focus:outline-none focus:border-amber-500 transition-all font-black text-white appearance-none cursor-pointer">
+                            <option value="">Select Player</option>
+                            {data.players.filter(p => selectedPlayersForMatch.includes(p.id)).map(p => (
+                              <option key={p.id} value={p.id} className="bg-slate-900">{p.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-10">
+                      <button type="submit" className="w-full py-6 bg-gradient-to-r from-amber-500 to-orange-600 text-gray-950 rounded-[2rem] font-black text-xl hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Finalize Match Scored</button>
+                    </div>
+                  </>
+                )}
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
         {showUpdateScore && selectedMatch && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 w-full max-w-md rounded-[3rem] p-10 space-y-8 shadow-2xl relative z-10">
@@ -4996,11 +6467,11 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</label>
-                      <input required type="number" value={matchScore.teamARuns} onChange={e => setMatchScore({...matchScore, teamARuns: parseInt(e.target.value)})} className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-amber-500" />
+                      <input required type="number" value={matchScore.teamARuns ?? ""} onChange={e => setMatchScore({...matchScore, teamARuns: parseInt(e.target.value)})} className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-amber-500" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Wickets</label>
-                      <input required type="number" value={matchScore.teamAWickets} onChange={e => setMatchScore({...matchScore, teamAWickets: parseInt(e.target.value)})} className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-amber-500" />
+                      <input required type="number" value={matchScore.teamAWickets ?? ""} onChange={e => setMatchScore({...matchScore, teamAWickets: parseInt(e.target.value)})} className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-amber-500" />
                     </div>
                   </div>
                 </div>
@@ -5009,11 +6480,11 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</label>
-                      <input required type="number" value={matchScore.teamBRuns} onChange={e => setMatchScore({...matchScore, teamBRuns: parseInt(e.target.value)})} className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-amber-500" />
+                      <input required type="number" value={matchScore.teamBRuns ?? ""} onChange={e => setMatchScore({...matchScore, teamBRuns: parseInt(e.target.value)})} className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-amber-500" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Wickets</label>
-                      <input required type="number" value={matchScore.teamBWickets} onChange={e => setMatchScore({...matchScore, teamBWickets: parseInt(e.target.value)})} className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-amber-500" />
+                      <input required type="number" value={matchScore.teamBWickets ?? ""} onChange={e => setMatchScore({...matchScore, teamBWickets: parseInt(e.target.value)})} className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-amber-500" />
                     </div>
                   </div>
                 </div>
@@ -5075,7 +6546,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Club Name</label>
                       <input 
                         required 
-                        value={settings.clubName} 
+                        value={settings.clubName ?? ""} 
                         onChange={e => setSettings({...settings, clubName: e.target.value})} 
                         className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
                         placeholder="Enter club name"
@@ -5085,7 +6556,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Established Year</label>
                       <input 
                         required 
-                        value={settings.established} 
+                        value={settings.established ?? ""} 
                         onChange={e => setSettings({...settings, established: e.target.value})} 
                         className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
                         placeholder="e.g. 2024"
@@ -5095,7 +6566,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">WhatsApp Number</label>
                       <input 
                         required 
-                        value={settings.whatsapp} 
+                        value={settings.whatsapp ?? ""} 
                         onChange={e => setSettings({...settings, whatsapp: e.target.value})} 
                         className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
                         placeholder="+880..."
@@ -5108,7 +6579,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Location</label>
                       <input 
                         required 
-                        value={settings.location} 
+                        value={settings.location ?? ""} 
                         onChange={e => setSettings({...settings, location: e.target.value})} 
                         className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
                         placeholder="Enter location"
@@ -5118,7 +6589,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Facebook URL</label>
                       <input 
                         required 
-                        value={settings.facebook} 
+                        value={settings.facebook ?? ""} 
                         onChange={e => setSettings({...settings, facebook: e.target.value})} 
                         className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
                         placeholder="https://facebook.com/..."
@@ -5141,7 +6612,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                     <input 
                       type="number"
                       required 
-                      value={settings.admissionFee} 
+                      value={settings.admissionFee ?? ""} 
                       onChange={e => setSettings({...settings, admissionFee: parseInt(e.target.value)})} 
                       className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
                       placeholder="e.g. 50"
@@ -5153,7 +6624,7 @@ const AdminPanel = ({ data, onRefresh, userRole }: { data: AppData, onRefresh: (
                     <input 
                       type="number"
                       required 
-                      value={settings.monthlyFee} 
+                      value={settings.monthlyFee ?? ""} 
                       onChange={e => setSettings({...settings, monthlyFee: parseInt(e.target.value)})} 
                       className="w-full px-8 py-6 bg-slate-950/50 border border-slate-800 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all font-black text-white placeholder:text-slate-700 uppercase italic" 
                       placeholder="e.g. 20"
@@ -5489,13 +6960,15 @@ const initialData: AppData = {
   notices: [],
   gallery: [],
   events: [],
-  hostedTournaments: []
+  hostedTournaments: [],
+  externalTournaments: []
 };
 
 export default function App() {
   const [data, setData] = useState<AppData>(initialData);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPlayerForProfile, setSelectedPlayerForProfile] = useState<any>(null);
   
   const fetchData = async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -5606,16 +7079,32 @@ export default function App() {
           <Navbar data={data} user={user} />
           <main className="flex-1">
             <Routes>
-              <Route path="/" element={<Portfolio data={data} onRefresh={fetchData} />} />
+              <Route path="/" element={<Portfolio data={data} onRefresh={fetchData} setSelectedPlayerForProfile={setSelectedPlayerForProfile} />} />
               <Route path="/matches" element={<MatchesPage data={data} />} />
               <Route path="/admission" element={<AdmissionForm data={data} onRefresh={fetchData} />} />
               <Route 
                 path="/admin" 
-                element={user ? <AdminPanel data={data} onRefresh={fetchData} userRole={user.role} /> : <Login onLogin={fetchData} />} 
+                element={user ? (
+                  <AdminPanel 
+                    data={data} 
+                    onRefresh={fetchData} 
+                    userRole={user.role} 
+                    setSelectedPlayerForProfile={setSelectedPlayerForProfile} 
+                  />
+                ) : (
+                  <Login onLogin={fetchData} />
+                )} 
               />
             </Routes>
           </main>
           
+          {selectedPlayerForProfile && (
+            <PlayerProfileModal 
+              player={selectedPlayerForProfile} 
+              onClose={() => setSelectedPlayerForProfile(null)} 
+            />
+          )}
+
           <footer className="bg-slate-950/80 backdrop-blur-3xl text-white py-24 border-t border-white/5 relative z-20 mt-auto">
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <div className="absolute -top-[200px] left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent opacity-50 z-0"></div>

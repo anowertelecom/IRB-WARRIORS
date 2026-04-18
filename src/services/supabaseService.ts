@@ -70,8 +70,13 @@ export const supabaseService = {
         bowlingStyle: p.bowling_style,
         jerseySize: p.jersey_size,
         jerseyNumber: p.jersey_number,
+        isCaptain: p.is_captain,
+        isViceCaptain: p.is_vice_captain,
         monthlyFee: p.monthly_fee,
-        stats: p.stats || { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0, bestInnings: "N/A" }
+        stats: p.stats || { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0, fours: 0, sixes: 0, fifties: 0, hundreds: 0, bowlInnings: 0, overs: 0, runsConceded: 0, bestBowling: "N/A", economy: 0, bowlSr: 0, maidens: 0 },
+        tournamentStats: p.tournament_stats || [],
+        lastMatches: p.last_matches || [],
+        matchHistory: p.match_history || []
       })) as Player[],
       matches: (matches || []).map(m => ({
         ...m,
@@ -179,8 +184,13 @@ export const supabaseService = {
     if (player.jerseyNumber) playerData.jersey_number = player.jerseyNumber;
     if (player.photo) playerData.photo = player.photo;
     if (player.phone) playerData.phone = player.phone;
+    if (player.isCaptain !== undefined) playerData.is_captain = player.isCaptain;
+    if (player.isViceCaptain !== undefined) playerData.is_vice_captain = player.isViceCaptain;
     if (player.monthlyFee !== undefined) playerData.monthly_fee = player.monthlyFee;
     if (player.stats) playerData.stats = player.stats;
+    if (player.tournamentStats) playerData.tournament_stats = player.tournamentStats;
+    if (player.lastMatches) playerData.last_matches = player.lastMatches;
+    if (player.matchHistory) playerData.match_history = player.matchHistory;
 
     // First try the full insert
     const { data, error } = await supabase
@@ -231,6 +241,30 @@ export const supabaseService = {
       }])
       .select()
       .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateMatch(id: number, updates: Partial<Match>) {
+    if (!supabase) throw new Error("Supabase client not initialized.");
+    const { data, error } = await supabase
+      .from('matches')
+      .update({
+        team_a: updates.teamA,
+        team_b: updates.teamB,
+        date: updates.date,
+        time: updates.time,
+        venue: updates.venue,
+        type: updates.type,
+        overs: updates.overs,
+        status: updates.status,
+        score: updates.score,
+        result: updates.result,
+        playing_xi: updates.playingXI,
+        performances: (updates as any).performances,
+        man_of_the_match: (updates as any).manOfTheMatch
+      })
+      .eq('id', id);
     if (error) throw error;
     return data;
   },
@@ -380,8 +414,13 @@ export const supabaseService = {
         photo: updates.photo,
         phone: updates.phone,
         status: updates.status,
+        is_captain: updates.isCaptain,
+        is_vice_captain: updates.isViceCaptain,
         monthly_fee: updates.monthlyFee,
-        stats: updates.stats
+        stats: updates.stats,
+        tournament_stats: updates.tournamentStats,
+        last_matches: updates.lastMatches,
+        match_history: updates.matchHistory
       })
       .eq('id', id);
     if (error) throw error;

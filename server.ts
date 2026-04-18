@@ -200,7 +200,24 @@ async function startServer() {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
     const admission = data.admissions.find((a: any) => a.id === parseInt(req.params.id));
     if (admission) {
+      const oldAmountPaid = admission.amountPaid || 0;
+      const newAmountPaid = req.body.amountPaid || 0;
+      const difference = newAmountPaid - oldAmountPaid;
+
+      admission.amountPaid = newAmountPaid;
       admission.paymentStatus = req.body.paymentStatus;
+
+      if (difference > 0) {
+        data.finances.push({
+          id: Date.now(),
+          type: "Income",
+          amount: difference,
+          category: "Admission Fee",
+          description: `Admission Payment from ${admission.name}`,
+          date: new Date().toISOString().split('T')[0]
+        });
+      }
+
       fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
       res.json(admission);
     } else {
@@ -336,6 +353,18 @@ async function startServer() {
     if (tournament) {
       const newReg = { ...req.body, id: Date.now(), registrationDate: new Date().toISOString() };
       tournament.registrations.push(newReg);
+
+      if (newReg.amountPaid && newReg.amountPaid > 0) {
+        data.finances.push({
+          id: Date.now() + 1,
+          type: "Income",
+          amount: newReg.amountPaid,
+          category: "Tournament Fee",
+          description: `Initial payment from ${newReg.teamName} for ${tournament.name}`,
+          date: new Date().toISOString().split('T')[0]
+        });
+      }
+
       fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
       res.json(newReg);
     } else {
@@ -349,9 +378,25 @@ async function startServer() {
     if (tournament) {
       const reg = tournament.registrations.find((r: any) => r.id === parseInt(req.params.regId));
       if (reg) {
-        reg.amountPaid = req.body.amountPaid;
+        const oldAmountPaid = reg.amountPaid || 0;
+        const newAmountPaid = req.body.amountPaid || 0;
+        const difference = newAmountPaid - oldAmountPaid;
+
+        reg.amountPaid = newAmountPaid;
         reg.amountDue = req.body.amountDue;
         reg.paymentStatus = req.body.paymentStatus;
+
+        if (difference > 0) {
+          data.finances.push({
+            id: Date.now(),
+            type: "Income",
+            amount: difference,
+            category: "Tournament Fee",
+            description: `Payment from ${reg.teamName} for ${tournament.name}`,
+            date: new Date().toISOString().split('T')[0]
+          });
+        }
+
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
         res.json(reg);
       } else {

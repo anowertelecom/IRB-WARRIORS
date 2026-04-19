@@ -166,33 +166,30 @@ export const supabaseService = {
   async addPlayer(player: Omit<Player, 'id'>) {
     if (!supabase) throw new Error("Supabase client not initialized.");
     
-    // Create an object with only the properties we know we have, filtering out undefined
+    // Explicitly mapping all fields for better reliability
     const playerData: any = {
       name: player.name,
-      role: player.role,
-      status: player.status,
+      father_name: player.fatherName || "",
+      dob: player.dob || null,
+      blood_group: player.bloodGroup || "",
+      address: player.address || "",
+      role: player.role || "Batsman",
+      batting_style: player.battingStyle || "Right Hand",
+      bowling_style: player.bowlingStyle || "",
+      jersey_size: player.jerseySize || "M",
+      jersey_number: player.jerseyNumber || "TBD",
+      photo: player.photo || "https://picsum.photos/seed/new/200/200",
+      phone: player.phone || "",
+      status: player.status || "Active",
+      is_captain: player.isCaptain ?? false,
+      is_vice_captain: player.isViceCaptain ?? false,
+      monthly_fee: player.monthlyFee ?? 0,
+      stats: player.stats || {},
+      tournament_stats: player.tournamentStats || [],
+      last_matches: (player as any).lastMatches || [],
+      match_history: player.matchHistory || []
     };
-    
-    // Conditionally add optional fields so we don't send undefined
-    if (player.fatherName) playerData.father_name = player.fatherName;
-    if (player.dob) playerData.dob = player.dob;
-    if (player.bloodGroup) playerData.blood_group = player.bloodGroup;
-    if (player.address) playerData.address = player.address;
-    if (player.battingStyle) playerData.batting_style = player.battingStyle;
-    if (player.bowlingStyle) playerData.bowling_style = player.bowlingStyle;
-    if (player.jerseySize) playerData.jersey_size = player.jerseySize;
-    if (player.jerseyNumber) playerData.jersey_number = player.jerseyNumber;
-    if (player.photo) playerData.photo = player.photo;
-    if (player.phone) playerData.phone = player.phone;
-    if (player.isCaptain !== undefined) playerData.is_captain = player.isCaptain;
-    if (player.isViceCaptain !== undefined) playerData.is_vice_captain = player.isViceCaptain;
-    if (player.monthlyFee !== undefined) playerData.monthly_fee = player.monthlyFee;
-    if (player.stats) playerData.stats = player.stats;
-    if (player.tournamentStats) playerData.tournament_stats = player.tournamentStats;
-    if (player.lastMatches) playerData.last_matches = player.lastMatches;
-    if (player.matchHistory) playerData.match_history = player.matchHistory;
 
-    // First try the full insert
     const { data, error } = await supabase
       .from('players')
       .insert([playerData])

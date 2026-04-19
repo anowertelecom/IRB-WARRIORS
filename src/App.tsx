@@ -69,7 +69,7 @@ import {
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { cn } from "./lib/utils";
-import { AppData, CommitteeMember, Player } from "./types";
+import { AppData, CommitteeMember, Player, FinanceRecord } from "./types";
 import { supabase } from "./lib/supabase";
 
 const PlayerCard = ({ player, onClick }: { player: Player; onClick: () => void; key?: any }) => {
@@ -1676,6 +1676,10 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
       alert("Please agree to the rules and regulations.");
       return;
     }
+    if (!formData.photo) {
+      alert("Please upload your photo first.");
+      return;
+    }
     try {
       await supabaseService.addAdmission({
         ...formData,
@@ -2492,12 +2496,125 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
     return data.finance.some(f => 
       f.type === 'Income' && 
       f.category === 'Monthly Fee' && 
-      f.description.includes(`ID: ${playerId}`) && 
-      f.date.startsWith(monthId)
+      (f.memberId === playerId || f.description.includes(`ID: ${playerId}`)) && 
+      (f.description.includes(monthId) || f.date.startsWith(monthId))
     );
   };
   const [selectedRegistration, setSelectedRegistration] = useState<any>(null);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  const generateReceipt = (record: FinanceRecord) => {
+    const doc = new jsPDF();
+    const settings = data.settings;
+    const primaryColor = record.type === 'Income' ? [16, 185, 129] : [244, 63, 94]; // emerald-500 : rose-500
+    
+    // Header background - Professional banner
+    doc.setFillColor(30, 41, 59); // slate-800
+    doc.rect(0, 0, 210, 50, 'F');
+    
+    // Primary Color accent line
+    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.rect(0, 50, 210, 2, 'F');
+    
+    // Club Name & Branding
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont("helvetica", "bold");
+    doc.text(settings.clubName, 105, 25, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(200, 200, 200);
+    doc.text(settings.location, 105, 35, { align: "center" });
+    doc.text(`Phone: ${settings.phone} | Established: ${settings.established}`, 105, 41, { align: "center" });
+    
+    // Receipt Title
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("OFFICIAL RECEIPT", 105, 75, { align: "center" });
+    
+    // Date and ID Section
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Receipt ID: #${record.id.toString().padStart(6, '0')}`, 20, 95);
+    doc.text(`Date of Issue: ${record.date}`, 190, 95, { align: "right" });
+    
+    // Main separator
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.setLineWidth(0.5);
+    doc.line(20, 100, 190, 100);
+    
+    // Transaction Details Table Header
+    doc.setFillColor(248, 250, 252); // slate-50
+    doc.rect(20, 110, 170, 10, 'F');
+    doc.setTextColor(51, 65, 85); // slate-700
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("CATEGORY", 25, 116.5);
+    doc.text("AMOUNT", 185, 116.5, { align: "right" });
+    
+    // Transaction Detail Row
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(record.category, 25, 132);
+    doc.text(`৳ ${record.amount.toLocaleString()}`, 185, 132, { align: "right" });
+    
+    // Description / Paid For
+    doc.setLineWidth(0.2);
+    doc.setDrawColor(241, 245, 249);
+    doc.line(25, 138, 185, 138);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    const descTitle = record.type === 'Income' ? "PAYMENT DESCRIPTION / RECEIVED FROM:" : "TRANSACTION DESCRIPTION:";
+    doc.text(descTitle, 25, 148);
+    
+    doc.setTextColor(51, 65, 85);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "italic");
+    const splitDesc = doc.splitTextToSize(record.description || "N/A", 160);
+    doc.text(splitDesc, 25, 156);
+    
+    // Total Amount Box
+    const boxY = 180;
+    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.rect(120, boxY, 70, 20, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("TOTAL AMOUNT", 125, boxY + 8);
+    doc.setFontSize(16);
+    doc.text(`৳ ${record.amount.toLocaleString()}`, 185, boxY + 15, { align: "right" });
+    
+    // Words representation (Optional but nice)
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Transaction Type: ${record.type}`, 20, boxY + 35);
+    
+    // Signature lines
+    doc.setDrawColor(203, 213, 225); // slate-300
+    doc.line(20, 240, 70, 240);
+    doc.line(140, 240, 190, 240);
+    
+    doc.setFontSize(9);
+    doc.text("Receiver Signature", 45, 246, { align: "center" });
+    doc.text("Authorized Seal & Sign", 165, 246, { align: "center" });
+    
+    // Footer Branding
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 280, 210, 17, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.text(`${settings.clubName} Sports Management System - Digital Receipt`, 105, 287, { align: "center" });
+    doc.text(`Visit us: fb.com/irbwarriors | Location: ${settings.location}`, 105, 292, { align: "center" });
+    
+    doc.save(`Receipt_${record.category.replace(/\s+/g, '_')}_${record.date}.pdf`);
+  };
   
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("All");
@@ -2590,20 +2707,20 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
       
       // Create player
       const newPlayer: Omit<Player, 'id'> = {
-        name: admission.name,
-        fatherName: admission.fatherName,
-        dob: admission.dob,
-        bloodGroup: admission.bloodGroup,
+        name: admission.name || "Unknown",
+        fatherName: admission.fatherName || "",
+        dob: admission.dob || "",
+        bloodGroup: admission.bloodGroup || "",
         address: admission.address || "",
-        role: admission.role,
-        battingStyle: admission.battingStyle,
-        bowlingStyle: admission.bowlingStyle,
-        jerseySize: admission.jerseySize,
-        jerseyNumber: admission.jerseyNumber || "TBD",
-        photo: admission.photo || "https://picsum.photos/seed/new/200/200",
-        phone: admission.phone,
+        role: admission.role || "Batsman",
+        battingStyle: admission.battingStyle || "Right Hand",
+        bowlingStyle: admission.bowlingStyle || "",
+        jerseySize: admission.jerseySize || "M",
+        jerseyNumber: admission.jerseyNumber && admission.jerseyNumber.trim() !== "" ? admission.jerseyNumber : "TBD",
+        photo: admission.photo && admission.photo.trim() !== "" ? admission.photo : "https://picsum.photos/seed/new/200/200",
+        phone: admission.phone || "",
         status: "Active",
-        monthlyFee: settings.monthlyFee,
+        monthlyFee: settings.monthlyFee || 0,
         isCaptain: false,
         isViceCaptain: false,
         stats: { 
@@ -3357,7 +3474,8 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
         amount: selectedPlayerForPayment.monthlyFee || settings.monthlyFee,
         category: 'Monthly Fee',
         description: `Monthly fee for ${selectedPlayerForPayment.name} (ID: ${selectedPlayerForPayment.id}) - ${paymentMonth}`,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        memberId: selectedPlayerForPayment.id
       });
       
       setNotification({ message: "Payment recorded successfully!", type: 'success' });
@@ -3927,14 +4045,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                         <td className="px-6 md:px-10 py-6 md:py-8 text-right">
                           <div className="flex justify-end gap-3">
                             <button 
-                              onClick={() => {
-                                const doc = new jsPDF();
-                                doc.text(`Receipt: ${record.category}`, 10, 10);
-                                doc.text(`Date: ${record.date}`, 10, 20);
-                                doc.text(`Type: ${record.type}`, 10, 30);
-                                doc.text(`Amount: ৳${record.amount}`, 10, 40);
-                                doc.save(`receipt-${record.id}.pdf`);
-                              }}
+                              onClick={() => generateReceipt(record)}
                               className="w-12 h-12 bg-slate-950 text-slate-500 rounded-2xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all duration-500"
                               title="Download Receipt"
                             >

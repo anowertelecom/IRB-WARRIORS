@@ -16,6 +16,8 @@ const getEmailTransporter = () => {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = parseInt(process.env.SMTP_PORT || "465");
   
+  console.log(`Configuring email transporter with host: ${host}, port: ${port}, user: ${process.env.SMTP_USER}`);
+  
   return nodemailer.createTransport({
     host: host,
     port: port,
@@ -24,8 +26,11 @@ const getEmailTransporter = () => {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    debug: true, // Enable debug output
-    logger: true // Log information into console
+    tls: {
+      rejectUnauthorized: false // Helps with some hosting environments
+    },
+    debug: true,
+    logger: true
   });
 };
 
@@ -122,14 +127,16 @@ async function startServer() {
     }
 
     try {
-      await transporter.sendMail({
+      console.log(`Attempting to send email to: ${process.env.ADMIN_EMAIL || process.env.SMTP_USER}`);
+      const info = await transporter.sendMail({
         from: `"IRB Warriors Portal" <${process.env.SMTP_USER}>`,
         to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
         subject: subject,
         text: text,
         html: html,
       });
-      res.json({ success: true });
+      console.log("Email sent successfully:", info.messageId);
+      res.json({ success: true, messageId: info.messageId });
     } catch (error: any) {
       console.error("--- EMAIL SENDING ERROR ---");
       console.error("Error Message:", error.message);
@@ -175,18 +182,18 @@ async function startServer() {
       // Auto-create player from approved admission
       const newPlayer = {
         id: Date.now(),
-        name: admission.name,
-        fatherName: admission.fatherName,
-        dob: admission.dob,
-        bloodGroup: admission.bloodGroup,
-        address: admission.address,
-        role: admission.role,
-        battingStyle: admission.battingStyle,
-        bowlingStyle: admission.bowlingStyle,
-        jerseySize: admission.jerseySize,
-        jerseyNumber: admission.jerseyNumber || "TBD",
-        photo: admission.photo || "https://picsum.photos/seed/new/200/200",
-        phone: admission.phone,
+        name: admission.name || "Unknown",
+        fatherName: admission.fatherName || "",
+        dob: admission.dob || "",
+        bloodGroup: admission.bloodGroup || "",
+        address: admission.address || "",
+        role: admission.role || "Batsman",
+        battingStyle: admission.battingStyle || "Right Hand",
+        bowlingStyle: admission.bowlingStyle || "",
+        jerseySize: admission.jerseySize || "M",
+        jerseyNumber: admission.jerseyNumber && admission.jerseyNumber.trim() !== "" ? admission.jerseyNumber : "TBD",
+        photo: admission.photo && admission.photo.trim() !== "" ? admission.photo : "https://picsum.photos/seed/new/200/200",
+        phone: admission.phone || "",
         status: "Active",
         monthlyFee: data.settings.monthlyFee || 0,
         stats: { 
@@ -195,8 +202,21 @@ async function startServer() {
           wickets: 0, 
           avg: 0, 
           sr: 0,
+          fours: 0,
+          sixes: 0,
+          fifties: 0,
+          hundreds: 0,
+          bowlInnings: 0,
+          overs: 0,
+          runsConceded: 0,
+          bestBowling: "N/A",
+          economy: 0,
+          bowlSr: 0,
+          maidens: 0,
           bestInnings: "N/A"
         },
+        tournamentStats: [],
+        lastMatches: [],
         matchHistory: []
       };
       

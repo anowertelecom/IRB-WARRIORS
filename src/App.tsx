@@ -1736,18 +1736,53 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
 
   if (submitted) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6 py-20 bg-slate-900/50 backdrop-blur-md rounded-[3rem] border border-slate-800">
-        <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
-          <CheckCircle2 size={48} />
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Application <span className="text-emerald-500">Submitted!</span></h3>
-          <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">Success / সফলভাবে জমা দেওয়া হয়েছে</p>
-          <div className="max-w-md mx-auto pt-4">
-            <p className="text-slate-400 font-medium leading-relaxed">We will review your application and contact you soon. Thank you for joining IRB Warriors!</p>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.5, y: 50 }} 
+          animate={{ opacity: 1, scale: 1, y: 0 }} 
+          className="max-w-xl w-full text-center space-y-10 py-16 px-10 bg-slate-900 rounded-[4rem] border border-slate-800 shadow-[0_0_100px_rgba(245,158,11,0.1)] relative overflow-hidden"
+        >
+          {/* Success Decoration */}
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-500 to-orange-600" />
+          <div className="absolute -top-24 -left-24 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px]" />
+          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-orange-600/10 rounded-full blur-[80px]" />
+
+          <div className="w-28 h-28 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(16,185,129,0.4)] relative">
+            <CheckCircle2 size={56} />
+            <motion.div 
+              initial={{ scale: 1 }}
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="absolute inset-0 rounded-full border-4 border-white/20"
+            />
           </div>
-        </div>
-      </motion.div>
+
+          <div className="space-y-4 relative z-10">
+            <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter leading-none">
+              Application <span className="text-amber-500">Successful!</span>
+            </h3>
+            <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">আপনার আবেদন সঠিকভাবে সফল হয়েছে</p>
+            
+            <div className="pt-6 border-t border-slate-800/50">
+              <p className="text-slate-300 font-medium leading-relaxed">
+                Thank you for choosing <span className="text-white font-bold">{data.settings.clubName}</span>. We will review your application and contact you on <span className="text-amber-400">{formData.phone}</span> very soon.
+              </p>
+            </div>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              setSubmitted(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="w-full py-5 bg-gradient-to-r from-amber-500 to-orange-600 text-gray-950 font-black uppercase italic tracking-widest rounded-2xl shadow-xl hover:shadow-amber-500/20 transition-all text-sm"
+          >
+            Done / ঠিক আছে
+          </motion.button>
+        </motion.div>
+      </div>
     );
   }
 

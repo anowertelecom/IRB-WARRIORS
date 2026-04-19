@@ -66,6 +66,7 @@ export const supabaseService = {
         dob: p.dob,
         bloodGroup: p.blood_group,
         address: p.address,
+        photo: p.photo,
         battingStyle: p.batting_style,
         bowlingStyle: p.bowling_style,
         jerseySize: p.jersey_size,
@@ -88,6 +89,7 @@ export const supabaseService = {
         ...a,
         fatherName: a.father_name,
         bloodGroup: a.blood_group,
+        photo: a.photo,
         battingStyle: a.batting_style,
         bowlingStyle: a.bowling_style,
         jerseySize: a.jersey_size,
@@ -395,30 +397,33 @@ export const supabaseService = {
 
   async updatePlayer(id: number, updates: Partial<Player>) {
     if (!supabase) throw new Error("Supabase client not initialized.");
+    
+    // Map camelCase to snake_case only for defined fields
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.fatherName !== undefined) dbUpdates.father_name = updates.fatherName;
+    if (updates.dob !== undefined) dbUpdates.dob = updates.dob;
+    if (updates.bloodGroup !== undefined) dbUpdates.blood_group = updates.bloodGroup;
+    if (updates.address !== undefined) dbUpdates.address = updates.address;
+    if (updates.role !== undefined) dbUpdates.role = updates.role;
+    if (updates.battingStyle !== undefined) dbUpdates.batting_style = updates.battingStyle;
+    if (updates.bowlingStyle !== undefined) dbUpdates.bowling_style = updates.bowlingStyle;
+    if (updates.jerseySize !== undefined) dbUpdates.jersey_size = updates.jerseySize;
+    if (updates.jerseyNumber !== undefined) dbUpdates.jersey_number = updates.jerseyNumber;
+    if (updates.photo !== undefined) dbUpdates.photo = updates.photo;
+    if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.isCaptain !== undefined) dbUpdates.is_captain = updates.isCaptain;
+    if (updates.isViceCaptain !== undefined) dbUpdates.is_vice_captain = updates.isViceCaptain;
+    if (updates.monthlyFee !== undefined) dbUpdates.monthly_fee = updates.monthlyFee;
+    if (updates.stats !== undefined) dbUpdates.stats = updates.stats;
+    if (updates.tournamentStats !== undefined) dbUpdates.tournament_stats = updates.tournamentStats;
+    if (updates.lastMatches !== undefined) dbUpdates.last_matches = updates.lastMatches;
+    if (updates.matchHistory !== undefined) dbUpdates.match_history = updates.matchHistory;
+
     const { data, error } = await supabase
       .from('players')
-      .update({
-        name: updates.name,
-        father_name: updates.fatherName,
-        dob: updates.dob,
-        blood_group: updates.bloodGroup,
-        address: updates.address,
-        role: updates.role,
-        batting_style: updates.battingStyle,
-        bowling_style: updates.bowlingStyle,
-        jersey_size: updates.jerseySize,
-        jersey_number: updates.jerseyNumber,
-        photo: updates.photo,
-        phone: updates.phone,
-        status: updates.status,
-        is_captain: updates.isCaptain,
-        is_vice_captain: updates.isViceCaptain,
-        monthly_fee: updates.monthlyFee,
-        stats: updates.stats,
-        tournament_stats: updates.tournamentStats,
-        last_matches: updates.lastMatches,
-        match_history: updates.matchHistory
-      })
+      .update(dbUpdates)
       .eq('id', id);
     if (error) throw error;
     return data;
@@ -426,25 +431,28 @@ export const supabaseService = {
 
   async updateAdmission(id: number, updates: Partial<Admission>) {
     if (!supabase) throw new Error("Supabase client not initialized.");
+    
+    // Map camelCase to snake_case only for defined fields
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.fatherName !== undefined) dbUpdates.father_name = updates.fatherName;
+    if (updates.dob !== undefined) dbUpdates.dob = updates.dob;
+    if (updates.bloodGroup !== undefined) dbUpdates.blood_group = updates.bloodGroup;
+    if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+    if (updates.address !== undefined) dbUpdates.address = updates.address;
+    if (updates.photo !== undefined) dbUpdates.photo = updates.photo;
+    if (updates.role !== undefined) dbUpdates.role = updates.role;
+    if (updates.battingStyle !== undefined) dbUpdates.batting_style = updates.battingStyle;
+    if (updates.bowlingStyle !== undefined) dbUpdates.bowling_style = updates.bowlingStyle;
+    if (updates.jerseySize !== undefined) dbUpdates.jersey_size = updates.jerseySize;
+    if (updates.jerseyNumber !== undefined) dbUpdates.jersey_number = updates.jerseyNumber;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
+    if (updates.registrationDate !== undefined) dbUpdates.registration_date = updates.registrationDate;
+
     const { data, error } = await supabase
       .from('admissions')
-      .update({
-        name: updates.name,
-        father_name: updates.fatherName,
-        dob: updates.dob,
-        blood_group: updates.bloodGroup,
-        phone: updates.phone,
-        address: updates.address,
-        photo: updates.photo,
-        role: updates.role,
-        batting_style: updates.battingStyle,
-        bowling_style: updates.bowlingStyle,
-        jersey_size: updates.jerseySize,
-        jersey_number: updates.jerseyNumber,
-        status: updates.status,
-        payment_status: updates.paymentStatus,
-        registration_date: updates.registrationDate
-      })
+      .update(dbUpdates)
       .eq('id', id);
     if (error) throw error;
     return data;

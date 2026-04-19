@@ -2535,6 +2535,28 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
       (f.description.includes(monthId) || f.date.startsWith(monthId))
     );
   };
+
+  const handleCancelPayment = async (playerId: number, monthId: string) => {
+    // Attempt to find the specific finance record
+    const record = data.finance.find(f => 
+      f.type === 'Income' && 
+      f.category === 'Monthly Fee' && 
+      (f.memberId === playerId || f.description.includes(`ID: ${playerId}`)) && 
+      (f.description.includes(monthId) || f.date.startsWith(monthId))
+    );
+    
+    if (record) {
+      try {
+        await handleDelete('finance', record.id);
+        setNotification({ message: `Success! Payment for ${monthId} has been removed.`, type: 'success' });
+      } catch (err) {
+        console.error("Cancellation failed:", err);
+        setNotification({ message: "Error: Could not cancel payment.", type: 'error' });
+      }
+    } else {
+      setNotification({ message: "Record search failed. Try deleting from Finance tab.", type: 'error' });
+    }
+  };
   const [selectedRegistration, setSelectedRegistration] = useState<any>(null);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
@@ -2607,11 +2629,26 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
     const descTitle = record.type === 'Income' ? "PAYMENT DESCRIPTION / RECEIVED FROM:" : "TRANSACTION DESCRIPTION:";
     doc.text(descTitle, 25, 148);
     
-    doc.setTextColor(51, 65, 85);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "italic");
-    const splitDesc = doc.splitTextToSize(record.description || "N/A", 160);
-    doc.text(splitDesc, 25, 156);
+    // Member Name in Receipt if available
+    const member = record.memberId ? data.players.find(p => p.id === record.memberId) : null;
+    if (member) {
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(member.name.toUpperCase(), 25, 156);
+      
+      doc.setTextColor(51, 65, 85);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "italic");
+      const splitDesc = doc.splitTextToSize(record.description || "N/A", 160);
+      doc.text(splitDesc, 25, 166);
+    } else {
+      doc.setTextColor(51, 65, 85);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "italic");
+      const splitDesc = doc.splitTextToSize(record.description || "N/A", 160);
+      doc.text(splitDesc, 25, 156);
+    }
     
     // Total Amount Box
     const boxY = 180;
@@ -2670,7 +2707,14 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
   const [newMember, setNewMember] = useState({ name: "", role: "", phone: "", photo: "" });
   const [newGallery, setNewGallery] = useState({ type: "Photo", url: "", caption: "", thumbnail: "" });
   const [newEvent, setNewEvent] = useState({ title: "", date: "", location: "", description: "" });
-  const [newFinance, setNewFinance] = useState({ type: "Income", amount: 0, category: "", description: "", date: new Date().toISOString().split('T')[0] });
+  const [newFinance, setNewFinance] = useState<Omit<FinanceRecord, 'id'>>({ 
+    type: "Income", 
+    amount: 0, 
+    category: "", 
+    description: "", 
+    date: new Date().toISOString().split('T')[0],
+    memberId: undefined
+  });
     const [newPlayer, setNewPlayer] = useState<Omit<Player, 'id'>>({ 
     name: "", 
     fatherName: "",
@@ -2786,7 +2830,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
       };
       
       try {
-        await supabaseService.addPlayer(newPlayer);
+        const createdPlayer = await supabaseService.addPlayer(newPlayer);
         
         // If paid, record finance
         if (admission.paymentStatus === 'Paid') {
@@ -2795,7 +2839,8 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
             amount: settings.admissionFee || 0,
             category: 'Admission Fee',
             description: `Admission fee for ${admission.name}`,
-            date: new Date().toISOString().split('T')[0]
+            date: new Date().toISOString().split('T')[0],
+            memberId: createdPlayer.id // Link to new player
           });
         }
       } catch (playerError: any) {
@@ -4052,31 +4097,67 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                       <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Date</th>
                       <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Type</th>
                       <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Category</th>
+                      <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Member</th>
                       <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Amount</th>
                       <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
-                    {data.finance?.map((record) => (
-                      <tr key={record.id} className="hover:bg-slate-900/50 transition-all duration-300 group">
-                        <td className="px-6 md:px-10 py-6 md:py-8 text-xs font-bold text-slate-500 uppercase tracking-widest">{record.date}</td>
-                        <td className="px-6 md:px-10 py-6 md:py-8">
-                          <span className={cn(
-                            "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
-                            record.type === 'Income' 
-                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
-                              : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                    {data.finance?.map((record) => {
+                      const member = record.memberId ? data.players.find(p => p.id === record.memberId) : null;
+                      
+                      // Fallback: try to extract name from description if memberId is missing
+                      const fallbackName = !member ? (
+                        record.description?.includes("Admission fee for ") 
+                          ? record.description.split("Admission fee for ")[1]
+                          : record.description?.includes("Monthly fee for ")
+                            ? record.description.split("Monthly fee for ")[1].split(" (ID:")[0]
+                            : null
+                      ) : null;
+
+                      return (
+                        <tr key={record.id} className="hover:bg-slate-900/50 transition-all duration-300 group">
+                          <td className="px-6 md:px-10 py-6 md:py-8 text-xs font-bold text-slate-500 uppercase tracking-widest">{record.date}</td>
+                          <td className="px-6 md:px-10 py-6 md:py-8">
+                            <span className={cn(
+                              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border",
+                              record.type === 'Income' 
+                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                                : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                            )}>
+                              {record.type}
+                            </span>
+                          </td>
+                          <td className="px-6 md:px-10 py-6 md:py-8 text-sm font-black text-white uppercase italic tracking-tight">{record.category}</td>
+                          <td className="px-6 md:px-10 py-6 md:py-8">
+                            <div className="flex items-center gap-3">
+                              {member && (
+                                <>
+                                  <div className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center border border-slate-800 overflow-hidden shrink-0">
+                                    <img 
+                                      src={member.photo} 
+                                      className="w-full h-full object-cover" 
+                                      referrerPolicy="no-referrer"
+                                      onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/100x100/1e293b/fbbf24?text=P"; }}
+                                    />
+                                  </div>
+                                  <span className="text-xs font-black text-white uppercase italic tracking-tight whitespace-nowrap">{member.name}</span>
+                                </>
+                              )}
+                              {!member && fallbackName && (
+                                <span className="text-xs font-black text-white uppercase italic tracking-tight whitespace-nowrap">{fallbackName}</span>
+                              )}
+                              {!member && !fallbackName && (
+                                <span className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">N/A</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className={cn(
+                            "px-6 md:px-10 py-6 md:py-8 text-sm font-black italic tracking-tighter",
+                            record.type === 'Income' ? "text-emerald-500" : "text-rose-500"
                           )}>
-                            {record.type}
-                          </span>
-                        </td>
-                        <td className="px-6 md:px-10 py-6 md:py-8 text-sm font-black text-white uppercase italic tracking-tight">{record.category}</td>
-                        <td className={cn(
-                          "px-6 md:px-10 py-6 md:py-8 text-sm font-black italic tracking-tighter",
-                          record.type === 'Income' ? "text-emerald-500" : "text-rose-500"
-                        )}>
-                          {record.type === 'Income' ? '+' : '-'}৳{record.amount.toLocaleString()}
-                        </td>
+                            {record.type === 'Income' ? '+' : '-'}৳{record.amount.toLocaleString()}
+                          </td>
                         <td className="px-6 md:px-10 py-6 md:py-8 text-right">
                           <div className="flex justify-end gap-3">
                             <button 
@@ -4097,7 +4178,8 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -4171,7 +4253,8 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                       <thead>
                         <tr className="bg-slate-950/50">
                           <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Player</th>
-                          <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Role</th>
+                          <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Style</th>
+                          <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Jersey</th>
                           <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800">Stats</th>
                           <th className="px-6 md:px-10 py-6 md:py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] border-b border-slate-800 text-right">Actions</th>
                         </tr>
@@ -4209,7 +4292,16 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                               </div>
                             </td>
                             <td className="px-6 md:px-10 py-6 md:py-8">
-                              <span className="px-3 md:px-4 py-1.5 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest bg-slate-950 text-amber-500 border border-slate-800">{player.role}</span>
+                              <div className="space-y-1">
+                                <span className="px-3 py-1 rounded-lg text-[8px] md:text-[10px] font-black uppercase tracking-widest bg-slate-950 text-amber-500 border border-slate-800 block w-fit">{player.role}</span>
+                                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.2em]">{player.battingStyle} • {player.battingPosition}</p>
+                              </div>
+                            </td>
+                            <td className="px-6 md:px-10 py-6 md:py-8">
+                              <div className="space-y-1">
+                                <p className="text-xs font-black text-white uppercase tracking-tighter italic">Size: {player.jerseySize}</p>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Number: {player.jerseyNumber}</p>
+                              </div>
                             </td>
                             <td className="px-6 md:px-10 py-6 md:py-8">
                               <div className="flex gap-4 md:gap-6">
@@ -4312,6 +4404,36 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
               </div>
             </div>
 
+            {/* Payment Summary Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { 
+                  label: `Collected (${paymentMonth})`, 
+                  value: data.players.filter(p => checkPaymentStatus(p.id, paymentMonth)).reduce((sum, p) => sum + (p.monthlyFee || settings.monthlyFee), 0),
+                  icon: CheckCircle2,
+                  color: "text-emerald-500",
+                  bg: "bg-emerald-500/10"
+                },
+                { 
+                  label: `Dues (${paymentMonth})`, 
+                  value: data.players.filter(p => !checkPaymentStatus(p.id, paymentMonth)).reduce((sum, p) => sum + (p.monthlyFee || settings.monthlyFee), 0),
+                  icon: AlertCircle,
+                  color: "text-rose-500",
+                  bg: "bg-rose-500/10"
+                }
+              ].map((stat, i) => (
+                <div key={i} className="bg-slate-900/50 backdrop-blur-md p-8 rounded-[2rem] border border-slate-800 flex items-center gap-6 shadow-2xl group">
+                  <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center", stat.bg)}>
+                    <stat.icon size={24} className={stat.color} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</p>
+                    <p className={cn("text-2xl font-black italic tracking-tighter", stat.color)}>৳{stat.value.toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <div className="bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
               <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full text-left border-collapse min-w-[800px] md:min-w-0">
@@ -4349,10 +4471,10 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                           </td>
                           <td className="px-6 md:px-10 py-6 md:py-8">
                             <span className={cn(
-                              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border whitespace-nowrap",
+                              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border whitespace-nowrap transition-all",
                               isPaid 
                                 ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
-                                : "bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
+                                : "bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)] animate-pulse"
                             )}>
                               {isPaid ? 'Paid' : 'Due'}
                             </span>
@@ -4370,9 +4492,20 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                               </button>
                             )}
                             {isPaid && (
-                              <div className="flex justify-end gap-2 text-emerald-500 opacity-60">
-                                <Check size={16} />
-                                <span className="text-[10px] font-black uppercase tracking-widest italic">Completed</span>
+                              <div className="flex justify-end items-center gap-4">
+                                <div className="flex items-center gap-2 text-emerald-500 opacity-60">
+                                  <Check size={16} />
+                                  <span className="text-[10px] font-black uppercase tracking-widest italic">Completed</span>
+                                </div>
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => handleCancelPayment(player.id, paymentMonth)}
+                                    className="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all group"
+                                    title="Cancel Payment"
+                                  >
+                                    <X size={14} className="group-hover:scale-110 transition-transform" />
+                                  </button>
+                                )}
                               </div>
                             )}
                           </td>
@@ -6275,6 +6408,19 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Category</label>
                   <input required value={newFinance.category ?? ""} onChange={e => setNewFinance({...newFinance, category: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" placeholder="e.g. Sponsorship" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Associated Member (Optional)</label>
+                  <select 
+                    value={newFinance.memberId || ""} 
+                    onChange={e => setNewFinance({...newFinance, memberId: e.target.value ? parseInt(e.target.value) : undefined})} 
+                    className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white appearance-none"
+                  >
+                    <option value="" className="bg-slate-900">General / Not Applicable</option>
+                    {data.players.map(player => (
+                      <option key={player.id} value={player.id} className="bg-slate-900">{player.name} (#{player.jerseyNumber})</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Description</label>

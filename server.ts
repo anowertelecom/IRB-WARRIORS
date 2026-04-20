@@ -13,21 +13,37 @@ const getEmailTransporter = () => {
     return null;
   }
   
+  const user = process.env.SMTP_USER;
+  const isGmail = user.endsWith("@gmail.com") || process.env.SMTP_HOST?.includes("gmail");
+
+  if (isGmail && !process.env.SMTP_HOST) {
+    console.log(`Configuring email transporter for Gmail service: ${user}`);
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: user,
+        pass: process.env.SMTP_PASS,
+      },
+      debug: true,
+      logger: true
+    });
+  }
+  
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = parseInt(process.env.SMTP_PORT || "465");
   
-  console.log(`Configuring email transporter with host: ${host}, port: ${port}, user: ${process.env.SMTP_USER}`);
+  console.log(`Configuring email transporter with custom host: ${host}, port: ${port}, user: ${user}`);
   
   return nodemailer.createTransport({
     host: host,
     port: port,
-    secure: port === 465, // Use SSL for port 465, STARTTLS for others
+    secure: port === 465, 
     auth: {
-      user: process.env.SMTP_USER,
+      user: user,
       pass: process.env.SMTP_PASS,
     },
     tls: {
-      rejectUnauthorized: false // Helps with some hosting environments
+      rejectUnauthorized: false 
     },
     debug: true,
     logger: true
@@ -118,7 +134,7 @@ async function startServer() {
 
   // Email Notification Endpoint
   app.post("/api/send-email", async (req, res) => {
-    const { subject, text, html } = req.body;
+    const { subject, text, html, to } = req.body;
     const transporter = getEmailTransporter();
     
     if (!transporter) {
@@ -126,11 +142,13 @@ async function startServer() {
       return res.status(500).json({ error: "SMTP credentials not configured" });
     }
 
+    const targetEmail = to || process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+
     try {
-      console.log(`Attempting to send email to: ${process.env.ADMIN_EMAIL || process.env.SMTP_USER}`);
+      console.log(`Attempting to send email to: ${targetEmail}`);
       const info = await transporter.sendMail({
         from: `"IRB Warriors Portal" <${process.env.SMTP_USER}>`,
-        to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
+        to: targetEmail,
         subject: subject,
         text: text,
         html: html,
@@ -142,6 +160,7 @@ async function startServer() {
       console.error("Error Message:", error.message);
       console.error("Error Code:", error.code);
       console.error("Command:", error.command);
+      console.error("Response:", error.response);
       
       if (error.message.includes("Invalid login") || error.message.includes("auth")) {
         console.error("HINT: SMTP login failed. If using Gmail, make sure you are using an 'App Password', not your regular password.");
@@ -150,8 +169,42 @@ async function startServer() {
       res.status(500).json({ 
         error: "Failed to send email", 
         message: error.message,
-        code: error.code 
+        code: error.code,
+        response: error.response
       });
+    }
+  });
+
+  // Diagnostic Endpoint
+  app.get("/api/health-check", (req, res) => {
+    res.json({
+      status: "ok",
+      env: {
+        SMTP_USER: !!process.env.SMTP_USER,
+        SMTP_PASS: !!process.env.SMTP_PASS,
+        ADMIN_EMAIL: !!process.env.ADMIN_EMAIL,
+        NODE_ENV: process.env.NODE_ENV
+      }
+    });
+  });
+
+  // Simple Email Test Endpoint
+  app.get("/api/test-email", async (req, res) => {
+    const transporter = getEmailTransporter();
+    if (!transporter) return res.status(500).json({ error: "SMTP not configured" });
+    
+    const target = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+    try {
+      await transporter.sendMail({
+        from: `"IRB Warriors Test" <${process.env.SMTP_USER}>`,
+        to: target,
+        subject: "SMTP Connection Test",
+        text: "If you are reading this, your email configuration is working perfectly!",
+        html: "<b>Success!</b> your email configuration is working perfectly!"
+      });
+      res.json({ success: true, message: `Test email sent to ${target}` });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message, response: err.response });
     }
   });
 

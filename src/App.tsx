@@ -1701,15 +1701,30 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
 
     // Trigger Email Notification safely
     try {
-      await fetch("/api/send-email", {
+      const emailRes = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subject: `New Admission Application: ${formData.name}`,
           text: `A new player has applied for admission!\n\nName: ${formData.name}\nPhone: ${formData.phone}\nRole: ${formData.role}\n\nPlease check the admin dashboard to review and approve their application.`,
-          html: `<div style="font-family: sans-serif; padding: 20px; text-align: center;"><h2>New Application Received!</h2><p><strong>${formData.name}</strong> has just applied as a <strong>${formData.role}</strong>.</p><p>Phone Number: ${formData.phone}</p><p><a href="https://irbwarriors.com/admin" style="background: #f59e0b; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Admin Panel</a></p></div>`
+          html: `<div style="font-family: sans-serif; padding: 20px; text-align: center; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: auto;">
+            <h2 style="color: #f59e0b;">New Application Received!</h2>
+            <p style="font-size: 16px; color: #475569;"><strong>${formData.name}</strong> has just applied as a <strong>${formData.role}</strong>.</p>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Phone:</strong> ${formData.phone}</p>
+              <p style="margin: 5px 0;"><strong>Role:</strong> ${formData.role}</p>
+            </div>
+            <p><a href="https://ais-dev-2huioslct5toj54nv673i7-133265222347.europe-west2.run.app/admin" style="background: #f59e0b; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View in Admin Panel</a></p>
+          </div>`
         })
       });
+      
+      if (!emailRes.ok) {
+        const errorData = await emailRes.json();
+        console.error("Email API responded with error:", errorData);
+      } else {
+        console.log("Email notification triggered successfully");
+      }
     } catch (e) {
       console.error("Failed to trigger email notification:", e);
     }

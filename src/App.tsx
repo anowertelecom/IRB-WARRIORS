@@ -500,15 +500,9 @@ const FileUploader = ({ onUpload, label, currentUrl }: { onUpload: (url: string)
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check if it's a valid file type - make it more permissive
-    const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|heic|heif|avif|tiff|bmp)$/i.test(file.name);
+    // Broaden recognition to satisfy "any format"
+    const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|heic|heif|avif|tiff|bmp|svg)$/i.test(file.name);
     const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(file.name);
-
-    if (!isImage && !isVideo) {
-      setError(`Format not recognized: ${file.type || 'unknown'}. Try renaming to .jpg`);
-      console.log("File type check failed:", file.name, file.type);
-      return;
-    }
 
     setUploading(true);
     setError(null);
@@ -516,7 +510,7 @@ const FileUploader = ({ onUpload, label, currentUrl }: { onUpload: (url: string)
     try {
       let fileToUpload = file;
 
-      // Handle HEIC/HEIF conversion separately before compression
+      // Handle HEIC/HEIF conversion separately
       if (/\.(heic|heif)$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif') {
         try {
           const convertedBlob = await heic2any({
@@ -528,30 +522,25 @@ const FileUploader = ({ onUpload, label, currentUrl }: { onUpload: (url: string)
           const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
           fileToUpload = new File([blobArray], newName, { type: 'image/jpeg' });
         } catch (heicErr) {
-          console.error("HEIC conversion failed:", heicErr);
-          // If heic2any fails, we fallback to imageCompression which might handle some HEIC or original
+          console.warn("HEIC conversion failed, trying original:", heicErr);
         }
       }
 
-      // Handle Image Compression and Format Conversion
-      if (isImage) {
+      // Handle Image Compression - only compress if larger than 4MB to avoid slow processing on mobile
+      if (isImage && fileToUpload.size > 4 * 1024 * 1024) {
         const options = {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1600,
+          maxSizeMB: 2, // Larger target size to avoid pixelation
+          maxWidthOrHeight: 1920,
           useWebWorker: true,
           initialQuality: 0.8,
           fileType: 'image/jpeg' as string 
         };
         try {
-          // Compress the file (whether it's original or was just converted from HEIC)
           fileToUpload = await imageCompression(fileToUpload, options);
-          
-          // Double check the file type/name after compression
           const fileNameWithJpg = fileToUpload.name.endsWith('.jpg') ? fileToUpload.name : fileToUpload.name.replace(/\.[^/.]+$/, "") + ".jpg";
           fileToUpload = new File([fileToUpload], fileNameWithJpg, { type: 'image/jpeg' });
         } catch (err) {
-          console.error("Compression/Conversion failed", err);
-          // Only fallback to original if compression failed entirely
+          console.error("Compression failed, using original:", err);
         }
       }
 
@@ -609,7 +598,14 @@ const FileUploader = ({ onUpload, label, currentUrl }: { onUpload: (url: string)
       }
     } catch (err: any) {
       console.error("Critical Upload Error:", err);
-      setError(err.message || "Upload failed. Try a smaller file.");
+      // More helpful error message for the user
+      if (err.message?.includes("413")) {
+        setError("File too large for server. Please try a smaller file or ensure Supabase is configured.");
+      } else if (err.message?.includes("bucket")) {
+        setError("Supabase Storage bucket 'uploads' not found or not public.");
+      } else {
+        setError(err.message || "Upload failed. Try again.");
+      }
     } finally {
       setUploading(false);
     }

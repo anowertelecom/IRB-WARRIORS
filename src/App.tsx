@@ -1669,84 +1669,81 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
   });
   const [agreed, setAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
     if (!agreed) {
-      alert("Please agree to the rules and regulations.");
+      setFormError("Please agree to the rules and regulations.");
       return;
     }
     if (!formData.photo) {
-      alert("Please upload your photo first.");
+      setFormError("Please upload your photo first.");
+      // Scroll to the photo uploader
+      const uploader = document.getElementById('file-upload-upload-photo');
+      if (uploader) {
+        uploader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
+
+    setIsSubmitting(true);
     try {
-      await supabaseService.addAdmission({
-        ...formData,
-        status: 'pending',
-        registrationDate: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Supabase admission failed, falling back to local API:", error);
-      await fetch("/api/admissions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          ...formData, 
+      try {
+        await supabaseService.addAdmission({
+          ...formData,
           status: 'pending',
           registrationDate: new Date().toISOString()
-        }),
-      });
-    }
-
-    // Trigger Email Notification safely
-    try {
-      const emailRes = await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subject: `New Admission Application: ${formData.name}`,
-          text: `A new player has applied for admission!\n\nName: ${formData.name}\nPhone: ${formData.phone}\nRole: ${formData.role}\n\nPlease check the admin dashboard to review and approve their application.`,
-          html: `<div style="font-family: sans-serif; padding: 20px; text-align: center; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: auto;">
-            <h2 style="color: #f59e0b;">New Application Received!</h2>
-            <p style="font-size: 16px; color: #475569;"><strong>${formData.name}</strong> has just applied as a <strong>${formData.role}</strong>.</p>
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>Phone:</strong> ${formData.phone}</p>
-              <p style="margin: 5px 0;"><strong>Role:</strong> ${formData.role}</p>
-            </div>
-            <p><a href="https://ais-dev-2huioslct5toj54nv673i7-133265222347.europe-west2.run.app/admin" style="background: #f59e0b; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View in Admin Panel</a></p>
-          </div>`
-        })
-      });
-      
-      if (!emailRes.ok) {
-        const errorData = await emailRes.json();
-        console.error("Email API responded with error:", errorData);
-      } else {
-        console.log("Email notification triggered successfully");
+        });
+      } catch (error) {
+        console.error("Supabase admission failed, falling back to local API:", error);
+        const res = await fetch("/api/admissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            ...formData, 
+            status: 'pending',
+            registrationDate: new Date().toISOString()
+          }),
+        });
+        if (!res.ok) throw new Error("Failed to submit to local API");
       }
-    } catch (e) {
-      console.error("Failed to trigger email notification:", e);
-    }
 
-    setSubmitted(true);
-    onRefresh();
-    setTimeout(() => setSubmitted(false), 5000);
-    setFormData({ 
-      name: "", 
-      fatherName: "",
-      dob: "", 
-      bloodGroup: "",
-      phone: "", 
-      address: "",
-      photo: "",
-      role: "Batsman", 
-      battingStyle: "Right Hand",
-      bowlingStyle: "",
-      jerseySize: "M",
-      jerseyNumber: ""
-    });
-    setAgreed(false);
+      // Trigger Email Notification safely
+      try {
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject: `New Admission Application: ${formData.name}`,
+            text: `A new player has applied for admission!\n\nName: ${formData.name}\nPhone: ${formData.phone}\nRole: ${formData.role}\n\nPlease check the admin dashboard to review and approve their application.`,
+            html: `<div style="font-family: sans-serif; padding: 20px; text-align: center; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: auto;">
+              <h2 style="color: #f59e0b;">New Application Received!</h2>
+              <p style="font-size: 16px; color: #475569;"><strong>${formData.name}</strong> has just applied as a <strong>${formData.role}</strong>.</p>
+              <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 5px 0;"><strong>Phone:</strong> ${formData.phone}</p>
+                <p style="margin: 5px 0;"><strong>Role:</strong> ${formData.role}</p>
+              </div>
+              <p><a href="https://irb-warriors-sport-club.vercel.app/admin" style="background: #f59e0b; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View in Admin Panel</a></p>
+            </div>`
+          })
+        });
+      } catch (e) {
+        console.error("Failed to trigger email notification:", e);
+      }
+
+      setSubmitted(true);
+      onRefresh();
+      // Scroll to top to see success message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
+      setFormError(err.message || "Submission failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -2124,22 +2121,42 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
             </div>
           )}
 
+          {formError && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-[2rem] flex items-center gap-4 text-rose-500 font-bold"
+            >
+              <AlertCircle className="shrink-0" />
+              <p className="text-sm uppercase tracking-widest">{formError}</p>
+            </motion.div>
+          )}
+
           <button 
             type="submit" 
-            disabled={!agreed}
+            disabled={!agreed || isSubmitting}
             className={cn(
               "w-full py-6 md:py-8 rounded-[2rem] md:rounded-[3rem] font-display font-black text-2xl md:text-3xl transition-all flex flex-col md:flex-row items-center justify-center gap-2 md:gap-5 uppercase tracking-wider group shadow-2xl relative overflow-hidden",
-              agreed 
+              (agreed && !isSubmitting)
                 ? "bg-gradient-to-r from-amber-500 to-orange-500 text-gray-950 hover:from-amber-400 hover:to-orange-400 shadow-[0_10px_40px_rgba(245,158,11,0.3)] scale-[1.02]" 
                 : "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
             )}
           >
-            <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_infinite] hidden group-hover:block" />
-            <span className="relative z-10 text-center flex flex-col md:flex-row items-center gap-2">
-              Submit Application 
-              <span className="text-sm md:text-2xl text-black/50 md:text-gray-950 block md:inline">/ আবেদন জমা দিন</span>
-            </span>
-            <ArrowRight size={24} className={cn("hidden md:block transition-transform relative z-10", agreed && "group-hover:translate-x-3")} />
+            {isSubmitting ? (
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 border-4 border-gray-950 border-t-transparent rounded-full animate-spin" />
+                <span>Submitting...</span>
+              </div>
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_infinite] hidden group-hover:block" />
+                <span className="relative z-10 text-center flex flex-col md:flex-row items-center gap-2">
+                  Submit Application 
+                  <span className="text-sm md:text-2xl text-black/50 md:text-gray-950 block md:inline">/ আবেদন জমা দিন</span>
+                </span>
+                <ArrowRight size={24} className={cn("hidden md:block transition-transform relative z-10", agreed && "group-hover:translate-x-3")} />
+              </>
+            )}
           </button>
           <div className="flex flex-col items-center gap-2 mt-10">
             <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">

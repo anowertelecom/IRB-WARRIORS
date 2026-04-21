@@ -335,6 +335,18 @@ async function startServer() {
     res.json(newPlayer);
   });
 
+  app.patch("/api/players/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const playerIdx = data.players.findIndex((p: any) => p.id === parseInt(req.params.id));
+    if (playerIdx !== -1) {
+      data.players[playerIdx] = { ...data.players[playerIdx], ...req.body };
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(data.players[playerIdx]);
+    } else {
+      res.status(404).send("Player not found");
+    }
+  });
+
   app.post("/api/players/:id/stats", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
     const player = data.players.find((p: any) => p.id === parseInt(req.params.id));

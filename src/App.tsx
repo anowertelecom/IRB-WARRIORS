@@ -2858,6 +2858,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
       };
       
       try {
+        // Try to create the player with complete data
         const createdPlayer = await supabaseService.addPlayer(newPlayer);
         
         // If paid, record finance
@@ -2872,20 +2873,34 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
           });
         }
       } catch (playerError: any) {
-        // Fallback to minimal schema if needed
-        console.warn("Supabase player creation error (might be schema mismatch):", playerError.message);
+        console.error("Supabase player creation error:", playerError);
         
-        // Let's try the absolute minimal payload
-        const minimalPlayer = {
-          name: newPlayer.name,
-          role: newPlayer.role,
-          status: newPlayer.status,
-          phone: newPlayer.phone,
-        };
-        try {
-          await supabase.from('players').insert([minimalPlayer]);
-        } catch (minimalError) {
-          throw minimalError; // Bubble up to main local fallback
+        // If it fails, we fall back to the local API which handles everything robustly
+        // Instead of a minimal local insert which loses data
+        const res = await fetch("/api/players", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newPlayer)
+        });
+        
+        if (!res.ok) throw new Error("Local API player creation failed");
+        
+        const createdLocalPlayer = await res.json();
+        
+        // Record finance locally if needed
+        if (admission.paymentStatus === 'Paid') {
+          await fetch("/api/finance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: 'Income',
+              amount: settings.admissionFee || 0,
+              category: 'Admission Fee',
+              description: `Admission fee for ${admission.name}`,
+              date: new Date().toISOString().split('T')[0],
+              memberId: createdLocalPlayer.id
+            })
+          });
         }
       }
 

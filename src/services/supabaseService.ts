@@ -73,8 +73,13 @@ export const supabaseService = {
         jerseyNumber: p.jersey_number,
         isCaptain: p.is_captain,
         isViceCaptain: p.is_vice_captain,
+        battingPosition: p.batting_position,
+        potmCount: p.potm_count,
+        pottCount: p.pott_count,
         monthlyFee: p.monthly_fee,
         stats: p.stats || { matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0, fours: 0, sixes: 0, fifties: 0, hundreds: 0, bowlInnings: 0, overs: 0, runsConceded: 0, bestBowling: "N/A", economy: 0, bowlSr: 0, maidens: 0 },
+        shortPitchStats: p.short_pitch_stats,
+        longPitchStats: p.long_pitch_stats,
         tournamentStats: p.tournament_stats || [],
         lastMatches: p.last_matches || [],
         matchHistory: p.match_history || []
@@ -83,7 +88,7 @@ export const supabaseService = {
         ...m,
         teamA: m.team_a,
         teamB: m.team_b,
-        playingXI: m.playing_xi
+        playing_xi: m.playing_xi
       })) as Match[],
       admissions: (admissions || []).map(a => ({
         ...a,
@@ -94,6 +99,7 @@ export const supabaseService = {
         bowlingStyle: a.bowling_style,
         jerseySize: a.jersey_size,
         jerseyNumber: a.jersey_number,
+        battingPosition: a.batting_position,
         paymentStatus: a.payment_status,
         registrationDate: a.registration_date
       })) as Admission[],
@@ -104,8 +110,14 @@ export const supabaseService = {
       notices: (notices || []) as Notice[],
       gallery: (gallery || []) as GalleryItem[],
       events: (events || []) as ClubEvent[],
-      hostedTournaments: (hostedTournaments || []) as HostedTournament[],
-      externalTournaments: (externalTournaments || []) as ExternalTournament[]
+      hostedTournaments: (hostedTournaments || []).map(h => ({
+        ...h,
+        pitchType: h.pitch_type || h.pitchType || 'Short Pitch'
+      })) as HostedTournament[],
+      externalTournaments: (externalTournaments || []).map(e => ({
+        ...e,
+        pitchType: e.pitch_type || e.pitchType || 'Short Pitch'
+      })) as ExternalTournament[]
     };
   },
 
@@ -142,6 +154,7 @@ export const supabaseService = {
         address: admission.address,
         photo: admission.photo,
         role: admission.role,
+        batting_position: admission.battingPosition,
         batting_style: admission.battingStyle,
         bowling_style: admission.bowlingStyle,
         jersey_size: admission.jerseySize,
@@ -176,6 +189,7 @@ export const supabaseService = {
       blood_group: player.bloodGroup || "",
       address: player.address || "",
       role: player.role || "Batsman",
+      batting_position: player.battingPosition || "Middle Order",
       batting_style: player.battingStyle || "Right Hand",
       bowling_style: player.bowlingStyle || "",
       jersey_size: player.jerseySize || "M",
@@ -185,8 +199,12 @@ export const supabaseService = {
       status: player.status || "Active",
       is_captain: player.isCaptain ?? false,
       is_vice_captain: player.isViceCaptain ?? false,
+      potm_count: player.potmCount ?? 0,
+      pott_count: player.pottCount ?? 0,
       monthly_fee: player.monthlyFee ?? 0,
       stats: player.stats || {},
+      short_pitch_stats: player.shortPitchStats || null,
+      long_pitch_stats: player.longPitchStats || null,
       tournament_stats: player.tournamentStats || [],
       last_matches: (player as any).lastMatches || [],
       match_history: player.matchHistory || []
@@ -236,7 +254,7 @@ export const supabaseService = {
         status: match.status,
         score: match.score,
         result: match.result,
-        playing_xi: match.playingXI
+        playing_xi: match.playing_xi
       }])
       .select()
       .single();
@@ -259,7 +277,7 @@ export const supabaseService = {
         status: updates.status,
         score: updates.score,
         result: updates.result,
-        playing_xi: updates.playingXI,
+        playing_xi: updates.playing_xi,
         performances: (updates as any).performances,
         man_of_the_match: (updates as any).manOfTheMatch
       })
@@ -395,6 +413,36 @@ export const supabaseService = {
     return data;
   },
 
+  async addExternalTournament(tournament: Omit<ExternalTournament, 'id'>) {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('external_tournaments')
+        .insert([{
+          name: tournament.name,
+          organizer: tournament.organizer,
+          location: tournament.location,
+          start_date: tournament.startDate,
+          budget: tournament.budget,
+          current_stage: tournament.currentStage,
+          status: tournament.status || 'Participating',
+          pitch_type: tournament.pitchType || 'Short Pitch',
+          squad: tournament.squad || [],
+          expenses: tournament.expenses || [],
+          matches: tournament.matches || []
+        }])
+        .select()
+        .single();
+      if (error) {
+        console.warn("Supabase addExternalTournament note:", error.message);
+      }
+      return data;
+    } catch (e) {
+      console.warn("Supabase addExternalTournament fallback:", e);
+      return null;
+    }
+  },
+
   async updatePlayer(id: number, updates: Partial<Player>) {
     if (!supabase) throw new Error("Supabase client not initialized.");
     
@@ -406,6 +454,7 @@ export const supabaseService = {
     if (updates.bloodGroup !== undefined) dbUpdates.blood_group = updates.bloodGroup;
     if (updates.address !== undefined) dbUpdates.address = updates.address;
     if (updates.role !== undefined) dbUpdates.role = updates.role;
+    if (updates.battingPosition !== undefined) dbUpdates.batting_position = updates.battingPosition;
     if (updates.battingStyle !== undefined) dbUpdates.batting_style = updates.battingStyle;
     if (updates.bowlingStyle !== undefined) dbUpdates.bowling_style = updates.bowlingStyle;
     if (updates.jerseySize !== undefined) dbUpdates.jersey_size = updates.jerseySize;
@@ -415,8 +464,12 @@ export const supabaseService = {
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.isCaptain !== undefined) dbUpdates.is_captain = updates.isCaptain;
     if (updates.isViceCaptain !== undefined) dbUpdates.is_vice_captain = updates.isViceCaptain;
+    if (updates.potmCount !== undefined) dbUpdates.potm_count = updates.potmCount;
+    if (updates.pottCount !== undefined) dbUpdates.pott_count = updates.pottCount;
     if (updates.monthlyFee !== undefined) dbUpdates.monthly_fee = updates.monthlyFee;
     if (updates.stats !== undefined) dbUpdates.stats = updates.stats;
+    if ((updates as any).shortPitchStats !== undefined) dbUpdates.short_pitch_stats = (updates as any).shortPitchStats;
+    if ((updates as any).longPitchStats !== undefined) dbUpdates.long_pitch_stats = (updates as any).longPitchStats;
     if (updates.tournamentStats !== undefined) dbUpdates.tournament_stats = updates.tournamentStats;
     if (updates.lastMatches !== undefined) dbUpdates.last_matches = updates.lastMatches;
     if (updates.matchHistory !== undefined) dbUpdates.match_history = updates.matchHistory;
@@ -442,6 +495,7 @@ export const supabaseService = {
     if (updates.address !== undefined) dbUpdates.address = updates.address;
     if (updates.photo !== undefined) dbUpdates.photo = updates.photo;
     if (updates.role !== undefined) dbUpdates.role = updates.role;
+    if (updates.battingPosition !== undefined) dbUpdates.batting_position = updates.battingPosition;
     if (updates.battingStyle !== undefined) dbUpdates.batting_style = updates.battingStyle;
     if (updates.bowlingStyle !== undefined) dbUpdates.bowling_style = updates.bowlingStyle;
     if (updates.jerseySize !== undefined) dbUpdates.jersey_size = updates.jerseySize;

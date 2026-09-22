@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -72,7 +72,13 @@ import { cn } from "./lib/utils";
 import { AppData, CommitteeMember, Player, FinanceRecord } from "./types";
 import { supabase } from "./lib/supabase";
 
-const PlayerCard = ({ player, onClick }: { player: Player; onClick: () => void; key?: any }) => {
+const PlayerCard = ({ player, onClick, pitchFormat = 'All' }: { player: Player; onClick: () => void; pitchFormat?: 'All' | 'Short Pitch' | 'Long Pitch'; key?: any }) => {
+  const displayStats = pitchFormat === 'Short Pitch'
+    ? (player.shortPitchStats || player.stats)
+    : pitchFormat === 'Long Pitch'
+    ? (player.longPitchStats || player.stats)
+    : player.stats;
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -92,8 +98,16 @@ const PlayerCard = ({ player, onClick }: { player: Player; onClick: () => void; 
         </div>
       )}
 
-      <div className="absolute top-6 right-6 z-20">
+      <div className="absolute top-6 right-6 z-20 flex flex-col items-end gap-1.5">
         <span className="text-4xl font-black text-white/5 italic opacity-50 group-hover:opacity-100 transition-opacity">#{player.jerseyNumber}</span>
+        {pitchFormat !== 'All' && (
+          <span className={cn(
+            "px-2.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider border shadow-md",
+            pitchFormat === 'Long Pitch' ? "bg-blue-500/20 text-blue-400 border-blue-500/30" : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+          )}>
+            {pitchFormat}
+          </span>
+        )}
       </div>
 
       <div className="relative aspect-[4/5] overflow-hidden bg-slate-950/50 shrink-0">
@@ -109,17 +123,17 @@ const PlayerCard = ({ player, onClick }: { player: Player; onClick: () => void; 
         <div className="absolute bottom-6 left-6 right-6 flex justify-around items-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
           <div className="text-center">
             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Runs</p>
-            <p className="text-xl font-black text-white italic">{player.stats?.runs || 0}</p>
+            <p className="text-xl font-black text-white italic">{displayStats?.runs || 0}</p>
           </div>
           <div className="w-px h-8 bg-white/10" />
           <div className="text-center">
             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Wickets</p>
-            <p className="text-xl font-black text-amber-500 italic">{player.stats?.wickets || 0}</p>
+            <p className="text-xl font-black text-amber-500 italic">{displayStats?.wickets || 0}</p>
           </div>
           <div className="w-px h-8 bg-white/10" />
           <div className="text-center">
             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">SR</p>
-            <p className="text-xl font-black text-white italic">{player.stats?.sr || 0.0}</p>
+            <p className="text-xl font-black text-white italic">{displayStats?.sr || 0.0}</p>
           </div>
         </div>
       </div>
@@ -148,51 +162,77 @@ const PlayerCard = ({ player, onClick }: { player: Player; onClick: () => void; 
   );
 };
 
-const PlayerProfileModal = ({ player, onClose }: { player: Player, onClose: () => void }) => {
+const PlayerProfileModal = ({ player, onClose, allMatches = [] }: { player: Player, onClose: () => void, allMatches?: any[] }) => {
   const [activeTab, setActiveTab] = useState<'stats' | 'tournaments' | 'career' | 'matches'>('stats');
+  const [pitchFilter, setPitchFilter] = useState<'All' | 'Short Pitch' | 'Long Pitch'>('All');
+
+  const currentStats = useMemo(() => {
+    if (pitchFilter === 'Short Pitch') {
+      return player.shortPitchStats || {
+        matches: 0, innings: 0, notOut: 0, runs: 0, highestScore: 0, avg: '0.00', sr: '0.00',
+        hundreds: 0, fifties: 0, fours: 0, sixes: 0, bowlInnings: 0, overs: 0, wickets: 0,
+        runsConceded: 0, bestBowling: 'N/A', economy: '0.00', bowlSr: '0.00', maidens: 0,
+        careerRuns: 0, careerWickets: 0, impactScore: 0
+      };
+    }
+    if (pitchFilter === 'Long Pitch') {
+      return player.longPitchStats || {
+        matches: 0, innings: 0, notOut: 0, runs: 0, highestScore: 0, avg: '0.00', sr: '0.00',
+        hundreds: 0, fifties: 0, fours: 0, sixes: 0, bowlInnings: 0, overs: 0, wickets: 0,
+        runsConceded: 0, bestBowling: 'N/A', economy: '0.00', bowlSr: '0.00', maidens: 0,
+        careerRuns: 0, careerWickets: 0, impactScore: 0
+      };
+    }
+    return player.stats || {
+      matches: 0, innings: 0, notOut: 0, runs: 0, highestScore: 0, avg: '0.00', sr: '0.00',
+      hundreds: 0, fifties: 0, fours: 0, sixes: 0, bowlInnings: 0, overs: 0, wickets: 0,
+      runsConceded: 0, bestBowling: 'N/A', economy: '0.00', bowlSr: '0.00', maidens: 0,
+      careerRuns: 0, careerWickets: 0, impactScore: 0
+    };
+  }, [player, pitchFilter]);
 
   const battingStats = [
-    { label: 'Matches', value: player.stats?.matches || 0 },
-    { label: 'Innings', value: player.stats?.innings || 0 },
-    { label: 'Not Out', value: player.stats?.notOut || 0 },
-    { label: 'Runs', value: player.stats?.runs || 0 },
-    { label: 'Highest', value: player.stats?.highestScore || 0 },
-    { label: 'Avg', value: player.stats?.avg || '0.00' },
-    { label: 'SR', value: player.stats?.sr || '0.00' },
-    { label: '100s', value: player.stats?.hundreds || 0 },
-    { label: '50s', value: player.stats?.fifties || 0 },
-    { label: '4s', value: player.stats?.fours || 0 },
-    { label: '6s', value: player.stats?.sixes || 0 },
+    { label: 'Matches', value: currentStats.matches || 0 },
+    { label: 'Innings', value: currentStats.innings || 0 },
+    { label: 'Not Out', value: currentStats.notOut || 0 },
+    { label: 'Runs', value: currentStats.runs || 0 },
+    { label: 'Highest', value: currentStats.highestScore || 0 },
+    { label: 'Avg', value: currentStats.avg || '0.00' },
+    { label: 'SR', value: currentStats.sr || '0.00' },
+    { label: '100s', value: currentStats.hundreds || 0 },
+    { label: '50s', value: currentStats.fifties || 0 },
+    { label: '4s', value: currentStats.fours || 0 },
+    { label: '6s', value: currentStats.sixes || 0 },
   ];
 
   const bowlingStats = [
-    { label: 'Innings', value: player.stats?.bowlInnings || 0 },
-    { label: 'Overs', value: player.stats?.overs || 0 },
-    { label: 'Wickets', value: player.stats?.wickets || 0 },
-    { label: 'Runs Conc', value: player.stats?.runsConceded || 0 },
-    { label: 'Best Bowl', value: player.stats?.bestBowling || 'N/A' },
-    { label: 'Economy', value: player.stats?.economy || '0.00' },
-    { label: 'Avg', value: player.stats?.bowlSr || '0.00' },
-    { label: 'Maidens', value: player.stats?.maidens || 0 },
+    { label: 'Innings', value: currentStats.bowlInnings || 0 },
+    { label: 'Overs', value: currentStats.overs || 0 },
+    { label: 'Wickets', value: currentStats.wickets || 0 },
+    { label: 'Runs Conc', value: currentStats.runsConceded || 0 },
+    { label: 'Best Bowl', value: currentStats.bestBowling || 'N/A' },
+    { label: 'Economy', value: currentStats.economy || '0.00' },
+    { label: 'Avg', value: currentStats.bowlSr || '0.00' },
+    { label: 'Maidens', value: currentStats.maidens || 0 },
   ];
   
   const careerStats = [
-    { label: 'Total Matches', value: player.stats?.matches || 0 },
-    { label: 'Career Runs', value: player.stats?.careerRuns || player.stats?.runs || 0 },
-    { label: 'Career Wickets', value: player.stats?.careerWickets || player.stats?.wickets || 0 },
-    { label: 'Best Score', value: player.stats?.highestScore || 0 },
-    { label: 'Best Bowling', value: player.stats?.bestBowling || 'N/A' },
+    { label: 'Total Matches', value: currentStats.matches || 0 },
+    { label: 'Career Runs', value: currentStats.careerRuns || currentStats.runs || 0 },
+    { label: 'Career Wickets', value: currentStats.careerWickets || currentStats.wickets || 0 },
+    { label: 'Best Score', value: currentStats.highestScore || 0 },
+    { label: 'Best Bowling', value: currentStats.bestBowling || 'N/A' },
     { label: 'POTM', value: player.potmCount || 0 },
     { label: 'POTT', value: player.pottCount || 0 },
-    { label: 'Impact Score', value: player.stats?.impactScore || 0 },
+    { label: 'Impact Score', value: currentStats.impactScore || 0 },
   ];
 
   const skillData = [
-    { subject: 'Batting', A: Math.min(100, ((player.stats?.runs || 0) / 1000) * 100 + 50) || 70, fullMark: 100 },
-    { subject: 'Bowling', A: Math.min(100, ((player.stats?.wickets || 0) / 50) * 100 + 40) || 60, fullMark: 100 },
+    { subject: 'Batting', A: Math.min(100, (((Number(currentStats.runs) || 0) / 1000) * 100) + 50) || 70, fullMark: 100 },
+    { subject: 'Bowling', A: Math.min(100, (((Number(currentStats.wickets) || 0) / 50) * 100) + 40) || 60, fullMark: 100 },
     { subject: 'Fielding', A: 85, fullMark: 100 },
     { subject: 'Fitness', A: 90, fullMark: 100 },
-    { subject: 'Pressure', A: (player.stats?.highestScore || 0) > 50 ? 95 : 75, fullMark: 100 },
+    { subject: 'Pressure', A: (Number(currentStats.highestScore) || 0) > 50 ? 95 : 75, fullMark: 100 },
   ];
 
   return (
@@ -294,26 +334,67 @@ const PlayerProfileModal = ({ player, onClose }: { player: Player, onClose: () =
 
             {/* Main Content Area */}
             <div className="lg:col-span-8 space-y-8">
-              {/* Tab Navigation */}
-              <div className="flex flex-wrap gap-4 bg-slate-950/50 p-2 rounded-2xl w-fit border border-slate-800">
-                {[
-                  { id: 'stats', label: 'Batting | Bowling', icon: Sword },
-                  { id: 'tournaments', label: 'Tournaments', icon: Trophy },
-                  { id: 'career', label: 'Overall Career', icon: History },
-                  { id: 'matches', label: 'Match History', icon: Calendar }
-                ].map((tab) => (
-                  <button 
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+              {/* Tab Navigation & Pitch Selector */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-wrap gap-2 bg-slate-950/50 p-2 rounded-2xl border border-slate-800">
+                  {[
+                    { id: 'stats', label: 'Batting | Bowling', icon: Sword },
+                    { id: 'tournaments', label: 'Tournaments', icon: Trophy },
+                    { id: 'career', label: 'Overall Career', icon: History },
+                    { id: 'matches', label: 'Match History', icon: Calendar }
+                  ].map((tab) => (
+                    <button 
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                        activeTab === tab.id ? "bg-amber-500 text-gray-950 shadow-lg shadow-amber-500/20" : "text-slate-500 hover:text-white"
+                      )}
+                    >
+                      <tab.icon size={14} />
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Pitch Selector: All Formats | Short Pitch | Long Pitch */}
+                <div className="flex items-center gap-1.5 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800 w-fit">
+                  <button
+                    onClick={() => setPitchFilter('All')}
                     className={cn(
-                      "flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                      activeTab === tab.id ? "bg-amber-500 text-gray-950 shadow-lg shadow-amber-500/20 shadow-[0_10px_30px_rgba(245,158,11,0.2)]" : "text-slate-500 hover:text-white"
+                      "px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
+                      pitchFilter === 'All'
+                        ? "bg-amber-500 text-gray-950 shadow-md font-black"
+                        : "text-slate-400 hover:text-white hover:bg-slate-900"
                     )}
                   >
-                    <tab.icon size={14} />
-                    {tab.label}
+                    All Pitch
                   </button>
-                ))}
+                  <button
+                    onClick={() => setPitchFilter('Short Pitch')}
+                    className={cn(
+                      "px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5",
+                      pitchFilter === 'Short Pitch'
+                        ? "bg-emerald-500 text-gray-950 shadow-md font-black"
+                        : "text-slate-400 hover:text-white hover:bg-slate-900"
+                    )}
+                  >
+                    <span className={cn("w-1.5 h-1.5 rounded-full", pitchFilter === 'Short Pitch' ? "bg-gray-950" : "bg-emerald-400")} />
+                    Short Pitch
+                  </button>
+                  <button
+                    onClick={() => setPitchFilter('Long Pitch')}
+                    className={cn(
+                      "px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5",
+                      pitchFilter === 'Long Pitch'
+                        ? "bg-blue-500 text-white shadow-md font-black"
+                        : "text-slate-400 hover:text-white hover:bg-slate-900"
+                    )}
+                  >
+                    <span className={cn("w-1.5 h-1.5 rounded-full", pitchFilter === 'Long Pitch' ? "bg-white" : "bg-blue-400")} />
+                    Long Pitch
+                  </button>
+                </div>
               </div>
 
               <AnimatePresence mode="wait">
@@ -321,9 +402,17 @@ const PlayerProfileModal = ({ player, onClose }: { player: Player, onClose: () =
                   <motion.div key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-12">
                     {/* Batting Secton */}
                     <div className="space-y-6">
-                      <div className="flex items-center gap-4">
-                        <Sword className="text-amber-500" />
-                        <h3 className="text-2xl font-black text-white italic uppercase tracking-tight">Batting Analysis</h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <Sword className="text-amber-500" />
+                          <h3 className="text-2xl font-black text-white italic uppercase tracking-tight">Batting Analysis</h3>
+                        </div>
+                        <span className={cn(
+                          "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border",
+                          pitchFilter === 'Short Pitch' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : pitchFilter === 'Long Pitch' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                        )}>
+                          {pitchFilter === 'All' ? 'All Matches' : pitchFilter}
+                        </span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {battingStats.map((stat, i) => (
@@ -337,9 +426,17 @@ const PlayerProfileModal = ({ player, onClose }: { player: Player, onClose: () =
 
                     {/* Bowling Section */}
                     <div className="space-y-6 pt-12 border-t border-white/5">
-                      <div className="flex items-center gap-4">
-                        <CircleDot className="text-emerald-500" />
-                        <h3 className="text-2xl font-black text-white italic uppercase tracking-tight">Bowling Analysis</h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <CircleDot className="text-emerald-500" />
+                          <h3 className="text-2xl font-black text-white italic uppercase tracking-tight">Bowling Analysis</h3>
+                        </div>
+                        <span className={cn(
+                          "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border",
+                          pitchFilter === 'Short Pitch' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : pitchFilter === 'Long Pitch' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                        )}>
+                          {pitchFilter === 'All' ? 'All Matches' : pitchFilter}
+                        </span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {bowlingStats.map((stat, i) => (
@@ -443,25 +540,43 @@ const PlayerProfileModal = ({ player, onClose }: { player: Player, onClose: () =
                         <thead className="bg-slate-950/80 border-b border-slate-800">
                           <tr>
                             <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date | Opponent</th>
+                            <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Pitch</th>
                             <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</th>
                             <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Wkts</th>
                             <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Match Result</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800">
-                          {(player.matchHistory || []).length === 0 ? (
-                            <tr>
-                              <td colSpan={4} className="px-10 py-20 text-center text-slate-600 font-bold uppercase tracking-widest italic leading-loose">
-                                Recording History...<br/>
-                                <span className="text-[10px] opacity-50">Match data is being compiled for the current season</span>
-                              </td>
-                            </tr>
-                          ) : (
-                            player.matchHistory.map((m: any, i: number) => (
+                          {(() => {
+                            const rawMatches = (player.matchHistory || []);
+                            const filteredMatches = pitchFilter === 'All' 
+                              ? rawMatches 
+                              : rawMatches.filter((m: any) => (m.type === pitchFilter) || (!m.type && pitchFilter === 'Short Pitch'));
+
+                            if (filteredMatches.length === 0) {
+                              return (
+                                <tr>
+                                  <td colSpan={5} className="px-10 py-20 text-center text-slate-600 font-bold uppercase tracking-widest italic leading-loose">
+                                    No {pitchFilter !== 'All' ? pitchFilter : ''} match data recorded yet<br/>
+                                    <span className="text-[10px] opacity-50">Match data will appear here as matches are played</span>
+                                  </td>
+                                </tr>
+                              );
+                            }
+
+                            return filteredMatches.map((m: any, i: number) => (
                               <tr key={i} className="hover:bg-amber-500/5 transition-colors">
                                 <td className="px-10 py-6">
                                   <p className="text-[10px] font-black text-slate-500 uppercase mb-1">{m.date}</p>
                                   <p className="text-xs font-black text-white uppercase italic">{m.opponent}</p>
+                                </td>
+                                <td className="px-10 py-6">
+                                  <span className={cn(
+                                    "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider border",
+                                    m.type === 'Long Pitch' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                  )}>
+                                    {m.type || 'Short Pitch'}
+                                  </span>
                                 </td>
                                 <td className="px-10 py-6 text-2xl font-black text-amber-500 scoreboard-font">{m.runs}</td>
                                 <td className="px-10 py-6 text-2xl font-black text-white scoreboard-font">{m.wickets}</td>
@@ -474,8 +589,8 @@ const PlayerProfileModal = ({ player, onClose }: { player: Player, onClose: () =
                                   </span>
                                 </td>
                               </tr>
-                            ))
-                          )}
+                            ));
+                          })()}
                         </tbody>
                       </table>
                     </div>
@@ -872,6 +987,7 @@ const Navbar = ({ data, user }: { data: AppData, user?: any }) => {
 };
 
 const Portfolio = ({ data, onRefresh, setSelectedPlayerForProfile }: { data: AppData, onRefresh: () => void, setSelectedPlayerForProfile: (player: any) => void }) => {
+  const [rosterPitchFormat, setRosterPitchFormat] = useState<'All' | 'Short Pitch' | 'Long Pitch'>('All');
   return (
     <div className="bg-slate-950 min-h-screen">
       {/* Hero Section */}
@@ -1080,11 +1196,50 @@ const Portfolio = ({ data, onRefresh, setSelectedPlayerForProfile }: { data: App
       <section id="team" className="py-32 relative overflow-hidden bg-slate-950">
         <div className="absolute inset-0 bg-carbon opacity-10 z-0" />
         <div className="max-w-7xl mx-auto px-4 relative z-10 space-y-16">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
             <div className="space-y-4">
               <span className="px-4 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)] text-shadow-glow">The Warriors</span>
               <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow italic underline decoration-amber-500 decoration-8 underline-offset-[-10px]">Active <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Roster</span></h2>
               <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-xs">আইআরবি ওয়ারিয়র্স খেলোয়াড়বৃন্দ</p>
+            </div>
+
+            {/* Pitch Type Toggle: All Formats | Short Pitch | Long Pitch */}
+            <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-xl">
+              <button
+                onClick={() => setRosterPitchFormat('All')}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
+                  rosterPitchFormat === 'All'
+                    ? "bg-amber-500 text-gray-950 shadow-md font-black"
+                    : "text-slate-400 hover:text-white"
+                )}
+              >
+                All Pitch
+              </button>
+              <button
+                onClick={() => setRosterPitchFormat('Short Pitch')}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5",
+                  rosterPitchFormat === 'Short Pitch'
+                    ? "bg-emerald-500 text-gray-950 shadow-md font-black"
+                    : "text-slate-400 hover:text-white"
+                )}
+              >
+                <span className={cn("w-1.5 h-1.5 rounded-full", rosterPitchFormat === 'Short Pitch' ? "bg-gray-950" : "bg-emerald-400")} />
+                Short Pitch (শর্ট পিচ)
+              </button>
+              <button
+                onClick={() => setRosterPitchFormat('Long Pitch')}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5",
+                  rosterPitchFormat === 'Long Pitch'
+                    ? "bg-blue-500 text-white shadow-md font-black"
+                    : "text-slate-400 hover:text-white"
+                )}
+              >
+                <span className={cn("w-1.5 h-1.5 rounded-full", rosterPitchFormat === 'Long Pitch' ? "bg-white" : "bg-blue-400")} />
+                Long Pitch (লং পিচ)
+              </button>
             </div>
           </div>
 
@@ -1093,6 +1248,7 @@ const Portfolio = ({ data, onRefresh, setSelectedPlayerForProfile }: { data: App
               <PlayerCard 
                 key={player.id} 
                 player={player} 
+                pitchFormat={rosterPitchFormat}
                 onClick={() => setSelectedPlayerForProfile(player)} 
               />
             ))}
@@ -1382,6 +1538,60 @@ const Portfolio = ({ data, onRefresh, setSelectedPlayerForProfile }: { data: App
         </div>
       </section>
 
+      {/* External Participation Section */}
+      <section id="external-participation" className="py-32 relative overflow-hidden bg-slate-950">
+        <div className="absolute inset-0 bg-hex opacity-5 z-0" />
+        <div className="max-w-7xl mx-auto px-4 relative z-10 space-y-16">
+          <div className="text-center space-y-4">
+            <span className="px-4 py-1 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(59,130,246,0.2)]">Participation</span>
+            <h2 className="text-5xl md:text-8xl font-display font-black uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 drop-shadow-xl text-shadow-glow">External <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Events</span></h2>
+            <p className="text-slate-400 font-bold uppercase tracking-widest">বাইরের টুর্নামেন্টে অংশগ্রহণ</p>
+          </div>
+
+          {data.externalTournaments?.length === 0 ? (
+            <div className="glass-card p-20 rounded-[4rem] text-center space-y-4">
+              <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto text-slate-700">
+                <Trophy size={40} />
+              </div>
+              <p className="text-xl font-bold text-slate-500">Records will appear here soon.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {data.externalTournaments?.map((tournament) => (
+                <div key={tournament.id} className="glass-card glass-card-hover p-10 rounded-[3rem] space-y-6 group">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className={cn(
+                        "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border",
+                        tournament.status === 'Participating' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-slate-950/50 text-slate-400 border-slate-800"
+                      )}>{tournament.status}</span>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{tournament.startDate}</p>
+                    </div>
+                    <h3 className="text-2xl font-display font-black text-white uppercase group-hover:text-blue-400 transition-colors">{tournament.name}</h3>
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                       <MapPin size={14} className="text-blue-500" /> {tournament.location}
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-slate-800/50 space-y-4">
+                    <div className="flex justify-between items-center bg-slate-950/30 p-4 rounded-2xl border border-slate-800/30">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none">Result</p>
+                        <p className="text-sm font-black text-blue-400 italic leading-none">{tournament.result || "Ongoing"}</p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none">Squad Size</p>
+                        <p className="text-sm font-black text-white italic leading-none">{tournament.squad?.length || 0} Players</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Apply Section */}
       <section id="apply" className="py-32 bg-slate-950 relative overflow-hidden">
         <div className="absolute inset-0 bg-carbon opacity-20 z-0" />
@@ -1658,6 +1868,7 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
     address: "",
     photo: "",
     role: "Batsman" as 'Batsman' | 'Bowler' | 'All-rounder' | 'Wicket Keeper', 
+    battingPosition: "Middle Order" as 'Opener' | 'Middle Order' | 'Finisher',
     battingStyle: "Right Hand" as 'Right Hand' | 'Left Hand',
     bowlingStyle: "",
     jerseySize: "M" as 'S' | 'M' | 'L' | 'XL' | 'XXL',
@@ -1946,6 +2157,31 @@ const AdmissionForm = ({ data, onRefresh }: { data: AppData, onRefresh: () => vo
                     )}
                   >
                     {role.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="md:col-span-2 space-y-4">
+              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Batting Position / ব্যাটিং পজিশন</label>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { id: 'Opener', label: 'Opener / ওপেনার' },
+                  { id: 'Middle Order', label: 'Middle Order / মিডল অর্ডার' },
+                  { id: 'Finisher', label: 'Finisher / ফিনিশার' }
+                ].map((pos) => (
+                  <button
+                    key={pos.id}
+                    type="button"
+                    onClick={() => setFormData({...formData, battingPosition: pos.id as any})}
+                    className={cn(
+                      "h-[50px] rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all border px-2",
+                      formData.battingPosition === pos.id 
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent shadow-lg shadow-amber-500/20" 
+                        : "bg-slate-950/50 text-slate-400 border-slate-800 hover:border-slate-700"
+                    )}
+                  >
+                    {pos.label}
                   </button>
                 ))}
               </div>
@@ -2340,9 +2576,17 @@ const SquadSelectionModal = ({ tournament, players, onClose, onSave }: { tournam
 };
 
 const PlayerProfile = ({ player, onBack }: { player: any, onBack: () => void }) => {
+  const [pitchFormat, setPitchFormat] = useState<'All' | 'Short Pitch' | 'Long Pitch'>('All');
+
+  const currentStats = useMemo(() => {
+    if (pitchFormat === 'Short Pitch') return player.shortPitchStats || player.stats;
+    if (pitchFormat === 'Long Pitch') return player.longPitchStats || player.stats;
+    return player.stats;
+  }, [player, pitchFormat]);
+
   const skillData = [
-    { subject: 'Batting', A: player.stats?.runs > 500 ? 95 : 70, fullMark: 100 },
-    { subject: 'Bowling', A: player.stats?.wickets > 20 ? 90 : 60, fullMark: 100 },
+    { subject: 'Batting', A: (Number(currentStats?.runs) || 0) > 500 ? 95 : 70, fullMark: 100 },
+    { subject: 'Bowling', A: (Number(currentStats?.wickets) || 0) > 20 ? 90 : 60, fullMark: 100 },
     { subject: 'Fielding', A: 85, fullMark: 100 },
     { subject: 'Fitness', A: 90, fullMark: 100 },
     { subject: 'Pressure', A: 80, fullMark: 100 },
@@ -2430,14 +2674,40 @@ const PlayerProfile = ({ player, onBack }: { player: any, onBack: () => void }) 
         </div>
 
         <div className="lg:col-span-2 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Career Statistics</h4>
+            <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+              <button
+                onClick={() => setPitchFormat('All')}
+                className={cn("px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all", pitchFormat === 'All' ? "bg-amber-500 text-gray-950" : "text-slate-400 hover:text-white")}
+              >
+                All Pitch
+              </button>
+              <button
+                onClick={() => setPitchFormat('Short Pitch')}
+                className={cn("px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1", pitchFormat === 'Short Pitch' ? "bg-emerald-500 text-gray-950" : "text-slate-400 hover:text-white")}
+              >
+                <span className={cn("w-1.5 h-1.5 rounded-full", pitchFormat === 'Short Pitch' ? "bg-gray-950" : "bg-emerald-400")} />
+                Short Pitch
+              </button>
+              <button
+                onClick={() => setPitchFormat('Long Pitch')}
+                className={cn("px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1", pitchFormat === 'Long Pitch' ? "bg-blue-500 text-white" : "text-slate-400 hover:text-white")}
+              >
+                <span className={cn("w-1.5 h-1.5 rounded-full", pitchFormat === 'Long Pitch' ? "bg-white" : "bg-blue-400")} />
+                Long Pitch
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { label: 'Matches', value: player.stats?.matches || 0 },
-              { label: 'Runs', value: player.stats?.runs || 0 },
-              { label: 'Wickets', value: player.stats?.wickets || 0 },
-              { label: 'Avg', value: player.stats?.avg || '0.0' },
-              { label: 'SR', value: player.stats?.sr || '0.0' },
-              { label: 'Best', value: player.stats?.bestInnings || 'N/A' },
+              { label: 'Matches', value: currentStats?.matches || 0 },
+              { label: 'Runs', value: currentStats?.runs || 0 },
+              { label: 'Wickets', value: currentStats?.wickets || 0 },
+              { label: 'Avg', value: currentStats?.avg || '0.0' },
+              { label: 'SR', value: currentStats?.sr || '0.0' },
+              { label: 'Best', value: currentStats?.bestBowling || currentStats?.bestInnings || 'N/A' },
             ].map((stat, i) => (
               <div key={i} className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-4 rounded-2xl text-center">
                 <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
@@ -2451,28 +2721,62 @@ const PlayerProfile = ({ player, onBack }: { player: any, onBack: () => void }) 
               <h3 className="text-sm font-black text-white uppercase italic tracking-widest flex items-center gap-3">
                 <History size={18} className="text-amber-500" /> Match History
               </h3>
+              {pitchFormat !== 'All' && (
+                <span className={cn(
+                  "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border",
+                  pitchFormat === 'Long Pitch' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                )}>
+                  {pitchFormat}
+                </span>
+              )}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-950/50">
                     <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Opponent</th>
+                    <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Pitch</th>
                     <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Runs</th>
                     <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Wickets</th>
                     <th className="px-10 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">MOTM</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {(player.matchHistory || []).map((match: any, i: number) => (
-                    <tr key={i} className="hover:bg-slate-900/50 transition-colors">
-                      <td className="px-10 py-6 text-xs font-bold text-white uppercase italic">{match.opponent}</td>
-                      <td className="px-10 py-6 text-xs font-black text-amber-500 scoreboard-font">{match.runs}</td>
-                      <td className="px-10 py-6 text-xs font-black text-red-500 scoreboard-font">{match.wickets}</td>
-                      <td className="px-10 py-6">
-                        {match.motm && <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[8px] font-black rounded-lg uppercase">Yes</span>}
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const rawList = (player.matchHistory || []);
+                    const filtered = pitchFormat === 'All'
+                      ? rawList
+                      : rawList.filter((m: any) => (m.type === pitchFormat) || (!m.type && pitchFormat === 'Short Pitch'));
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={5} className="px-10 py-12 text-center text-slate-600 font-bold uppercase tracking-widest italic">
+                            No {pitchFormat !== 'All' ? pitchFormat : ''} matches on record
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map((match: any, i: number) => (
+                      <tr key={i} className="hover:bg-slate-900/50 transition-colors">
+                        <td className="px-10 py-6 text-xs font-bold text-white uppercase italic">{match.opponent}</td>
+                        <td className="px-10 py-6">
+                          <span className={cn(
+                            "px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border",
+                            match.type === 'Long Pitch' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          )}>
+                            {match.type || 'Short Pitch'}
+                          </span>
+                        </td>
+                        <td className="px-10 py-6 text-xs font-black text-amber-500 scoreboard-font">{match.runs}</td>
+                        <td className="px-10 py-6 text-xs font-black text-red-500 scoreboard-font">{match.wickets}</td>
+                        <td className="px-10 py-6">
+                          {match.motm && <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[8px] font-black rounded-lg uppercase">Yes</span>}
+                        </td>
+                      </tr>
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -2545,6 +2849,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
   const [showGraphicGenerator, setShowGraphicGenerator] = useState(false);
   const [selectedMatchForQuickScore, setSelectedMatchForQuickScore] = useState<any>(null);
   const [selectedMatchForGraphic, setSelectedMatchForGraphic] = useState<any>(null);
+  const [selectedMatchForSquad, setSelectedMatchForSquad] = useState<any>(null);
   const [selectedPlayersForMatch, setSelectedPlayersForMatch] = useState<number[]>([]);
   
   useEffect(() => {
@@ -2719,6 +3024,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("All");
   const [sortBy, setSortBy] = useState<'name' | 'runs' | 'wickets'>('name');
+  const [adminPitchFormat, setAdminPitchFormat] = useState<'All' | 'Short Pitch' | 'Long Pitch'>('All');
   
   const filteredPlayers = data.players
     .filter(p => {
@@ -2727,8 +3033,15 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
       return matchesSearch && matchesRole;
     })
     .sort((a, b) => {
-      if (sortBy === 'runs') return (b.stats?.runs || 0) - (a.stats?.runs || 0);
-      if (sortBy === 'wickets') return (b.stats?.wickets || 0) - (a.stats?.wickets || 0);
+      const getPStats = (player: Player) => {
+        if (adminPitchFormat === 'Short Pitch') return player.shortPitchStats || player.stats;
+        if (adminPitchFormat === 'Long Pitch') return player.longPitchStats || player.stats;
+        return player.stats;
+      };
+      const aStats = getPStats(a);
+      const bStats = getPStats(b);
+      if (sortBy === 'runs') return (Number(bStats?.runs) || 0) - (Number(aStats?.runs) || 0);
+      if (sortBy === 'wickets') return (Number(bStats?.wickets) || 0) - (Number(aStats?.wickets) || 0);
       return a.name.localeCompare(b.name);
     });
   
@@ -2757,6 +3070,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
     photo: "", 
     phone: "", 
     status: "Active",
+    battingPosition: "Middle Order" as 'Opener' | 'Middle Order' | 'Finisher',
     isCaptain: false,
     isViceCaptain: false,
     stats: { 
@@ -2792,7 +3106,8 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
   const [newExternalMatch, setNewExternalMatch] = useState({ teamA: "IRB Warriors", teamB: "", date: "", time: "", venue: "", type: "Short Pitch", overs: 8, status: "Upcoming" });
   const [newExternalExpense, setNewExternalExpense] = useState({ type: "Expense", amount: 0, category: "Tournament", description: "", date: new Date().toISOString().split('T')[0] });
   const [matchScore, setMatchScore] = useState({ teamARuns: 0, teamAWickets: 0, teamBRuns: 0, teamBWickets: 0 });
-  const [editStats, setEditStats] = useState({ matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0 });
+  const [editStats, setEditStats] = useState<any>({ matches: 0, runs: 0, wickets: 0, avg: 0, sr: 0 });
+  const [editPitchType, setEditPitchType] = useState<'Short Pitch' | 'Long Pitch'>('Short Pitch');
   const [settings, setSettings] = useState(data.settings || {
     clubName: "IRB WARRIORS",
     established: "2026",
@@ -2820,6 +3135,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
         bloodGroup: admission.bloodGroup || "",
         address: admission.address || "",
         role: admission.role || "Batsman",
+        battingPosition: admission.battingPosition || "Middle Order",
         battingStyle: admission.battingStyle || "Right Hand",
         bowlingStyle: admission.bowlingStyle || "",
         jerseySize: admission.jerseySize || "M",
@@ -3439,11 +3755,13 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
     await fetch(`/api/players/${selectedPlayer.id}/stats`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editStats),
+      body: JSON.stringify({ ...editStats, pitchType: editPitchType }),
     });
     setShowEditStats(false);
     setSelectedPlayer(null);
     onRefresh();
+    setNotification({ message: `${editPitchType} stats updated successfully for ${selectedPlayer.name}!`, type: 'success' });
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const handleQuickScore = async (e: React.FormEvent) => {
@@ -3616,14 +3934,30 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
   const [selectedTournamentForBracket, setSelectedTournamentForBracket] = useState<any>(null);
 
   const handleSaveSquad = async (squad: number[]) => {
-    if (!selectedTournamentForSquad) return;
-    await fetch(`/api/externalTournaments/${selectedTournamentForSquad.id}/squad`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ squad }),
-    });
+    if (selectedTournamentForSquad) {
+      await fetch(`/api/externalTournaments/${selectedTournamentForSquad.id}/squad`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ squad }),
+      });
+      setSelectedTournamentForSquad(null);
+    } else if (selectedMatchForSquad) {
+      try {
+        await supabaseService.updateMatch(selectedMatchForSquad.id, { playing_xi: squad });
+      } catch (error) {
+        console.error("Supabase match update failed:", error);
+        await fetch(`/api/matches/${selectedMatchForSquad.id}/playing-xi`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playing_xi: squad }),
+        });
+      }
+      setSelectedMatchForSquad(null);
+    } else {
+      return;
+    }
+    
     onRefresh();
-    setSelectedTournamentForSquad(null);
     setNotification({ message: "Squad updated successfully!", type: 'success' });
     setTimeout(() => setNotification(null), 3000);
   };
@@ -4276,20 +4610,44 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                 </div>
 
                 <div className="bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 overflow-hidden shadow-2xl">
-                  <div className="p-6 md:p-8 flex flex-wrap gap-4 border-b border-slate-800">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest self-center mr-2">Sort By:</span>
-                    <button 
-                      onClick={() => setSortBy('name')}
-                      className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'name' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
-                    >Name</button>
-                    <button 
-                      onClick={() => setSortBy('runs')}
-                      className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'runs' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
-                    >Runs</button>
-                    <button 
-                      onClick={() => setSortBy('wickets')}
-                      className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'wickets' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
-                    >Wickets</button>
+                  <div className="p-6 md:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mr-1">Sort By:</span>
+                      <button 
+                        onClick={() => setSortBy('name')}
+                        className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'name' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
+                      >Name</button>
+                      <button 
+                        onClick={() => setSortBy('runs')}
+                        className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'runs' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
+                      >Runs</button>
+                      <button 
+                        onClick={() => setSortBy('wickets')}
+                        className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", sortBy === 'wickets' ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-800/50")}
+                      >Wickets</button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 hidden md:inline">Pitch Format:</span>
+                      <button 
+                        onClick={() => setAdminPitchFormat('All')}
+                        className={cn("px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all", adminPitchFormat === 'All' ? "bg-amber-500 text-gray-950 shadow-md font-black" : "text-slate-400 hover:text-white")}
+                      >All</button>
+                      <button 
+                        onClick={() => setAdminPitchFormat('Short Pitch')}
+                        className={cn("px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5", adminPitchFormat === 'Short Pitch' ? "bg-emerald-500 text-gray-950 shadow-md font-black" : "text-slate-400 hover:text-white")}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", adminPitchFormat === 'Short Pitch' ? "bg-gray-950" : "bg-emerald-400")} />
+                        Short Pitch
+                      </button>
+                      <button 
+                        onClick={() => setAdminPitchFormat('Long Pitch')}
+                        className={cn("px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5", adminPitchFormat === 'Long Pitch' ? "bg-blue-500 text-white shadow-md font-black" : "text-slate-400 hover:text-white")}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", adminPitchFormat === 'Long Pitch' ? "bg-white" : "bg-blue-400")} />
+                        Long Pitch
+                      </button>
+                    </div>
                   </div>
                   <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left border-collapse min-w-[800px] md:min-w-0">
@@ -4347,16 +4705,39 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                               </div>
                             </td>
                             <td className="px-6 md:px-10 py-6 md:py-8">
-                              <div className="flex gap-4 md:gap-6">
-                                <div className="text-center">
-                                  <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Runs</p>
-                                  <p className="text-xs md:text-sm font-black text-white italic">{player.stats.runs}</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Wickets</p>
-                                  <p className="text-xs md:text-sm font-black text-white italic">{player.stats.wickets}</p>
-                                </div>
-                              </div>
+                              {(() => {
+                                const pStats = adminPitchFormat === 'Short Pitch' 
+                                  ? (player.shortPitchStats || player.stats) 
+                                  : adminPitchFormat === 'Long Pitch' 
+                                  ? (player.longPitchStats || player.stats) 
+                                  : player.stats;
+                                return (
+                                  <div className="space-y-1.5">
+                                    <div className="flex gap-4 md:gap-6">
+                                      <div className="text-center">
+                                        <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Runs</p>
+                                        <p className="text-xs md:text-sm font-black text-white italic">{pStats?.runs ?? 0}</p>
+                                      </div>
+                                      <div className="text-center">
+                                        <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Wickets</p>
+                                        <p className="text-xs md:text-sm font-black text-white italic">{pStats?.wickets ?? 0}</p>
+                                      </div>
+                                      <div className="text-center hidden sm:block">
+                                        <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg</p>
+                                        <p className="text-xs md:text-sm font-black text-amber-500 italic">{pStats?.avg ?? '0.0'}</p>
+                                      </div>
+                                    </div>
+                                    {adminPitchFormat !== 'All' && (
+                                      <span className={cn(
+                                        "text-[8px] font-black uppercase px-2 py-0.5 rounded border inline-block",
+                                        adminPitchFormat === 'Long Pitch' ? "text-blue-400 border-blue-500/20 bg-blue-500/10" : "text-emerald-400 border-emerald-500/20 bg-emerald-500/10"
+                                      )}>
+                                        {adminPitchFormat}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="px-6 md:px-10 py-6 md:py-8 text-right">
                               <div className="flex justify-end gap-2 md:gap-3">
@@ -4394,10 +4775,13 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedPlayer(player);
-                                      setEditStats(player.stats);
+                                      const defaultPitch = adminPitchFormat === 'Long Pitch' ? 'Long Pitch' : 'Short Pitch';
+                                      setEditPitchType(defaultPitch);
+                                      setEditStats(defaultPitch === 'Long Pitch' ? (player.longPitchStats || player.stats || {}) : (player.shortPitchStats || player.stats || {}));
                                       setShowEditStats(true);
                                     }}
                                     className="w-10 h-10 md:w-12 md:h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-gray-950 transition-all duration-500 shadow-lg shadow-amber-500/5"
+                                    title="Edit Stats (Short / Long Pitch)"
                                   >
                                     <Activity size={16} />
                                   </button>
@@ -4629,6 +5013,17 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                         </td>
                         <td className="px-6 md:px-10 py-6 md:py-8 text-right">
                           <div className="flex justify-end gap-3">
+                          {isAdmin && (
+                            <button 
+                              onClick={() => {
+                                setSelectedMatchForSquad(match);
+                              }}
+                              className="w-12 h-12 bg-indigo-500/10 text-indigo-500 rounded-2xl flex items-center justify-center hover:bg-indigo-500 hover:text-white transition-all duration-500 shadow-lg shadow-indigo-500/5"
+                              title="Select Playing XI"
+                            >
+                              <Users size={18} />
+                            </button>
+                          )}
                           {isAdmin && (
                             <button 
                               onClick={() => {
@@ -6088,10 +6483,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                       <option value="XXL" className="bg-slate-900">XXL</option>
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</label>
-                    <input required value={newPlayer.phone ?? ""} onChange={e => setNewPlayer({...newPlayer, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white placeholder:text-slate-700" />
-                  </div>
+                  <div className="space-y-2 invisible" />
                 </div>
                 <FileUploader 
                   label="Player Photo" 
@@ -6231,14 +6623,7 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                       <option value="XXL" className="bg-slate-900">XXL</option>
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</label>
-                    <select value={editingPlayer.status ?? ""} onChange={e => setEditingPlayer({...editingPlayer, status: e.target.value as any})} className="w-full px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl focus:outline-none focus:border-amber-500 transition-all font-bold text-white">
-                      <option value="Active" className="bg-slate-900">Active</option>
-                      <option value="Injured" className="bg-slate-900">Injured</option>
-                      <option value="Inactive" className="bg-slate-900">Inactive</option>
-                    </select>
-                  </div>
+                  <div className="space-y-2 invisible" />
                 </div>
                 <FileUploader 
                   label="Player Photo" 
@@ -6267,6 +6652,15 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
             tournament={selectedTournamentForSquad} 
             players={data.players} 
             onClose={() => setSelectedTournamentForSquad(null)} 
+            onSave={handleSaveSquad} 
+          />
+        )}
+
+        {selectedMatchForSquad && (
+          <SquadSelectionModal 
+            tournament={{...selectedMatchForSquad, squad: selectedMatchForSquad.playing_xi}} 
+            players={data.players} 
+            onClose={() => setSelectedMatchForSquad(null)} 
             onSave={handleSaveSquad} 
           />
         )}
@@ -6309,7 +6703,50 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                 <button onClick={() => setShowEditStats(false)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-500 hover:text-white"><X /></button>
               </div>
               <p className="text-sm font-bold text-slate-500">Updating stats for <span className="text-white">{selectedPlayer.name}</span></p>
-              <form onSubmit={handleUpdateStats} className="space-y-6 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+
+              {/* Pitch Format Selector */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center justify-between">
+                  <span>Pitch Format</span>
+                  <span className="text-amber-500 font-bold">পিচ ফরম্যাট সিলেক্ট করুন</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditPitchType('Short Pitch');
+                      setEditStats(selectedPlayer.shortPitchStats || selectedPlayer.stats || {});
+                    }}
+                    className={cn(
+                      "py-2.5 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
+                      editPitchType === 'Short Pitch'
+                        ? "bg-emerald-500 text-gray-950 shadow-md font-black"
+                        : "text-slate-400 hover:text-white"
+                    )}
+                  >
+                    <span className={cn("w-2 h-2 rounded-full", editPitchType === 'Short Pitch' ? "bg-gray-950" : "bg-emerald-400")} />
+                    Short Pitch (শর্ট পিচ)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditPitchType('Long Pitch');
+                      setEditStats(selectedPlayer.longPitchStats || selectedPlayer.stats || {});
+                    }}
+                    className={cn(
+                      "py-2.5 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
+                      editPitchType === 'Long Pitch'
+                        ? "bg-blue-500 text-white shadow-md font-black"
+                        : "text-slate-400 hover:text-white"
+                    )}
+                  >
+                    <span className={cn("w-2 h-2 rounded-full", editPitchType === 'Long Pitch' ? "bg-white" : "bg-blue-400")} />
+                    Long Pitch (লং পিচ)
+                  </button>
+                </div>
+              </div>
+
+              <form onSubmit={handleUpdateStats} className="space-y-6 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
                 {/* Batting Section */}
                 <div className="space-y-4">
                   <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] border-b border-slate-800 pb-2">Batting Stats</h3>
@@ -6420,7 +6857,9 @@ const AdminPanel = ({ data, onRefresh, userRole, setSelectedPlayerForProfile }: 
                 </div>
 
                 <div className="sticky bottom-0 bg-slate-900/80 backdrop-blur-md pt-4 pb-2">
-                  <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter">Update Performance</button>
+                  <button type="submit" className="w-full py-5 bg-amber-500 text-gray-950 rounded-2xl font-black text-lg hover:bg-amber-400 transition-all shadow-2xl shadow-amber-500/20 uppercase italic tracking-tighter flex items-center justify-center gap-2">
+                    Update {editPitchType} Performance
+                  </button>
                 </div>
               </form>
             </motion.div>
@@ -7190,6 +7629,27 @@ const MatchesPage = ({ data }: { data: AppData }) => {
                   </div>
                 </div>
               )}
+
+              {match.playing_xi && match.playing_xi.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-slate-800 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <Users size={16} className="text-amber-500" />
+                    <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Playing XI - {data.settings?.clubName.split(' ')[0]}</h4>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {match.playing_xi.map((playerId: number) => {
+                      const player = data.players.find(p => p.id === playerId);
+                      if (!player) return null;
+                      return (
+                        <div key={playerId} className="flex items-center gap-2 bg-slate-950/50 pr-4 py-1.5 rounded-full border border-white/5 pl-2">
+                          <img src={player.photo} className="w-6 h-6 rounded-full object-cover border border-white/10" referrerPolicy="no-referrer" />
+                          <span className="text-[9px] font-black text-white uppercase tracking-wider">{player.name}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
@@ -7199,9 +7659,24 @@ const MatchesPage = ({ data }: { data: AppData }) => {
 };
 
 const RankingPage = ({ data, isAdminView = false }: { data: AppData, isAdminView?: boolean }) => {
-  const sortedPlayers = [...(data.players || [])].sort((a, b) => b.stats.runs - a.stats.runs);
+  const [rankingFormat, setRankingFormat] = useState<'All' | 'Short Pitch' | 'Long Pitch'>('All');
+
+  const sortedPlayers = useMemo(() => {
+    return [...(data.players || [])].sort((a, b) => {
+      const aStats = rankingFormat === 'Short Pitch' ? (a.shortPitchStats || a.stats) : rankingFormat === 'Long Pitch' ? (a.longPitchStats || a.stats) : a.stats;
+      const bStats = rankingFormat === 'Short Pitch' ? (b.shortPitchStats || b.stats) : rankingFormat === 'Long Pitch' ? (b.longPitchStats || b.stats) : b.stats;
+      return (Number(bStats?.runs) || 0) - (Number(aStats?.runs) || 0);
+    });
+  }, [data.players, rankingFormat]);
+
   const topThree = sortedPlayers.slice(0, 3);
   const others = sortedPlayers.slice(3);
+
+  const getStats = (player: Player) => {
+    if (rankingFormat === 'Short Pitch') return player.shortPitchStats || player.stats;
+    if (rankingFormat === 'Long Pitch') return player.longPitchStats || player.stats;
+    return player.stats;
+  };
 
   return (
     <div className={cn(
@@ -7211,7 +7686,7 @@ const RankingPage = ({ data, isAdminView = false }: { data: AppData, isAdminView
 
       <div className={cn("relative z-10", !isAdminView && "max-w-7xl mx-auto")}>
         {!isAdminView && (
-          <div className="text-center mb-12 md:mb-20">
+          <div className="text-center mb-10 md:mb-14">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -7223,47 +7698,91 @@ const RankingPage = ({ data, isAdminView = false }: { data: AppData, isAdminView
           </div>
         )}
 
-        {/* Podium */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-20">
-          {topThree.map((player, index) => (
-            <motion.div 
-              key={player.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+        {/* Pitch Format Selector */}
+        <div className="flex items-center justify-center mb-10">
+          <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-xl">
+            <button
+              onClick={() => setRankingFormat('All')}
               className={cn(
-                "relative bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 p-8 md:p-10 text-center shadow-2xl",
-                index === 0 ? "md:-mt-8 border-amber-500/30 md:scale-105 z-20" : "z-10"
+                "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                rankingFormat === 'All'
+                  ? "bg-amber-500 text-gray-950 shadow-md font-black"
+                  : "text-slate-400 hover:text-white"
               )}
             >
-              <div className="absolute -top-4 md:-top-6 left-1/2 -translate-x-1/2 w-10 h-10 md:w-12 md:h-12 bg-amber-500 text-gray-950 rounded-xl md:rounded-2xl flex items-center justify-center font-black text-lg md:text-xl italic shadow-xl shadow-amber-500/20">
-                #{index + 1}
-              </div>
-              <img 
-                src={player.photo} 
-                alt={player.name} 
-                className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] md:rounded-[2.5rem] object-contain bg-slate-950/50 mx-auto mb-6 border-4 border-slate-800" 
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "https://placehold.co/200x200/1e293b/fbbf24?text=N/A";
-                }}
-              />
-              <h3 className="text-xl md:text-2xl font-black text-white uppercase italic mb-2 tracking-tight leading-tighter">{player.name}</h3>
-              <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-6">{player.role}</p>
-              
-              <div className="grid grid-cols-2 gap-3 md:gap-4">
-                <div className="bg-slate-950/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-800">
-                  <p className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase mb-1">Runs</p>
-                  <p className="text-xl md:text-2xl font-black text-white italic">{player.stats.runs}</p>
+              All Formats
+            </button>
+            <button
+              onClick={() => setRankingFormat('Short Pitch')}
+              className={cn(
+                "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+                rankingFormat === 'Short Pitch'
+                  ? "bg-emerald-500 text-gray-950 shadow-md font-black"
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              <span className={cn("w-2 h-2 rounded-full", rankingFormat === 'Short Pitch' ? "bg-gray-950" : "bg-emerald-400")} />
+              Short Pitch (শর্ট পিচ)
+            </button>
+            <button
+              onClick={() => setRankingFormat('Long Pitch')}
+              className={cn(
+                "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2",
+                rankingFormat === 'Long Pitch'
+                  ? "bg-blue-500 text-white shadow-md font-black"
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              <span className={cn("w-2 h-2 rounded-full", rankingFormat === 'Long Pitch' ? "bg-white" : "bg-blue-400")} />
+              Long Pitch (লং পিচ)
+            </button>
+          </div>
+        </div>
+
+        {/* Podium */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-20">
+          {topThree.map((player, index) => {
+            const pStats = getStats(player);
+            return (
+              <motion.div 
+                key={player.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={cn(
+                  "relative bg-slate-900/50 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-slate-800 p-8 md:p-10 text-center shadow-2xl",
+                  index === 0 ? "md:-mt-8 border-amber-500/30 md:scale-105 z-20" : "z-10"
+                )}
+              >
+                <div className="absolute -top-4 md:-top-6 left-1/2 -translate-x-1/2 w-10 h-10 md:w-12 md:h-12 bg-amber-500 text-gray-950 rounded-xl md:rounded-2xl flex items-center justify-center font-black text-lg md:text-xl italic shadow-xl shadow-amber-500/20">
+                  #{index + 1}
                 </div>
-                <div className="bg-slate-950/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-800">
-                  <p className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase mb-1">Avg</p>
-                  <p className="text-xl md:text-2xl font-black text-white italic">{player.stats.avg}</p>
+                <img 
+                  src={player.photo} 
+                  alt={player.name} 
+                  className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] md:rounded-[2.5rem] object-contain bg-slate-950/50 mx-auto mb-6 border-4 border-slate-800" 
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://placehold.co/200x200/1e293b/fbbf24?text=N/A";
+                  }}
+                />
+                <h3 className="text-xl md:text-2xl font-black text-white uppercase italic mb-2 tracking-tight leading-tighter">{player.name}</h3>
+                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-6">{player.role}</p>
+                
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                  <div className="bg-slate-950/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-800">
+                    <p className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase mb-1">Runs</p>
+                    <p className="text-xl md:text-2xl font-black text-white italic">{pStats?.runs || 0}</p>
+                  </div>
+                  <div className="bg-slate-950/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-800">
+                    <p className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase mb-1">Avg</p>
+                    <p className="text-xl md:text-2xl font-black text-white italic">{pStats?.avg || '0.00'}</p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Leaderboard Table */}
@@ -7281,33 +7800,36 @@ const RankingPage = ({ data, isAdminView = false }: { data: AppData, isAdminView
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {others.map((player, index) => (
-                  <tr key={player.id} className="hover:bg-slate-900/50 transition-colors group">
-                    <td className="px-6 md:px-8 py-4 md:py-6 font-black text-slate-600 italic">#{index + 4}</td>
-                    <td className="px-6 md:px-8 py-4 md:py-6">
-                      <div className="flex items-center gap-3 md:gap-4">
-                        <img 
-                          src={player.photo} 
-                          alt={player.name} 
-                          className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl object-contain bg-slate-950/50 border border-slate-800" 
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
-                          }}
-                        />
-                        <div>
-                          <div className="font-black text-white uppercase italic text-xs md:text-sm">{player.name}</div>
-                          <div className="text-[8px] md:text-[10px] font-black text-amber-500 uppercase tracking-widest">{player.role}</div>
+                {others.map((player, index) => {
+                  const pStats = getStats(player);
+                  return (
+                    <tr key={player.id} className="hover:bg-slate-900/50 transition-colors group">
+                      <td className="px-6 md:px-8 py-4 md:py-6 font-black text-slate-600 italic">#{index + 4}</td>
+                      <td className="px-6 md:px-8 py-4 md:py-6">
+                        <div className="flex items-center gap-3 md:gap-4">
+                          <img 
+                            src={player.photo} 
+                            alt={player.name} 
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl object-contain bg-slate-950/50 border border-slate-800" 
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://placehold.co/100x100/1e293b/fbbf24?text=N/A";
+                            }}
+                          />
+                          <div>
+                            <div className="font-black text-white uppercase italic text-xs md:text-sm">{player.name}</div>
+                            <div className="text-[8px] md:text-[10px] font-black text-amber-500 uppercase tracking-widest">{player.role}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{player.stats.matches}</td>
-                    <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{player.stats.runs}</td>
-                    <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{player.stats.wickets}</td>
-                    <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{player.stats.avg}</td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{pStats?.matches || 0}</td>
+                      <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{pStats?.runs || 0}</td>
+                      <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{pStats?.wickets || 0}</td>
+                      <td className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm font-black text-white italic">{pStats?.avg || '0.00'}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -7567,6 +8089,7 @@ export default function App() {
           {selectedPlayerForProfile && (
             <PlayerProfileModal 
               player={selectedPlayerForProfile} 
+              allMatches={data.matches}
               onClose={() => setSelectedPlayerForProfile(null)} 
             />
           )}

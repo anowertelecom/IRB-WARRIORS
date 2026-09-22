@@ -106,8 +106,8 @@ async function startServer() {
     }
   }
 
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+  app.use(express.json({ limit: '500mb' }));
+  app.use(express.urlencoded({ limit: '500mb', extended: true }));
   app.use("/uploads", express.static(UPLOADS_DIR));
 
   // Multer configuration
@@ -118,7 +118,10 @@ async function startServer() {
       cb(null, uniqueSuffix + path.extname(file.originalname));
     }
   });
-  const upload = multer({ storage });
+  const upload = multer({ 
+    storage,
+    limits: { fileSize: 500 * 1024 * 1024 }
+  });
 
   // Upload endpoint
   app.post("/api/upload", upload.single("file"), (req: any, res) => {
@@ -227,7 +230,8 @@ async function startServer() {
 
   app.post("/api/admissions/:id/approve", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const admissionIdx = data.admissions.findIndex((a: any) => a.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const admissionIdx = data.admissions.findIndex((a: any) => a.id === id);
     if (admissionIdx !== -1) {
       const admission = data.admissions[admissionIdx];
       admission.status = "approved";
@@ -241,6 +245,7 @@ async function startServer() {
         bloodGroup: admission.bloodGroup || "",
         address: admission.address || "",
         role: admission.role || "Batsman",
+        battingPosition: admission.battingPosition || "Middle Order",
         battingStyle: admission.battingStyle || "Right Hand",
         bowlingStyle: admission.bowlingStyle || "",
         jerseySize: admission.jerseySize || "M",
@@ -248,11 +253,17 @@ async function startServer() {
         photo: admission.photo && admission.photo.trim() !== "" ? admission.photo : "https://picsum.photos/seed/new/200/200",
         phone: admission.phone || "",
         status: "Active",
+        isCaptain: false,
+        isViceCaptain: false,
+        potmCount: 0,
+        pottCount: 0,
         monthlyFee: data.settings.monthlyFee || 0,
         stats: { 
           matches: 0, 
+          innings: 0,
+          notOut: 0,
           runs: 0, 
-          wickets: 0, 
+          highestScore: 0,
           avg: 0, 
           sr: 0,
           fours: 0,
@@ -261,6 +272,7 @@ async function startServer() {
           hundreds: 0,
           bowlInnings: 0,
           overs: 0,
+          wickets: 0,
           runsConceded: 0,
           bestBowling: "N/A",
           economy: 0,
@@ -283,14 +295,16 @@ async function startServer() {
 
   app.delete("/api/admissions/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.admissions = data.admissions.filter((a: any) => a.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.admissions = data.admissions.filter((a: any) => a.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
 
   app.post("/api/admissions/:id/payment", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const admission = data.admissions.find((a: any) => a.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const admission = data.admissions.find((a: any) => a.id === id);
     if (admission) {
       const oldAmountPaid = admission.amountPaid || 0;
       const newAmountPaid = req.body.amountPaid || 0;
@@ -337,7 +351,8 @@ async function startServer() {
 
   app.patch("/api/players/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const playerIdx = data.players.findIndex((p: any) => p.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const playerIdx = data.players.findIndex((p: any) => p.id === id);
     if (playerIdx !== -1) {
       data.players[playerIdx] = { ...data.players[playerIdx], ...req.body };
       fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
@@ -349,9 +364,42 @@ async function startServer() {
 
   app.post("/api/players/:id/stats", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const player = data.players.find((p: any) => p.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const player = data.players.find((p: any) => p.id === id);
     if (player) {
-      player.stats = { ...player.stats, ...req.body };
+      const { pitchType, ...statsData } = req.body;
+      if (pitchType === 'Short Pitch') {
+        player.shortPitchStats = { ...(player.shortPitchStats || {}), ...statsData };
+      } else if (pitchType === 'Long Pitch') {
+        player.longPitchStats = { ...(player.longPitchStats || {}), ...statsData };
+      } else {
+        player.stats = { ...player.stats, ...statsData };
+      }
+
+      // Also ensure aggregate player.stats reflects changes
+      if (pitchType === 'Short Pitch' || pitchType === 'Long Pitch') {
+        const sp = player.shortPitchStats || {};
+        const lp = player.longPitchStats || {};
+        const hasBoth = player.shortPitchStats && player.longPitchStats;
+        if (hasBoth) {
+          const totalMatches = (Number(sp.matches) || 0) + (Number(lp.matches) || 0);
+          const totalRuns = (Number(sp.runs) || 0) + (Number(lp.runs) || 0);
+          const totalWickets = (Number(sp.wickets) || 0) + (Number(lp.wickets) || 0);
+          const totalInnings = (Number(sp.innings) || 0) + (Number(lp.innings) || 0);
+          const totalBalls = (Number(sp.balls) || Number(sp.ballsFaced) || 0) + (Number(lp.balls) || Number(lp.ballsFaced) || 0);
+          
+          player.stats = {
+            ...player.stats,
+            matches: totalMatches,
+            runs: totalRuns,
+            wickets: totalWickets,
+            innings: totalInnings,
+            avg: totalInnings > 0 ? (totalRuns / totalInnings).toFixed(2) : player.stats.avg,
+            sr: totalBalls > 0 ? ((totalRuns / totalBalls) * 100).toFixed(2) : player.stats.sr,
+          };
+        }
+      }
+
       fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
       res.json(player);
     } else {
@@ -361,7 +409,8 @@ async function startServer() {
 
   app.delete("/api/players/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.players = data.players.filter((p: any) => p.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.players = data.players.filter((p: any) => p.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
@@ -377,7 +426,8 @@ async function startServer() {
 
   app.delete("/api/finance/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.finance = data.finance.filter((f: any) => f.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.finance = data.finance.filter((f: any) => f.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
@@ -402,7 +452,8 @@ async function startServer() {
 
   app.delete("/api/gallery/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.gallery = data.gallery.filter((item: any) => item.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.gallery = data.gallery.filter((item: any) => item.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
@@ -418,7 +469,8 @@ async function startServer() {
 
   app.delete("/api/events/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.events = data.events.filter((e: any) => e.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.events = data.events.filter((e: any) => e.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
@@ -434,14 +486,16 @@ async function startServer() {
 
   app.delete("/api/hostedTournaments/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.hostedTournaments = data.hostedTournaments.filter((t: any) => t.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.hostedTournaments = data.hostedTournaments.filter((t: any) => t.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
 
   app.patch("/api/hostedTournaments/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const tournamentIdx = data.hostedTournaments.findIndex((t: any) => t.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const tournamentIdx = data.hostedTournaments.findIndex((t: any) => t.id === id);
     if (tournamentIdx !== -1) {
       data.hostedTournaments[tournamentIdx] = { ...data.hostedTournaments[tournamentIdx], ...req.body };
       fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
@@ -453,7 +507,8 @@ async function startServer() {
 
   app.post("/api/hostedTournaments/:id/registrations", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const tournament = data.hostedTournaments.find((t: any) => t.id === id);
     if (tournament) {
       const newReg = { ...req.body, id: Date.now(), registrationDate: new Date().toISOString() };
       tournament.registrations.push(newReg);
@@ -478,9 +533,11 @@ async function startServer() {
 
   app.post("/api/hostedTournaments/:id/registrations/:regId/payment", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const tournament = data.hostedTournaments.find((t: any) => t.id === id);
     if (tournament) {
-      const reg = tournament.registrations.find((r: any) => r.id === parseInt(req.params.regId));
+      const regId = isNaN(parseInt(req.params.regId)) ? req.params.regId : parseInt(req.params.regId);
+      const reg = tournament.registrations.find((r: any) => r.id === regId);
       if (reg) {
         const oldAmountPaid = reg.amountPaid || 0;
         const newAmountPaid = req.body.amountPaid || 0;
@@ -513,7 +570,8 @@ async function startServer() {
 
   app.post("/api/hostedTournaments/:id/sponsors", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const tournament = data.hostedTournaments.find((t: any) => t.id === id);
     if (tournament) {
       const newSponsor = { ...req.body, id: Date.now() };
       tournament.sponsors.push(newSponsor);
@@ -526,7 +584,8 @@ async function startServer() {
 
   app.post("/api/hostedTournaments/:id/fixtures", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const tournament = data.hostedTournaments.find((t: any) => t.id === id);
     if (tournament) {
       const newMatch = { ...req.body, id: Date.now(), status: "Upcoming" };
       tournament.fixtures.push(newMatch);
@@ -539,9 +598,11 @@ async function startServer() {
 
   app.post("/api/hostedTournaments/:id/fixtures/:matchId/score", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const tournament = data.hostedTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const tournament = data.hostedTournaments.find((t: any) => t.id === id);
     if (tournament) {
-      const match = tournament.fixtures.find((m: any) => m.id === parseInt(req.params.matchId));
+      const matchId = isNaN(parseInt(req.params.matchId)) ? req.params.matchId : parseInt(req.params.matchId);
+      const match = tournament.fixtures.find((m: any) => m.id === matchId);
       if (match) {
         match.score = req.body.score;
         match.status = req.body.status || "Live";
@@ -567,14 +628,16 @@ async function startServer() {
 
   app.delete("/api/externalTournaments/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.externalTournaments = data.externalTournaments.filter((t: any) => t.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.externalTournaments = data.externalTournaments.filter((t: any) => t.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
 
   app.post("/api/externalTournaments/:id/expenses", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const tournament = data.externalTournaments.find((t: any) => t.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const tournament = data.externalTournaments.find((t: any) => t.id === id);
     if (tournament) {
       const newExpense = { ...req.body, id: Date.now() };
       tournament.expenses.push(newExpense);
@@ -588,9 +651,23 @@ async function startServer() {
   });
 
   // Committee Delete
+  app.patch("/api/committee/:id", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const memberIdx = data.committee.findIndex((m: any) => m.id === id);
+    if (memberIdx !== -1) {
+      data.committee[memberIdx] = { ...data.committee[memberIdx], ...req.body };
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(data.committee[memberIdx]);
+    } else {
+      res.status(404).send("Member not found");
+    }
+  });
+
   app.delete("/api/committee/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.committee = data.committee.filter((m: any) => m.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.committee = data.committee.filter((m: any) => m.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
@@ -606,14 +683,29 @@ async function startServer() {
 
   app.delete("/api/matches/:id", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    data.matches = data.matches.filter((m: any) => m.id !== parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    data.matches = data.matches.filter((m: any) => m.id !== id);
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     res.json({ success: true });
   });
 
+  app.post("/api/matches/:id/playing-xi", (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const match = data.matches.find((m: any) => m.id === id);
+    if (match) {
+      match.playing_xi = req.body.playing_xi;
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+      res.json(match);
+    } else {
+      res.status(404).send("Not found");
+    }
+  });
+
   app.post("/api/matches/:id/score", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    const match = data.matches.find((m: any) => m.id === parseInt(req.params.id));
+    const id = isNaN(parseInt(req.params.id)) ? req.params.id : parseInt(req.params.id);
+    const match = data.matches.find((m: any) => m.id === id);
     if (match) {
       match.score = req.body;
       match.status = "Live";

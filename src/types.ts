@@ -6,6 +6,37 @@ export interface CommitteeMember {
   phone: string;
 }
 
+export interface PlayerStats {
+  matches: number;
+  innings: number;
+  notOut: number;
+  runs: number;
+  highestScore: number;
+  avg: number | string;
+  sr: number | string;
+  fours: number;
+  sixes: number;
+  fifties: number;
+  hundreds: number;
+  balls?: number;
+  
+  // Bowling
+  bowlInnings: number;
+  overs: number;
+  wickets: number;
+  runsConceded: number;
+  bestBowling: string;
+  economy: number | string;
+  bowlSr: number | string;
+  maidens: number;
+  
+  // Best overall
+  careerRuns?: number;
+  careerWickets?: number;
+  bestInnings?: string;
+  impactScore?: number;
+}
+
 export interface Player {
   id: number;
   name: string;
@@ -27,36 +58,9 @@ export interface Player {
   potmCount?: number;
   pottCount?: number;
   monthlyFee?: number;
-  stats: {
-    matches: number;
-    innings: number;
-    notOut: number;
-    runs: number;
-    highestScore: number;
-    avg: number;
-    sr: number;
-    fours: number;
-    sixes: number;
-    fifties: number;
-    hundreds: number;
-    balls?: number;
-    
-    // Bowling
-    bowlInnings: number;
-    overs: number;
-    wickets: number;
-    runsConceded: number;
-    bestBowling: string;
-    economy: number;
-    bowlSr: number;
-    maidens: number;
-    
-    // Best overall
-    careerRuns?: number;
-    careerWickets?: number;
-    bestInnings?: string;
-    impactScore?: number;
-  };
+  stats: PlayerStats;
+  shortPitchStats?: PlayerStats;
+  longPitchStats?: PlayerStats;
   tournamentStats?: {
     tournamentName: string;
     matches: number;
@@ -96,7 +100,7 @@ export interface Match {
     teamBWickets: number;
     teamBOvers: string;
   };
-  playingXI?: number[]; // Array of player IDs
+  playing_xi?: number[]; // Array of player IDs
   performances?: {
     playerId: number;
     isGuest?: boolean;
@@ -146,6 +150,7 @@ export interface Admission {
   address?: string;
   photo?: string;
   role: 'Batsman' | 'Bowler' | 'All-rounder' | 'Wicket Keeper';
+  battingPosition?: 'Opener' | 'Middle Order' | 'Finisher';
   battingStyle?: 'Right Hand' | 'Left Hand';
   bowlingStyle?: string;
   jerseySize?: 'S' | 'M' | 'L' | 'XL' | 'XXL';
@@ -212,6 +217,7 @@ export interface HostedTournament {
   registrations: TournamentRegistration[];
   sponsors: TournamentSponsor[];
   fixtures: Match[];
+  pitchType?: 'Short Pitch' | 'Long Pitch';
 }
 
 export interface ExternalTournament {
@@ -227,6 +233,7 @@ export interface ExternalTournament {
   currentStage: string; // e.g., 'Group Stage', 'Quarter Final', etc.
   status: 'Upcoming' | 'Participating' | 'Finished';
   result?: string;
+  pitchType?: 'Short Pitch' | 'Long Pitch';
 }
 
 export interface AppData {
